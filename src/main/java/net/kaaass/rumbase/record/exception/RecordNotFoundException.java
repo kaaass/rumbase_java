@@ -6,6 +6,8 @@ import net.kaaass.rumbase.exception.RumbaseException;
  * E5001 记录不存在异常
  * <p>
  * E5001-1 物理记录不存在
+ *
+ * @author kaaass
  */
 public class RecordNotFoundException extends RumbaseException {
     /**

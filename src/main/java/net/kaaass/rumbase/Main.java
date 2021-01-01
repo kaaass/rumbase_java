@@ -1,7 +1,5 @@
 package net.kaaass.rumbase;
 
-import java.util.UUID;
-
 /**
  * 入口类
  *

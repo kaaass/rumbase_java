@@ -25,6 +25,8 @@ package net.kaaass.rumbase.exception;
  * <p>
  * 如对于 {@link net.kaaass.rumbase.record.exception.RecordNotFoundException}，主错误号
  * 是5001，而子错误号不同表示不同发生原因。如物理记录不存在，或记录对事务不可见等等。
+ *
+ * @author kaaass
  */
 public class RumbaseException extends Exception {
 
