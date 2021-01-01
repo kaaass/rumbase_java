@@ -1,5 +1,7 @@
 package net.kaaass.rumbase.record.mock;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -15,6 +17,7 @@ import java.util.UUID;
  * @author kaaass
  */
 @Deprecated
+@RequiredArgsConstructor
 public class MockRecordStorage implements IRecordStorage {
 
     /**
@@ -22,15 +25,12 @@ public class MockRecordStorage implements IRecordStorage {
      */
     private static final Map<String, MockRecordStorage> MOCK_STORAGES = new HashMap<>();
 
+    @Getter
     private final String mockId;
 
     private final Map<UUID, byte[]> memoryStorage = new HashMap<>();
 
     private byte[] metadata = new byte[0];
-
-    private MockRecordStorage(String mockId) {
-        this.mockId = mockId;
-    }
 
     @Override
     public UUID insert(TransactionContext txContext, byte[] rawData) {
@@ -70,9 +70,5 @@ public class MockRecordStorage implements IRecordStorage {
         var result = new MockRecordStorage(mockId);
         MOCK_STORAGES.put(mockId, result);
         return result;
-    }
-
-    public String getMockId() {
-        return mockId;
     }
 }
