@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.record;
 
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.util.Optional;
@@ -28,7 +29,15 @@ public interface IRecordStorage {
      * @param recordId  记录ID
      * @return 记录数据字节
      */
-    Optional<byte[]> query(TransactionContext txContext, UUID recordId);
+    byte[] query(TransactionContext txContext, UUID recordId) throws RecordNotFoundException;
+
+    default Optional<byte[]> queryOptional(TransactionContext txContext, UUID recordId) {
+        try {
+            return Optional.of(query(txContext, recordId));
+        } catch (RecordNotFoundException ignore) {
+            return Optional.empty();
+        }
+    }
 
     /**
      * 由记录ID删除记录数据
@@ -44,12 +53,12 @@ public interface IRecordStorage {
      *
      * @return 元信息数据
      */
-    byte[] getMetadata();
+    byte[] getMetadata(TransactionContext txContext);
 
     /**
      * 更新记录存储的元信息
      *
      * @param metadata 元信息数据
      */
-    void setMetadata(byte[] metadata);
+    void setMetadata(TransactionContext txContext, byte[] metadata);
 }
