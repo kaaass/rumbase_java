@@ -9,8 +9,8 @@ Java构建的高性能SQL关系型数据库。
 | **模块**                | **内容**             | **负责人** | **包**       |
 | ----------------------- | -------------------- | ---------- | ------------ |
 | Query Parse Module      | SQL 语句解析         | @KAAAsS    | parse       |
-| Query Execution Module  | 查询执行、优化       |            | query       |
-| Table Management Module | 系统内数据库、表管理 |            | table       |
+| Query Execution Module  | 查询执行、优化       | @KveinAxel  | query       |
+| Table Management Module | 系统内数据库、表管理 |  @KveinAxel  | table       |
 | Indexing Module         | 索引结构，使用 B+ 树 |            | index       |
 | Record Module           | 记录管理，实现 MVCC  | @KAAAsS    | record      |
 | Transaction Module      | 实现事务的管理与 2PL |            | transaction |
