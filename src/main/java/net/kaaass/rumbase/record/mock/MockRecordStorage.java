@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.record.mock;
 
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.record.IRecordStorage;
@@ -24,6 +25,7 @@ public class MockRecordStorage implements IRecordStorage {
      * 内存中创建的Mock存储
      */
     private static final Map<String, MockRecordStorage> MOCK_STORAGES = new HashMap<>();
+
 
     @Getter
     private final String mockId;
@@ -71,4 +73,5 @@ public class MockRecordStorage implements IRecordStorage {
         MOCK_STORAGES.put(mockId, result);
         return result;
     }
+
 }
