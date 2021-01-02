@@ -23,3 +23,11 @@ dependencies {
     // JUnit
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
+
+// Agree --scan ToS
+if (hasProperty('buildScan')) {
+    buildScan {
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
+    }
+}
