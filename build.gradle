@@ -10,5 +10,16 @@ repositories {
 }
 
 dependencies {
+    // java-binary-block-parser
+    compile 'com.igormaznitsa:jbbp:2.0.2'
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.16'
+    annotationProcessor 'org.projectlombok:lombok:1.18.16'
+    testCompileOnly 'org.projectlombok:lombok:1.18.16'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
+    // Slf4j
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
+    // JUnit
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
