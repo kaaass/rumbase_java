@@ -37,18 +37,17 @@ public class FieldValue<T> implements Comparable {
             if (this.type != another.type) {
                 return 0;
             } else {
-                return switch (this.type) {
-                    case INT -> (int) this.getValue() - (int) another.getValue();
-                    case FLOAT -> {
-                        var res = (float) this.getValue() - (float) another.getValue();
-                        if (res < 0)
-                            yield -1;
-                        else if (res == 0)
-                            yield 0;
-                        else
-                            yield 1;
-                    }
-                };
+                var res = 0;
+                if (this.type == FieldType.INT) {
+                    res = (int) this.getValue() - (int) another.getValue();
+                } else if (this.type == FieldType.FLOAT) {
+                    var tmp = (float) this.getValue() - (float) another.getValue();
+                    if (tmp < 0)
+                        res = -1;
+                    else if (tmp > 0)
+                        res = 1;
+                }
+                return res;
             }
         } else {
             return 0;

@@ -5,9 +5,12 @@ public enum FieldType {
     FLOAT;
 
     public int getSize() {
-        return switch (this) {
-            case INT -> 4;
-            case FLOAT -> 4;
-        };
+        if (this == FieldType.INT) {
+            return 4;
+        } else if (this == FieldType.FLOAT) {
+            return 4;
+        } else {
+            return 4;
+        }
     }
 }

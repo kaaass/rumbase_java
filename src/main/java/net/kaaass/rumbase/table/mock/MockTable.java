@@ -1,10 +1,7 @@
 package net.kaaass.rumbase.table.mock;
 
 import net.kaaass.rumbase.record.IRecordStorage;
-import net.kaaass.rumbase.table.Entry;
-import net.kaaass.rumbase.table.FieldValue;
-import net.kaaass.rumbase.table.IField;
-import net.kaaass.rumbase.table.ITable;
+import net.kaaass.rumbase.table.*;
 import net.kaaass.rumbase.table.exception.TableNotFoundException;
 import net.kaaass.rumbase.table.exception.TypeIncompatibleException;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -117,10 +114,10 @@ public class MockTable implements ITable {
         ) {
             for (var e : entry.entrySet()) {
                 var fieldValue = e.getValue();
-
-                switch (fieldValue.getType()) {
-                    case INT -> dos.writeInt((int) fieldValue.getValue());
-                    case FLOAT -> dos.writeFloat((float) fieldValue.getValue());
+                if (fieldValue.getValue() == FieldType.INT) {
+                    dos.writeInt((int) fieldValue.getValue());
+                } else if (fieldValue.getValue() == FieldType.FLOAT) {
+                    dos.writeFloat((float) fieldValue.getValue());
                 }
 
             }

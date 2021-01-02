@@ -66,10 +66,12 @@ public class MockField implements IField {
 
     @Override
     public int getSize() {
-        return switch (type) {
-            case INT -> 4;
-            case FLOAT -> 4;
-        };
+        if (type == FieldType.INT) {
+            return 4;
+        } else if (type == FieldType.FLOAT) {
+            return 4;
+        }
+        return 4;
     }
 
     @Override
@@ -88,91 +90,94 @@ public class MockField implements IField {
 
     @Override
     public Optional<FieldValue> strToValue(String valStr) {
-        return switch (type) {
-            case INT -> {
-                int value;
-                try {
-                    value = Integer.parseInt(valStr);
-                } catch (NumberFormatException e) {
-                    yield Optional.empty();
-                }
-
+        if (type == FieldType.INT) {
+            try {
+                var value = Integer.parseInt(valStr);
                 var fieldValue = new FieldValue<Integer>(type);
+
                 fieldValue.setValue(value);
 
-                yield Optional.of(fieldValue);
+                return Optional.of(fieldValue);
+            } catch (NumberFormatException e) {
+                return Optional.empty();
             }
-            case FLOAT -> {
-                float value;
-                try {
-                    value = Float.parseFloat(valStr);
-                } catch (NumberFormatException e) {
-                    yield Optional.empty();
-                }
+
+        } else if (type == FieldType.FLOAT) {
+            try {
+                var value = Float.parseFloat(valStr);
                 var fieldValue = new FieldValue<Float>(type);
+
                 fieldValue.setValue(value);
 
-                yield Optional.of(fieldValue);
+                return Optional.of(fieldValue);
+            } catch (NumberFormatException e) {
+                return Optional.empty();
             }
-        };
+        }
+
+        return Optional.empty();
     }
 
     @Override
     public Optional<byte[]> valueToRaw(FieldValue value) {
-        byte[] bytes;
         try (
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(bos)
         ) {
-            bytes = switch (type) {
-                case INT -> {
-                    int intVal = (int) value.getValue();
-                    out.writeInt(intVal);
-                    out.close();
+            if (type == FieldType.INT) {
+                int intVal = (int) value.getValue();
 
-                    yield bos.toByteArray();
-                }
-                case FLOAT -> {
-                    float floatVal = (float) value.getValue();
+                out.writeInt(intVal);
+                out.close();
 
-                    out.writeFloat(floatVal);
-                    out.close();
+                return Optional.of(bos.toByteArray());
 
-                    yield bos.toByteArray();
-                }
-            };
+            } else if (type == FieldType.FLOAT) {
+                float floatVal = (float) value.getValue();
+
+                out.writeFloat(floatVal);
+                out.close();
+
+                return Optional.of(bos.toByteArray());
+            }
+
         } catch (Exception e) {
             return Optional.empty();
         }
-        return Optional.of(bytes);
+        return Optional.empty();
     }
 
     @Override
     public Optional<FieldValue> rawToValue(byte[] raw) {
-        Optional<FieldValue> value;
         try (
                 var bais = new ByteArrayInputStream(raw);
                 var dis = new DataInputStream(bais)
                 ) {
-            value = switch (type) {
-                case INT -> {
-                    var fieldValue = new FieldValue<Integer>(FieldType.INT);
-                    if (raw.length != fieldValue.getType().getSize()) {
-                        yield Optional.empty();
-                    }
-                    fieldValue.setValue(dis.readInt());
-                    yield Optional.of(fieldValue);
+            if (type == FieldType.INT) {
+                var fieldValue = new FieldValue<Integer>(FieldType.INT);
+
+                if (raw.length != fieldValue.getType().getSize()) {
+                    return Optional.empty();
                 }
-                case FLOAT -> {
-                    var fieldValue = new FieldValue<Float>(FieldType.FLOAT);
-                    fieldValue.setValue(dis.readFloat());
-                    yield Optional.of(fieldValue);
+
+                fieldValue.setValue(dis.readInt());
+                return Optional.of(fieldValue);
+
+            } else if (type == FieldType.FLOAT) {
+                var fieldValue = new FieldValue<Float>(FieldType.FLOAT);
+
+                if (raw.length != fieldValue.getType().getSize()) {
+                    return Optional.empty();
                 }
-            };
+
+                fieldValue.setValue(dis.readFloat());
+                return Optional.of(fieldValue);
+            }
+
         } catch (Exception e) {
             return Optional.empty();
         }
-        return value;
+        return Optional.empty();
     }
 
     @Override
