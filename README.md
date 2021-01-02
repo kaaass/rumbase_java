@@ -1,5 +1,9 @@
 # RumBase Java
 
+| master | dev | feature-mock |
+| ------ | --- | ------------ |
+| [![Build Status](https://www.travis-ci.com/kaaass/rumbase_java.svg?token=7d6V7UKwzfD6augATNKx&branch=master)](https://www.travis-ci.com/kaaass/rumbase_java) | [![Build Status](https://www.travis-ci.com/kaaass/rumbase_java.svg?token=7d6V7UKwzfD6augATNKx&branch=dev)](https://www.travis-ci.com/kaaass/rumbase_java) | [![Build Status](https://www.travis-ci.com/kaaass/rumbase_java.svg?token=7d6V7UKwzfD6augATNKx&branch=feature-mock)](https://www.travis-ci.com/kaaass/rumbase_java) |
+
 Java构建的高性能SQL关系型数据库。
 
 本项目为吉林大学2018级数据库系统课程&系统软件综合实践（荣誉课）课程设计。
