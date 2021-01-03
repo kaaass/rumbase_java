@@ -9,8 +9,12 @@ import java.util.Map;
  * E3002 类型不匹配异常
  * <p>
  * E3002-1 字段类型不匹配
+ * <p>
  * E3002-2 字段类型不存在
+ * <p>
  * E3002-3 Entry类型不匹配
+ * <p>
+ * 该表已存在
  *
  * @author @KveinAxel
  */
@@ -19,6 +23,7 @@ public class TypeIncompatibleException extends RumbaseException {
         put(1, "字段类型不匹配");
         put(2, "字段类型不存在");
         put(3, "Entry不匹配");
+        put(4, "该表已存在");
     }};
 
     /**

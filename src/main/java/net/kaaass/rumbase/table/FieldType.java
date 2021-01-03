@@ -1,16 +1,10 @@
 package net.kaaass.rumbase.table;
 
+/**
+ * 字段的类型枚举
+ */
 public enum FieldType {
     INT,
-    FLOAT;
-
-    public int getSize() {
-        if (this == FieldType.INT) {
-            return 4;
-        } else if (this == FieldType.FLOAT) {
-            return 4;
-        } else {
-            return 4;
-        }
-    }
+    FLOAT,
+    VARCHAR;
 }
