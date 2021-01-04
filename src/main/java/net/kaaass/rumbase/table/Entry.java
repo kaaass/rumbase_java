@@ -1,5 +1,7 @@
 package net.kaaass.rumbase.table;
 
+import net.kaaass.rumbase.table.Field.Field;
+
 import java.util.*;
 
 /**
@@ -9,5 +11,5 @@ import java.util.*;
  *
  * @author @KveinAxel
  */
-public class Entry extends HashMap<String, FieldValue> {
+public class Entry extends HashMap<String, Field> {
 }

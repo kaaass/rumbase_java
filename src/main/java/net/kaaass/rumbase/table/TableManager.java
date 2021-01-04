@@ -1,11 +1,12 @@
 package net.kaaass.rumbase.table;
 
 import lombok.NoArgsConstructor;
+import net.kaaass.rumbase.exception.RumbaseException;
+import net.kaaass.rumbase.table.Field.Field;
 import net.kaaass.rumbase.table.exception.NotFoundException;
 import net.kaaass.rumbase.table.exception.TypeIncompatibleException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -120,7 +121,7 @@ public class TableManager {
             TransactionContext context,
             String tableName,
             Entry newEntry
-    ) throws NotFoundException, TypeIncompatibleException {
+    ) throws RumbaseException {
 
         var table = tableCache.get(tableName);
 
@@ -167,7 +168,7 @@ public class TableManager {
             TransactionContext context,
             String tableName,
             Map<UUID, Entry> newEntries
-    ) throws NotFoundException, TypeIncompatibleException {
+    ) throws RumbaseException {
         var table = tableCache.get(tableName);
 
         if (table == null) {
@@ -231,9 +232,9 @@ public class TableManager {
             TransactionContext context,
             String tableName,
             String fieldName,
-            FieldValue left,
-            FieldValue right
-    ) throws NotFoundException {
+            Field left,
+            Field right
+    ) throws RumbaseException {
 
         var table = tableCache.get(tableName);
 

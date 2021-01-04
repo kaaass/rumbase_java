@@ -2,8 +2,11 @@ package net.kaaass.rumbase.table;
 
 import com.igormaznitsa.jbbp.JBBPParser;
 import lombok.*;
+import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
+import net.kaaass.rumbase.table.Field.Field;
+import net.kaaass.rumbase.table.Field.FieldWrapper;
 import net.kaaass.rumbase.table.exception.NotFoundException;
 import net.kaaass.rumbase.table.exception.TypeIncompatibleException;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -128,7 +131,7 @@ public class Table {
      * @param uuid     元组的uuid
      * @param newEntry 新的元组
      */
-    public void update(TransactionContext context, UUID uuid, Entry newEntry) throws TypeIncompatibleException {
+    public void update(TransactionContext context, UUID uuid, Entry newEntry) throws RumbaseException {
 
 
         if(!checkEntry(newEntry))
@@ -149,14 +152,17 @@ public class Table {
      * @param entry 待检查entry
      * @return 满足情况
      */
-    boolean checkEntry(Entry entry) {
+    boolean checkEntry(Entry entry) throws TypeIncompatibleException, NotFoundException {
         if (fields.size() != entry.size()) {
             return false;
         }
 
-        return fields
-                .stream()
-                .allMatch(f -> f.checkValue(entry.get(f.getName())));
+        for (var f: fields) {
+            if (!FieldWrapper.useCheckValueVisitor(f, entry.get(f.getName())))
+                return false;
+        }
+
+        return true;
     }
 
     /**
@@ -191,7 +197,7 @@ public class Table {
      * @param newEntry 新的元组
      * @throws TypeIncompatibleException 插入的元组不满足表约束
      */
-    public void insert(TransactionContext context, Entry newEntry) throws TypeIncompatibleException {
+    public void insert(TransactionContext context, Entry newEntry) throws RumbaseException {
 
         var raw = entryToRaw(newEntry);
 
@@ -206,14 +212,15 @@ public class Table {
      * @return 查询到的uuid列表
      * @throws NotFoundException 要查询的表不存在
      */
-    public List<UUID> search(String fieldName, FieldValue left, FieldValue right) throws NotFoundException {
+    public List<UUID> search(String fieldName, Field left, Field right) throws RumbaseException {
 
-        return fields
-                .stream()
-                .filter(f -> checkSearchValue(fieldName, f, left, right))
-                .findAny()
-                .orElseThrow(() -> new NotFoundException(2))
-                .searchRange(left, right);
+        for (var f: fields) {
+            if (checkSearchValue(fieldName, f, left, right)) {
+                return FieldWrapper.useSearchRangeVisitor(f, left, right);
+            }
+        }
+
+        throw new NotFoundException(4);
     }
 
     /**
@@ -225,10 +232,11 @@ public class Table {
      * @param right     区间右端点
      * @return 满足情况
      */
-    boolean checkSearchValue(String fieldName, Field field, FieldValue left, FieldValue right) {
+    boolean checkSearchValue(String fieldName, Field field, Field left, Field right) throws RumbaseException {
+
         return fieldName.equals(field.getName()) // 名字符合
-                && (left == null || field.checkValue(left)) // 如果存在则需满足约束
-                && (right == null || field.checkValue(right)) // 如果存在则需满足约束
+                && (left == null || FieldWrapper.useCheckValueVisitor(field, left)) // 如果存在则需满足约束
+                && (right == null || FieldWrapper.useCheckValueVisitor(field, left)) // 如果存在则需满足约束
                 && (left == null || right == null || left.compareTo(right) <= 0); // 如果都存在，需要满足偏序关系
     }
 
@@ -238,7 +246,7 @@ public class Table {
      * @param values 字符串列表
      * @return 元组的
      */
-    public Entry strToEntry(List<String> values) throws TypeIncompatibleException {
+    public Entry strToEntry(List<String> values) throws RumbaseException {
         var entry = new Entry();
 
         if (values.size() != fields.size()) {
@@ -249,8 +257,8 @@ public class Table {
 
         for (var field : fields) {
             var valStr = iter.next();
-            if (field.checkStr(valStr))
-                entry.put(field.getName(), field.strToValue(valStr));
+            if (FieldWrapper.useCheckStrVisitor(field, valStr))
+                entry.put(field.getName(), FieldWrapper.useStrToValueVisitor(field, valStr));
             else
                 throw new TypeIncompatibleException(1);
         }
@@ -264,7 +272,7 @@ public class Table {
      * @param entry 元组
      * @return 字节数组
      */
-    public byte[] entryToRaw(Entry entry) throws TypeIncompatibleException {
+    public byte[] entryToRaw(Entry entry) throws TypeIncompatibleException, NotFoundException {
         var jbbpOut = BeginBin();
 
         if (!checkEntry(entry))
@@ -272,7 +280,7 @@ public class Table {
 
         try {
             for (var e : entry.entrySet()) {
-                e.getValue().append2JBBPOut(jbbpOut);
+                FieldWrapper.useAppendToJBBPOutVisitor(e.getValue(), jbbpOut);
             }
             return jbbpOut.End().toByteArray();
 
@@ -288,7 +296,7 @@ public class Table {
      * @param raw 字节数组
      * @return 元组
      */
-    public Entry parseEntry(byte[] raw) throws TypeIncompatibleException, IOException {
+    public Entry parseEntry(byte[] raw) throws TypeIncompatibleException, NotFoundException, IOException {
         var entry = new Entry();
         var stringBuilder = new StringBuilder();
 
@@ -299,7 +307,7 @@ public class Table {
         var struct = JBBPParser.prepare(stringBuilder.toString()).parse(raw);
 
         for (var field : fields) {
-            var value = field.JBBPStructToValue(struct);
+            var value = FieldWrapper.useJBBPStructToValueVisitor(field, struct);
             entry.put(field.getName(), value);
         }
 

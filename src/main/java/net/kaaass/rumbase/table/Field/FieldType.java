@@ -1,4 +1,4 @@
-package net.kaaass.rumbase.table;
+package net.kaaass.rumbase.table.Field;
 
 /**
  * 字段的类型枚举
