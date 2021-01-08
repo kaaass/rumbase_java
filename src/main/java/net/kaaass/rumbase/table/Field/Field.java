@@ -1,10 +1,11 @@
 package net.kaaass.rumbase.table.Field;
 
 import lombok.*;
-import net.kaaass.rumbase.table.Field.Visitor.FieldVisitor;
-import net.kaaass.rumbase.table.exception.TypeIncompatibleException;
+import net.kaaass.rumbase.table.exception.TableConflictException;
 
-import java.util.UUID;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 
 /**
  * 字段结构
@@ -16,44 +17,63 @@ import java.util.UUID;
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public abstract class Field<T> implements Comparable<Field>  {
+public abstract class Field<T> {
 
+    /**
+     * 字段名
+     */
     @Getter
     @NonNull
     protected final String name;
 
+    /**
+     * 字段类型
+     */
     @Getter
     @NonNull
     private final FieldType type;
 
-    @Getter
-    @Setter
-    private UUID selfUUID = null;
-
-    @Getter
-    @Setter
-    private UUID index = null;
-
     /**
-     * 如果是字符数组要求长度在 0 ~ 2^15 - 1 范围内
-     */
-    @Getter
-    @Setter
-    @NonNull
-    protected T value;
-
-    public abstract void accept(FieldVisitor visitor);
-
-    /**
-     * 检查字段值是否满足当前字段的约束
-     *
-     * @param field 待检查字段值
+     * 判断字符串是否能够转成符合当前字段约束的值
+     * @param valStr 待检查字符串
      * @return 满足情况
      */
-    public boolean checkValueVisitor(Field field) {
-        // fixme 目前仅检查了类型是否匹配，没有检查其他约束
-        return field != null && type == field.getType();
-    }
+    public abstract boolean checkStr(String valStr);
 
-    public abstract String getPrepareCode() throws TypeIncompatibleException;
-    }
+    /**
+     * 将字符串转成哈希
+     * @param str 待转换字符串
+     * @return 哈希
+     */
+    public abstract long strToHash(String str);
+
+    /**
+     * 从输入流中反序列化出一个满足当前字段约束的值对象
+     * @param inputStream 输入流
+     * @return 值对象
+     */
+    public abstract Object deserialize(InputStream inputStream) throws TableConflictException;
+
+    /**
+     * 从输入流中反序列化一个满足当前类型的对象，并判断是否满足约束
+     * @param inputStream 输入流
+     * @return 满足情况
+     */
+    public abstract boolean checkInputStream(InputStream inputStream);
+
+    /**
+     * 将值对象序列化到输出流中
+     * @param outputStream 输出流
+     * @param strVal 值对象
+     */
+    public abstract void serialize(OutputStream outputStream, String strVal) throws TableConflictException;
+
+    /**
+     * 向索引插入一个键值对
+     * @param value 值对象
+     * @param uuid uuid
+     */
+    public abstract void insertIndex(Object value, long uuid);
+
+    // todo index查询
+}

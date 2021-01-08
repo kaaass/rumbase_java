@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * @author @KveinAxel
  */
-public class NotFoundException extends RumbaseException {
+public class TableNotFoundException extends RumbaseException {
     public static final Map<Integer, String> REASONS = new HashMap<>(){{
         put(1, "关系不存在");
         put(2, "字段不存在");
@@ -34,7 +34,7 @@ public class NotFoundException extends RumbaseException {
      *
      * @param subId  子错误号
      */
-    public NotFoundException(int subId) {
+    public TableNotFoundException(int subId) {
         super(3001, subId, REASONS.get(subId));
     }
 }

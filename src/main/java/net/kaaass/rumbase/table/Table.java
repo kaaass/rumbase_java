@@ -1,20 +1,18 @@
 package net.kaaass.rumbase.table;
 
-import com.igormaznitsa.jbbp.JBBPParser;
 import lombok.*;
 import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
 import net.kaaass.rumbase.table.Field.Field;
-import net.kaaass.rumbase.table.Field.FieldWrapper;
-import net.kaaass.rumbase.table.exception.NotFoundException;
-import net.kaaass.rumbase.table.exception.TypeIncompatibleException;
+import net.kaaass.rumbase.table.exception.TableNotFoundException;
+import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
-
-import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
 
 /**
  * 表结构
@@ -80,6 +78,7 @@ public class Table {
      * @param fields    表的字段结构
      */
     public Table(@NonNull String tableName, @NonNull List<Field> fields) {
+        // fixme remove mock
         this.recordStorage = MockRecordStorage.ofFile(tableName);
         this.tableName = tableName;
         this.fields = fields;
@@ -129,15 +128,14 @@ public class Table {
      *
      * @param context  事务context
      * @param uuid     元组的uuid
-     * @param newEntry 新的元组
+     * @param entry    新的行的字符串值列表
      */
-    public void update(TransactionContext context, UUID uuid, Entry newEntry) throws RumbaseException {
+    public void update(TransactionContext context, UUID uuid, List<String> entry) throws RumbaseException {
 
+        if(!checkStringEntry(entry))
+            throw new TableConflictException(3);
 
-        if(!checkEntry(newEntry))
-            throw new TypeIncompatibleException(3);
-
-        var raw = entryToRaw(newEntry);
+        var raw = stringEntryToBytes(entry);
 
         recordStorage.delete(context, uuid);
         var newUUID = recordStorage.insert(context, raw);
@@ -152,13 +150,15 @@ public class Table {
      * @param entry 待检查entry
      * @return 满足情况
      */
-    boolean checkEntry(Entry entry) throws TypeIncompatibleException, NotFoundException {
+    boolean checkStringEntry(List<String> entry) {
         if (fields.size() != entry.size()) {
             return false;
         }
 
-        for (var f: fields) {
-            if (!FieldWrapper.useCheckValueVisitor(f, entry.get(f.getName())))
+        var len = fields.size();
+
+        for (int i = 0; i < len; i++) {
+            if (!fields.get(i).checkStr(entry.get(i)))
                 return false;
         }
 
@@ -171,21 +171,21 @@ public class Table {
      * @param context 事务context
      * @param uuid    元组的uuid
      * @return 元组
-     * @throws NotFoundException         要查询的表不存在
-     * @throws TypeIncompatibleException 查询到的entry和当前表冲突
+     * @throws TableNotFoundException         要查询的表不存在
+     * @throws TableConflictException 查询到的entry和当前表冲突
      */
-    public Entry read(TransactionContext context, UUID uuid) throws NotFoundException, TypeIncompatibleException {
+    public List<Object> read(TransactionContext context, UUID uuid) throws TableNotFoundException, TableConflictException {
 
         var bytes = recordStorage
                 .queryOptional(context, uuid)
-                .orElseThrow(() -> new NotFoundException(4));
+                .orElseThrow(() -> new TableNotFoundException(4));
 
         try {
             return parseEntry(bytes);
         } catch (IOException e) {
             // fixme 不该出现这样的事情（吧）
             // 查询到的entry和当前表冲突
-            throw new TypeIncompatibleException(3);
+            throw new TableConflictException(3);
         }
 
     }
@@ -194,14 +194,15 @@ public class Table {
      * 向表插入元组
      *
      * @param context  事务context
-     * @param newEntry 新的元组
-     * @throws TypeIncompatibleException 插入的元组不满足表约束
+     * @param entry 新的元组
+     * @throws TableConflictException 插入的元组不满足表约束
      */
-    public void insert(TransactionContext context, Entry newEntry) throws RumbaseException {
+    public void insert(TransactionContext context, List<String> entry) throws TableConflictException {
 
-        var raw = entryToRaw(newEntry);
+        var bytes = stringEntryToBytes(entry);
 
-        var uuid = recordStorage.insert(context, raw);
+        var uuid = recordStorage.insert(context, bytes);
+
         // todo add to index
     }
 
@@ -210,60 +211,11 @@ public class Table {
      * @param left      查询区间左端点
      * @param right     查询区间右端点
      * @return 查询到的uuid列表
-     * @throws NotFoundException 要查询的表不存在
+     * @throws TableNotFoundException 要查询的表不存在
      */
-    public List<UUID> search(String fieldName, Field left, Field right) throws RumbaseException {
+    public List<UUID> search(String fieldName, Field left, Field right) throws TableNotFoundException {
 
-        for (var f: fields) {
-            if (checkSearchValue(fieldName, f, left, right)) {
-                return FieldWrapper.useSearchRangeVisitor(f, left, right);
-            }
-        }
-
-        throw new NotFoundException(4);
-    }
-
-    /**
-     * 存在名字相同的域, 且左右值的类型与该域相同,如果左右值都存在，则按<=的偏序关系传入
-     *
-     * @param fieldName 目标字段的名字
-     * @param field     待检查字段
-     * @param left      区间左端点
-     * @param right     区间右端点
-     * @return 满足情况
-     */
-    boolean checkSearchValue(String fieldName, Field field, Field left, Field right) throws RumbaseException {
-
-        return fieldName.equals(field.getName()) // 名字符合
-                && (left == null || FieldWrapper.useCheckValueVisitor(field, left)) // 如果存在则需满足约束
-                && (right == null || FieldWrapper.useCheckValueVisitor(field, left)) // 如果存在则需满足约束
-                && (left == null || right == null || left.compareTo(right) <= 0); // 如果都存在，需要满足偏序关系
-    }
-
-    /**
-     * 将字符串列表转换成一个元组
-     *
-     * @param values 字符串列表
-     * @return 元组的
-     */
-    public Entry strToEntry(List<String> values) throws RumbaseException {
-        var entry = new Entry();
-
-        if (values.size() != fields.size()) {
-            throw new TypeIncompatibleException(1);
-        }
-
-        var iter = values.iterator();
-
-        for (var field : fields) {
-            var valStr = iter.next();
-            if (FieldWrapper.useCheckStrVisitor(field, valStr))
-                entry.put(field.getName(), FieldWrapper.useStrToValueVisitor(field, valStr));
-            else
-                throw new TypeIncompatibleException(1);
-        }
-
-        return entry;
+        throw new TableNotFoundException(4);
     }
 
     /**
@@ -272,22 +224,19 @@ public class Table {
      * @param entry 元组
      * @return 字节数组
      */
-    public byte[] entryToRaw(Entry entry) throws TypeIncompatibleException, NotFoundException {
-        var jbbpOut = BeginBin();
+    byte[] stringEntryToBytes(List<String > entry) throws TableConflictException {
+        var stream = new ByteArrayOutputStream();
 
-        if (!checkEntry(entry))
-            throw new TypeIncompatibleException(3);
+        if (!checkStringEntry(entry))
+            throw new TableConflictException(3);
 
-        try {
-            for (var e : entry.entrySet()) {
-                FieldWrapper.useAppendToJBBPOutVisitor(e.getValue(), jbbpOut);
-            }
-            return jbbpOut.End().toByteArray();
+        var len = fields.size();
 
-        } catch (IOException e) {
-            // fixme 返回的异常可能不太合适
-            throw new TypeIncompatibleException(3);
+        for (int i = 0; i < len; i++) {
+            fields.get(i).serialize(stream, entry.get(i));
         }
+
+        return stream.toByteArray();
     }
 
     /**
@@ -296,22 +245,15 @@ public class Table {
      * @param raw 字节数组
      * @return 元组
      */
-    public Entry parseEntry(byte[] raw) throws TypeIncompatibleException, NotFoundException, IOException {
-        var entry = new Entry();
-        var stringBuilder = new StringBuilder();
+    List<Object> parseEntry(byte[] raw) throws TableConflictException, IOException {
+        var stream = new ByteArrayInputStream(raw);
+        var list = new ArrayList<Object>();
 
         for (var field : fields) {
-            stringBuilder.append(field.getPrepareCode());
+            list.add(field.deserialize(stream));
         }
 
-        var struct = JBBPParser.prepare(stringBuilder.toString()).parse(raw);
-
-        for (var field : fields) {
-            var value = FieldWrapper.useJBBPStructToValueVisitor(field, struct);
-            entry.put(field.getName(), value);
-        }
-
-        return entry;
+        return list;
     }
 
 }
