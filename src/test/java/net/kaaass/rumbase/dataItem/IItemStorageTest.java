@@ -22,7 +22,7 @@ public class IItemStorageTest extends TestCase {
      * 测试能否从已有文件中解析得到数据项管理器
      */
     public void testGetFromFile() {
-        String fileName = "user.db";
+        String fileName = "testGetFromFile.db";
         try {
             // 如果表中有的话，正常执行的情况
             var itemStorage = ItemManager.fromFile(fileName);
@@ -44,7 +44,7 @@ public class IItemStorageTest extends TestCase {
      * 测试能否新建文件并得到数据项管理器
      */
     public void testCreateFile() {
-        String fileName = "user.db";
+        String fileName = "testCreateFile.db";
         byte[] tableBytes = new byte[1024];
         // 第一次执行的时候，表中没有数据，不会报错
         try {
@@ -64,7 +64,7 @@ public class IItemStorageTest extends TestCase {
      * 进行插入的测试
      */
     public void testInsert() throws FileExistException {
-        String fileName = "user.db";
+        String fileName = "testInsert.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         long uuid = iItemStorage.insertItem(bytes);
@@ -79,7 +79,7 @@ public class IItemStorageTest extends TestCase {
      * 对插入一个已分配UUID的测试
      */
     public void testInsertWithUUID() throws FileExistException {
-        String fileName = "user.db";
+        String fileName = "testInsertWithUUID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         long uuid = 50;
@@ -103,7 +103,7 @@ public class IItemStorageTest extends TestCase {
      * 对查询进行测试
      */
     public void testQuery() throws FileExistException {
-        String fileName = "user.db";
+        String fileName = "testQuery.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         long uuid = iItemStorage.insertItem(bytes);
@@ -129,7 +129,7 @@ public class IItemStorageTest extends TestCase {
      * 获取整个页的数据项进行测试
      */
     public void testQueryByPageID() throws FileExistException {
-        String fileName = "user.db";
+        String fileName = "testQueryByPageID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         long uuid = iItemStorage.insertItem(bytes);
@@ -153,7 +153,7 @@ public class IItemStorageTest extends TestCase {
      * 对更新进行测试
      */
     public void testUpdate() throws FileExistException {
-        String fileName = "user.db";
+        String fileName = "testUpdate.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         long uuid = iItemStorage.insertItem(bytes);
@@ -182,7 +182,7 @@ public class IItemStorageTest extends TestCase {
      * 测试修改和获取表头信息
      */
     public void testMeta() throws FileExistException {
-        String fileName = "user.db";
+        String fileName = "testMeta.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] result = new byte[]{1, 2, 3, 4};
 
