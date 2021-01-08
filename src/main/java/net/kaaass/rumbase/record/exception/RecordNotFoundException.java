@@ -20,7 +20,6 @@ public class RecordNotFoundException extends RumbaseException {
 
     /**
      * 记录不存在异常
-     *
      * @param subId  子错误号
      */
     public RecordNotFoundException(int subId) {
