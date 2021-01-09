@@ -3,7 +3,6 @@ package net.kaaass.rumbase.dataitem;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 数据项管理接口
@@ -24,45 +23,39 @@ public interface IItemStorage {
      * <p>
      * 如果数据项已经存在，就将数据更新在已存在的数据项所在空间上；
      * 如果数据项不存在，则以此UUID插入数据项
-     *
+     *</p>
      * @param item 数据项
-     * @param uuid
+     * @param uuid 编号
      */
-    void insertItemWithUUID(byte[] item, long uuid) throws UUIDException;
+    void insertItemWithUuid(byte[] item, long uuid);
 
     /**
-     * 通过UUID查询数据项 FIXME 不要因为记录不存在丢出错误，性能问题。直接返回null
      *
-     * @param uuid
-     * @return 数据项
-     */
-    byte[] queryItemByUUID(long uuid);
-
-    /**
      * 通过UUID查询数据项
      *
-     * @param uuid
-     * @return Optional形式数据项
+     * @param uuid 编号
+     * @return 数据项
+     * @throws UUIDException UUID找不到的异常
      */
-    default Optional<byte[]> queryItemOptional(long uuid) {
-        return Optional.ofNullable(queryItemByUUID(uuid));
-    }
+    byte[] queryItemByUuid(long uuid) throws UUIDException;
+
+
 
     /**
      * 列出页中所有的记录
      *
-     * @param pageID 页号
+     * @param pageId 页号
      * @return list的一堆数据项
      */
-    List<byte[]> listItemByPageId(int pageID);
+    List<byte[]> listItemByPageId(int pageId);
 
     /**
-     * 通过UUID更新数据项 FIXME 不要因为记录不存在丢出错误，性能问题。直接返回null。修改方法参考上面的，加一个updateItemOptional
-     *
-     * @param uuid
-     * @param item
+     * 根据UUID更新数据项
+     * @param uuid 编号
+     * @param item 数据项
+     * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUUID(long uuid, byte[] item) throws UUIDException;
+    void updateItemByUuid(long uuid, byte[] item) throws UUIDException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
@@ -74,7 +67,7 @@ public interface IItemStorage {
     /**
      * 设置数据项存储的元数据（可以用于头）
      *
-     * @param metadata
+     * @param metadata 头信息
      */
     void setMetadata(byte[] metadata);
 

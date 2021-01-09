@@ -22,7 +22,7 @@ public class MockTransactionManager implements TransactionManager {
     /**
      * 事务状态持久化文件名
      */
-    private static final String logFileName = "xid.log";
+    private static final String LOG_FILE_NAME = "xid.log";
 
     /**
      * Mock事务数量存储

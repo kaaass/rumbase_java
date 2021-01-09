@@ -15,19 +15,31 @@ import java.util.List;
 public class MockTransactionContext implements TransactionContext {
 
     @Getter
-    private static final List<Integer> snapshot;
+    private static final List<Integer> SNAPSHOT;
 
     static {
-        snapshot = new ArrayList<>();
+        SNAPSHOT = new ArrayList<>();
     }
 
+    /**
+     * 事务Id
+     */
     @Getter
-    private final int xid;        //事务Id
+    private final int xid;
+    /**
+     * 事务隔离度
+     */
     @Getter
-    private final TransactionIsolation isolation; //事务隔离度
-    private final TransactionManager manager; //存储创建它的管理器
+    private final TransactionIsolation isolation;
+    /**
+     * 存储创建它的管理器
+     */
+    private final TransactionManager manager;
+    /**
+     * 事务状态
+     */
     @Getter
-    private TransactionStatus status; //事务状态
+    private TransactionStatus status;
 
     public MockTransactionContext() {
         this.xid = 0;
