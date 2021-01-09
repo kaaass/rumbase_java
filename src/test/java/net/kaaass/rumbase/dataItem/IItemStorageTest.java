@@ -139,8 +139,8 @@ public class IItemStorageTest extends TestCase {
 
         try {
             List<byte[]> bs = new ArrayList<byte[]>();
-            bs.add(bytes);
             bs.add(bytes1);
+            bs.add(bytes);
             // 获取pageID对应的数据项，在这里Mock是获取所有list中的数据
             var result = iItemStorage.queryItemByPageID(0);
             assertEquals(bs, result);

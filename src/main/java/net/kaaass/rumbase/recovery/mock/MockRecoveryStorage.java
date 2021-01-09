@@ -62,10 +62,9 @@ public class MockRecoveryStorage implements IRecoveryStorage {
     }
 
     @Override
-    public void print() {
-        for (var b : bytes){
-            System.out.println(Arrays.toString(b));
-        }
+    public List<byte[]> getContent() {
+        return bytes;
     }
+
 
 }
