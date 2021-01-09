@@ -4,6 +4,10 @@ import net.kaaass.rumbase.exception.RumbaseException;
 
 import java.util.HashMap;
 import java.util.Map;
+
+/**
+ * TODO 文档
+ */
 public class IndexNotFoundException extends RumbaseException {
     /**
      * 构造Rumbase异常
@@ -16,14 +20,14 @@ public class IndexNotFoundException extends RumbaseException {
         super(mainId, subId, reason);
     }
 
-    public static final Map<Integer, String> REASONS = new HashMap<>(){{
+    public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "索引不存在");
     }};
 
     /**
      * 索引不存在
      *
-     * @param subId  子错误号
+     * @param subId 子错误号
      */
     public IndexNotFoundException(int subId) {
         super(9001, subId, REASONS.get(subId));
