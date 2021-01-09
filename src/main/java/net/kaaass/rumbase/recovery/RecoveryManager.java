@@ -3,7 +3,8 @@ package net.kaaass.rumbase.recovery;
 import net.kaaass.rumbase.recovery.mock.MockRecoveryStorage;
 
 /**
- * TODO 文档
+ * 日志恢复的管理器，用来对每个数据库文件进行恢复
+ * @author kaito
  */
 public class RecoveryManager {
     /**
