@@ -13,6 +13,14 @@ public class Pair {
         return key;
     }
 
+    @Override
+    public String toString() {
+        return "Pair{" +
+                "key=" + key +
+                ", uuid=" + uuid +
+                '}';
+    }
+
     public long getUuid() {
         return uuid;
     }

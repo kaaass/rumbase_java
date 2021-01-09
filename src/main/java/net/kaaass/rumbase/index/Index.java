@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.index;
 
+import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.index.mock.MockBtreeIndex;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
@@ -23,7 +24,7 @@ public interface Index {
      */
     static Index getIndex(String indexFileName) throws IndexNotFoundException {
         if (MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName) == null){
-            MockBtreeIndex.MOCK_BTREE_INDEX_MAP.put(indexFileName,new MockBtreeIndex());
+            throw new IndexNotFoundException(1);
         }
         return MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName);
     }
@@ -35,7 +36,7 @@ public interface Index {
      * @return
      */
     static boolean exists(String indexFileName) {
-        return true;
+        return MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName) != null;
     }
 
     /**
@@ -44,8 +45,12 @@ public interface Index {
      * @param indexFileName
      * @return
      */
-    static Index createEmptyIndex(String indexFileName) {
-        return new MockBtreeIndex();
+    static Index createEmptyIndex(String indexFileName) throws IndexAlreadyExistException {
+        if (MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName) == null){
+            MockBtreeIndex.MOCK_BTREE_INDEX_MAP.put(indexFileName,new MockBtreeIndex());
+        }
+        else throw new IndexAlreadyExistException(1);
+        return MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName);
     }
 
     /**
