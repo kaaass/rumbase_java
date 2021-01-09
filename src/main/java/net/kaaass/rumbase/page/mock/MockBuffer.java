@@ -29,21 +29,37 @@ public class MockBuffer {
             throw new BufferExeception(1);
         }
         lock.lock();
-        System.arraycopy(bytes, 0, this.byteBuffer, offset, bytes.length);
-        this.size--;
-        lock.unlock();
+        try {
+            System.arraycopy(bytes, 0, this.byteBuffer, offset, bytes.length);
+            this.size--;
+        }catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            lock.unlock();
+        }
     }
     public byte[] get(int offset) {
         lock.lock();
-        byte[] temp = new byte[PageManager.PAGE_SIZE];
-        System.arraycopy(this.byteBuffer, offset, temp, offset, PageManager.PAGE_SIZE);
-        lock.unlock();
-        return temp;
+        try{
+            byte[] temp = new byte[PageManager.PAGE_SIZE];
+            System.arraycopy(this.byteBuffer, offset, temp, offset, PageManager.PAGE_SIZE);
+            return temp;
+        }catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            lock.unlock();
+        }
+        return null;
     }
     public void free(int offset) {
         lock.lock();
-        System.arraycopy(this.byteBuffer, offset, new byte[PageManager.PAGE_SIZE], 0, PageManager.PAGE_SIZE);
-        lock.unlock();
+        try{
+            System.arraycopy(this.byteBuffer, offset, new byte[PageManager.PAGE_SIZE], 0, PageManager.PAGE_SIZE);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }finally{
+            lock.unlock();
+        }
     }
     private ReentrantLock lock = null;
 }

@@ -12,6 +12,7 @@ public class PageCacheTest extends TestCase {
         try{
             PageCache pc = PageManager.fromFile("testFile");
             Page p0 = pc.get(0);
+            p0 = pc.get(0);
             Page p3 = pc.get(3);
 
             File file = new File("testFile");

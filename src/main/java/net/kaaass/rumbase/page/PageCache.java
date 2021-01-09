@@ -7,6 +7,8 @@ import java.util.Map;
 
 /**
  * 以文件名初始化
+ *
+ * @author XuanLaoYee
  */
 public interface PageCache {
 

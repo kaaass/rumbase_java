@@ -35,10 +35,10 @@ public class MockPage implements Page {
 
     @Override
     public void writeData(byte[] data) {
-        lock.lock();
         this.data = data;
-        this.dirty = true;
-        lock.unlock();
+        synchronized(this){
+            this.dirty = true;
+        }
         unpin();
     }
 

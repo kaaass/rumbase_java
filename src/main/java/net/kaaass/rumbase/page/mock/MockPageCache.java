@@ -6,14 +6,20 @@ import net.kaaass.rumbase.page.PageManager;
 import net.kaaass.rumbase.page.exception.FileExeception;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 
+/**
+ * @author XuanLaoYee
+ */
 public class MockPageCache implements PageCache {
 
 
     public MockPageCache(String filepath) throws FileExeception {
         this.filepath = filepath;
         File file = new File(filepath);
+        pageMap = new HashMap<>();
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -50,8 +56,13 @@ public class MockPageCache implements PageCache {
             }catch(Exception e){
                 throw new FileExeception(4);
             }
-
-            return new MockPage(data, pageId, this.filepath);
+            Integer tmpId = (int) pageId;
+            if(pageMap.containsKey(tmpId)){
+                return pageMap.get(tmpId);
+            }
+            Page page = new MockPage(data, pageId, this.filepath);
+            pageMap.put(tmpId, page);
+            return page;
         } catch (Exception e) {
             throw new FileExeception(3);
         }
@@ -61,6 +72,7 @@ public class MockPageCache implements PageCache {
     public void flush() {
         //TODO
     }
+    private Map<Integer,Page> pageMap;
 
     private String filepath;
 }
