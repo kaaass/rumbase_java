@@ -2,9 +2,6 @@ package net.kaaass.rumbase.index;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
-import net.kaaass.rumbase.dataItem.IItemStorage;
-import net.kaaass.rumbase.dataItem.ItemManager;
-import net.kaaass.rumbase.dataItem.exception.FileExistException;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 
