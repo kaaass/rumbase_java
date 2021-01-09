@@ -1,20 +1,75 @@
 package net.kaaass.rumbase.transaction;
 
+import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
+
 /**
  * 事务上下文
  *
- * @author
+ * <p>
+ * 存储事务状态，对事务进行操作
+ * </p>
+ *
+ * @author criki
  */
-public class TransactionContext {
+public interface TransactionContext {
 
-    private TransactionContext() {
-    }
 
     /**
      * 返回空事务上下文。空事务或超级事务XID为0，不受事务限制，也不具备ACID性质。
+     *
      * @return 空事务上下文
      */
-    public static TransactionContext empty() {
-        return new TransactionContext();
+    static TransactionContext empty() {
+        return new MockTransactionContext();
     }
+
+    /**
+     * 获取事务隔离度
+     *
+     * @return 事务隔离度
+     */
+    TransactionIsolation getIsolation();
+
+    /**
+     * 获取事务状态
+     *
+     * @return 事务状态
+     */
+    TransactionStatus getStatus();
+
+    /**
+     * 获取事务id
+     *
+     * @return 事务id
+     */
+    int getXid();
+
+    /**
+     * 事务开始
+     */
+    void start();
+
+    /**
+     * 事务提交
+     */
+    void commit();
+
+    /**
+     * 事务撤销
+     */
+    void rollback();
+
+    /**
+     * 对记录加共享锁
+     *
+     * @param uuid 记录id
+     */
+    void sharedLock(long uuid);
+
+    /**
+     * 对记录加排他锁
+     *
+     * @param uuid 记录id
+     */
+    void exclusiveLock(long uuid);
 }

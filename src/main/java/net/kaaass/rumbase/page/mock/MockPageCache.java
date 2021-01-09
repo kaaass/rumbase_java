@@ -1,0 +1,66 @@
+package net.kaaass.rumbase.page.mock;
+
+import net.kaaass.rumbase.page.Page;
+import net.kaaass.rumbase.page.PageCache;
+import net.kaaass.rumbase.page.PageManager;
+import net.kaaass.rumbase.page.exception.FileExeception;
+
+import java.io.*;
+
+
+public class MockPageCache implements PageCache {
+
+
+    public MockPageCache(String filepath) throws FileExeception {
+        this.filepath = filepath;
+        File file = new File(filepath);
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+                OutputStream os = null;
+                try {
+                    os = new FileOutputStream(file, true);
+                    byte[] data = new byte[PageManager.PAGE_SIZE];
+                    for (int i = 0; i < 10; i++) {
+                        os.write(data, 0, data.length);
+                        os.flush();
+                    }
+                } catch (Exception e) {
+                    throw new FileExeception(2);
+                }
+            } catch (Exception e) {
+                throw new FileExeception(1);
+            }
+        }
+    }
+
+    @Override
+    public Page get(long pageId) throws FileExeception {
+        File file = new File(filepath);
+        //文件会预留5页作为文件头
+        try {
+            FileInputStream in = new FileInputStream(file);
+            byte[] data = new byte[PageManager.PAGE_SIZE];
+            try{
+                in.skip((pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
+                int readNumber = in.read(data);
+                if(readNumber<PageManager.PAGE_SIZE){
+                    throw new FileExeception(4);
+                }
+            }catch(Exception e){
+                throw new FileExeception(4);
+            }
+
+            return new MockPage(data, pageId, this.filepath);
+        } catch (Exception e) {
+            throw new FileExeception(3);
+        }
+    }
+
+    @Override
+    public void flush() {
+        //TODO
+    }
+
+    private String filepath;
+}
