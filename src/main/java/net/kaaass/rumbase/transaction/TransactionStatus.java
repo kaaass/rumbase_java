@@ -8,10 +8,22 @@ import lombok.Getter;
  * @author criki
  */
 public enum TransactionStatus {
-    PREPARING(0),   //未开始
-    ACTIVE(1),      //正在进行
-    COMMITTED(2),   //已提交
-    ABORTED(3);     //被撤销
+    /**
+     * 未开始
+     */
+    PREPARING(0),
+    /**
+     * 正在进行
+     */
+    ACTIVE(1),
+    /**
+     * 已提交
+     */
+    COMMITTED(2),
+    /**
+     * 被撤销
+     */
+    ABORTED(3);
 
     /**
      * 事务状态Id
