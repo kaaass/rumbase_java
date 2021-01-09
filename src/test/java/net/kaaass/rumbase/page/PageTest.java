@@ -71,8 +71,12 @@ public class PageTest extends TestCase {
         try{
             PageCache pc = PageManager.fromFile("testFile");
             Page p0 = pc.get(0);
+            byte[] originalData = p0.getData();
             p0.patchData(offset,data);
-            assertEquals(data,p0.getData());
+            byte[] newData = new byte[PageManager.PAGE_SIZE];
+            System.arraycopy(originalData,0,newData,0,offset);
+            System.arraycopy(data,0,newData,offset,data.length);
+            assertArrayEquals(newData,p0.getData());
         }catch (Exception e) {
             e.printStackTrace();
         }

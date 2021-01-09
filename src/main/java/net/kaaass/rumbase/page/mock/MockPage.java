@@ -6,26 +6,27 @@ import net.kaaass.rumbase.page.exception.FileExeception;
 import net.kaaass.rumbase.page.exception.PageException;
 
 import java.io.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MockPage implements Page {
     private byte[] data;
-    long pageId = -1;
-    boolean dirty = false;
+    long pageId;
+    boolean dirty;
     int pinned = 0;
-    String filepath = null;
-    private ReentrantReadWriteLock lock = null;
+    String filepath;
+    private final ReentrantLock lock;
 
     MockPage(byte[] data, long pageId, String filepath) {
         this.data = data;
         this.pageId = pageId;
-        this.lock = new ReentrantReadWriteLock();
+        this.lock = new ReentrantLock();
         this.dirty = false;
         this.filepath = filepath;
     }
 
     @Override
-    public byte[] getData() { //?读这个地方怎么加锁
+    public byte[] getData() {
         synchronized(this){
             pin();
             return data;
@@ -34,12 +35,11 @@ public class MockPage implements Page {
 
     @Override
     public void writeData(byte[] data) {
-        lock.writeLock().lock();
-        pin();
+        lock.lock();
         this.data = data;
         this.dirty = true;
+        lock.unlock();
         unpin();
-        lock.writeLock().unlock();
     }
 
     @Override
@@ -47,15 +47,12 @@ public class MockPage implements Page {
         if (offset + data.length > PageManager.PAGE_SIZE) {
             throw new PageException(1);
         }
-        lock.writeLock().lock();
         System.arraycopy(data, 0, this.data, offset, data.length);
-        lock.writeLock().unlock();
     }
 
     @Override
     public void flush() throws FileExeception {
         File file = new File(this.filepath);
-        OutputStream os = null;
         try {
             RandomAccessFile out = new RandomAccessFile(file, "rw");
             try{
