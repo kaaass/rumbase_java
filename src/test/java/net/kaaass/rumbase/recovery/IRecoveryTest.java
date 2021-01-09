@@ -15,8 +15,20 @@ public class IRecoveryTest extends TestCase {
     public void testBegin(){
         IRecoveryStorage iRecoveryStorage = RecoveryManager.recovery("user.db");
         List<Integer> l = new ArrayList<>();
+        int xid = 1;
         l.add(3);
         l.add(2);
-        iRecoveryStorage.begin(1,l);
+        iRecoveryStorage.begin(xid,l);
+
+        var content = iRecoveryStorage.getContent();
+        String beginStr = "begin " + xid;
+        String snapStr = "snap " + l.toString();
+        List<byte[]> result = new ArrayList<>();
+        result.add(beginStr.getBytes());
+        result.add(snapStr.getBytes());
+        assertEquals(result,content);
     }
+
+
+
 }

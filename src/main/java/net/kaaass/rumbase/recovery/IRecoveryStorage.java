@@ -48,6 +48,6 @@ public interface IRecoveryStorage {
     /**
      * 模拟打印日志资料
      */
-    void print();
+    List<byte[]> getContent();
 
 }

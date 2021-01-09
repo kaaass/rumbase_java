@@ -14,11 +14,6 @@ import java.util.*;
  */
 @Data
 public class MockItemStorage implements IItemStorage {
-//    static class Parse{
-//        int tempFreePage;
-//        long headerUUID;
-//        byte[] data;
-//    }
 
     private String fileName;
     /**
@@ -63,8 +58,6 @@ public class MockItemStorage implements IItemStorage {
 
     public static IItemStorage ofFile(String fileName) {
         // TODO: 实际通过文件名建立数据项管理器，还需要获取到文件头信息来解析得到可以插入的起始页
-//        byte[] bytes = new byte[4096];
-//            Parse parse = JBBPParser.prepare("int tempFreePage;long headerUUID;").parse(bytes).mapTo(new Parse());
         return new MockItemStorage(fileName,0,0);
     }
 
