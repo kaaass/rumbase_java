@@ -20,7 +20,7 @@ public interface IRecordStorage {
      * @param rawData   字节数据
      * @return 记录ID
      */
-    UUID insert(TransactionContext txContext, byte[] rawData);
+    long insert(TransactionContext txContext, byte[] rawData);
 
     /**
      * 由记录ID查询记录数据
@@ -28,16 +28,18 @@ public interface IRecordStorage {
      * @param txContext 事务上下文
      * @param recordId  记录ID
      * @return 记录数据字节
+     * @throws RecordNotFoundException 若记录不存在、不可见，抛出错误
      */
-    byte[] query(TransactionContext txContext, UUID recordId) throws RecordNotFoundException;
+    byte[] query(TransactionContext txContext, long recordId) throws RecordNotFoundException;
 
-    default Optional<byte[]> queryOptional(TransactionContext txContext, UUID recordId) {
-        try {
-            return Optional.of(query(txContext, recordId));
-        } catch (RecordNotFoundException ignore) {
-            return Optional.empty();
-        }
-    }
+    /**
+     * 由记录ID查询记录数据，并忽略由事务造成的记录不可见。若物理记录不存在，将抛出运行时错误
+     *
+     * @param txContext 事务上下文
+     * @param recordId  记录ID
+     * @return 记录数据字节，若记录不可见则返回Optional.empty()
+     */
+    Optional<byte[]> queryOptional(TransactionContext txContext, long recordId);
 
     /**
      * 由记录ID删除记录数据
@@ -45,7 +47,7 @@ public interface IRecordStorage {
      * @param txContext 事务上下文
      * @param recordId  记录ID
      */
-    void delete(TransactionContext txContext, UUID recordId);
+    void delete(TransactionContext txContext, long recordId);
 
 
     /**
