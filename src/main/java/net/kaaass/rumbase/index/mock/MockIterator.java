@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class MockIterator implements Iterator {
+public class MockIterator implements Iterator<Pair> {
     private Iterator<Map.Entry<Long, List<Long>>> indexIterator;
     private Iterator<Long> tempIterator;
     private long tempKey;
@@ -23,9 +23,9 @@ public class MockIterator implements Iterator {
         tempKey = f.getKey();
     }
 
-    public MockIterator(MockBtreeIndex mockBtreeIndex,long keyHash,boolean isWith) {
+    public MockIterator(MockBtreeIndex mockBtreeIndex, long keyHash, boolean isWith) {
         indexIterator = mockBtreeIndex.getHashMap().entrySet().iterator();
-        if (isWith == true){
+        if (isWith == true) {
             do {
                 var v = indexIterator.next();
                 if (v == null) {
@@ -35,9 +35,7 @@ public class MockIterator implements Iterator {
                 tempIterator = v.getValue().iterator();
                 tempKey = v.getKey();
             } while (tempKey < keyHash);
-        }
-        else
-        {
+        } else {
             do {
                 var v = indexIterator.next();
                 if (v == null) {
@@ -52,13 +50,15 @@ public class MockIterator implements Iterator {
 
     @Override
     public boolean hasNext() {
-        return indexIterator.hasNext() || (tempIterator!=null && tempIterator.hasNext());
+        return indexIterator.hasNext() || (tempIterator != null && tempIterator.hasNext());
     }
 
 
     @Override
-    public Object next() {
-        if (state == false) return null;
+    public Pair next() {
+        if (state == false) {
+            return null;
+        }
         Pair res = new Pair(tempKey, tempIterator.next());
         if (!tempIterator.hasNext()) {
             if (!indexIterator.hasNext()) {

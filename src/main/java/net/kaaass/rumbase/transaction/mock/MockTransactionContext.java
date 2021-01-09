@@ -1,7 +1,10 @@
 package net.kaaass.rumbase.transaction.mock;
 
 import lombok.Getter;
-import net.kaaass.rumbase.transaction.*;
+import net.kaaass.rumbase.transaction.TransactionContext;
+import net.kaaass.rumbase.transaction.TransactionIsolation;
+import net.kaaass.rumbase.transaction.TransactionManager;
+import net.kaaass.rumbase.transaction.TransactionStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,19 +18,31 @@ import java.util.List;
 public class MockTransactionContext implements TransactionContext {
 
     @Getter
-    private static final List<Integer> snapshot;
+    private static final List<Integer> SNAPSHOT;
 
     static {
-        snapshot = new ArrayList<>();
+        SNAPSHOT = new ArrayList<>();
     }
 
+    /**
+     * 事务Id
+     */
     @Getter
-    private final int xid;        //事务Id
+    private final int xid;
+    /**
+     * 事务隔离度
+     */
     @Getter
-    private final TransactionIsolation isolation; //事务隔离度
-    private final TransactionManager manager; //存储创建它的管理器
+    private final TransactionIsolation isolation;
+    /**
+     * 存储创建它的管理器
+     */
+    private final TransactionManager manager;
+    /**
+     * 事务状态
+     */
     @Getter
-    private TransactionStatus status; //事务状态
+    private TransactionStatus status;
 
     public MockTransactionContext() {
         this.xid = 0;
@@ -74,12 +89,12 @@ public class MockTransactionContext implements TransactionContext {
     }
 
     @Override
-    public void sharedLock(long uuid) {
+    public void sharedLock(long uuid, String tableName) {
 
     }
 
     @Override
-    public void exclusiveLock(long uuid) {
+    public void exclusiveLock(long uuid, String tableName) {
 
     }
 }

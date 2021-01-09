@@ -2,10 +2,11 @@ package net.kaaass.rumbase.page.mock;
 
 import net.kaaass.rumbase.page.Page;
 import net.kaaass.rumbase.page.PageManager;
-import net.kaaass.rumbase.page.exception.FileExeception;
+import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 
-import java.io.*;
+import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -26,20 +27,11 @@ public class MockPage implements Page {
     }
 
     @Override
-    public byte[] getData() {
-        synchronized(this){
-            pin();
+    public byte[] getDataBytes() {
+        synchronized (this) {
+            pin(); // TODO 错误使用
             return data;
         }
-    }
-
-    @Override
-    public void writeData(byte[] data) {
-        this.data = data;
-        synchronized(this){
-            this.dirty = true;
-        }
-        unpin();
     }
 
     @Override
@@ -51,23 +43,23 @@ public class MockPage implements Page {
     }
 
     @Override
-    public void flush() throws FileExeception {
+    public void flush() throws FileException {
         File file = new File(this.filepath);
         try {
             RandomAccessFile out = new RandomAccessFile(file, "rw");
-            try{
+            try {
                 out.seek((PageManager.FILE_HEAD_SIZE + this.pageId) * PageManager.PAGE_SIZE);
             }catch(Exception e){
                 throw new FileExeception(4);
             }
-            try{
+            try {
                 out.write(data);
-            }catch(Exception e){
-                throw new FileExeception(2);
+            } catch (Exception e) {
+                throw new FileException(2);
             }
             out.close();
         } catch (Exception e) {
-            throw new FileExeception(3);
+            throw new FileException(3);
         }
     }
 

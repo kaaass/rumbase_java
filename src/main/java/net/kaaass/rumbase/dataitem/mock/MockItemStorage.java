@@ -1,8 +1,8 @@
-package net.kaaass.rumbase.dataItem.mock;
+package net.kaaass.rumbase.dataitem.mock;
 
 import lombok.Data;
-import net.kaaass.rumbase.dataItem.IItemStorage;
-import net.kaaass.rumbase.dataItem.exception.UUIDException;
+import net.kaaass.rumbase.dataitem.IItemStorage;
+import net.kaaass.rumbase.dataitem.exception.UUIDException;
 
 import java.util.*;
 
@@ -10,7 +10,6 @@ import java.util.*;
  * 数据项管理的Mock,进行数据项的增删改查
  *
  * @author kaito
- * 
  */
 @Data
 public class MockItemStorage implements IItemStorage {
@@ -21,31 +20,36 @@ public class MockItemStorage implements IItemStorage {
      */
     private int tempFreePage;
     /**
-     *  表信息头对应的UUID
+     * 表信息头对应的UUID
      */
-    private long headerUUID;
+    private long headerUuid;
 
 
-    // 模拟的数据信息
-    private  Map<Long,byte[]> maps;
-    // 模拟的文件头信息
+    /**
+     * 模拟的数据信息
+     */
+    private Map<Long, byte[]> maps;
+    /**
+     *  模拟的文件头信息
+     */
     private byte[] meta;
 
     /**
      * 模拟的构造函数
-     * @param fileName
-     * @param tempFreePage
-     * @param headerUUID
+     *
+     * @param fileName 文件名
+     * @param tempFreePage 当前第一个空闲页号
+     * @param headerUuid 头信息对应UUID
      */
-    public MockItemStorage(String fileName, int tempFreePage, long headerUUID) {
+    public MockItemStorage(String fileName, int tempFreePage, long headerUuid) {
         this.fileName = fileName;
         this.tempFreePage = tempFreePage;
-        this.headerUUID = headerUUID;
+        this.headerUuid = headerUuid;
         maps = new HashMap<>();
         meta = new byte[1024];
     }
 
-    public Map<Long,byte[]> getMap(){
+    public Map<Long, byte[]> getMap() {
         return maps;
     }
 
@@ -58,19 +62,19 @@ public class MockItemStorage implements IItemStorage {
 
     public static IItemStorage ofFile(String fileName) {
         // TODO: 实际通过文件名建立数据项管理器，还需要获取到文件头信息来解析得到可以插入的起始页
-        return new MockItemStorage(fileName,0,0);
+        return new MockItemStorage(fileName, 0, 0);
     }
 
     /**
      * 新建数据库，并写入表头
      *
-     * @param fileName
-     * @param tableHeader
-     * @return
+     * @param fileName 文件名
+     * @param tableHeader 表头信息
+     * @return 返回数据项管理器
      */
-    public static IItemStorage ofNewFile(String fileName, byte[] tableHeader){
+    public static IItemStorage ofNewFile(String fileName, byte[] tableHeader) {
         // TODO: 因为是新建的文件，所以需要给文件头写入头信息数据。
-        return new MockItemStorage(fileName,0,0);
+        return new MockItemStorage(fileName, 0, 0);
     }
 
 
@@ -78,42 +82,34 @@ public class MockItemStorage implements IItemStorage {
     public long insertItem(byte[] item) {
         Random ran = new Random();
         long r = ran.nextLong();
-        maps.put(r,item);
+        maps.put(r, item);
         return r;
     }
 
     @Override
-    public void insertItemWithUUID(byte[] item, long uuid) throws UUIDException {
-        if (maps.containsKey(uuid)){
-            throw new UUIDException(1);
-        }else {
-            maps.put(uuid,item);
-        }
+    public void insertItemWithUuid(byte[] item, long uuid){
+        maps.put(uuid,item);
     }
 
     @Override
-    public byte[] queryItemByUUID(long uuid) throws UUIDException {
+    public byte[] queryItemByUuid(long uuid) throws UUIDException {
         if (maps.containsKey(uuid)){
             return maps.get(uuid);
-        }else{
+        }else {
             throw new UUIDException(2);
         }
     }
 
     @Override
-    public List<byte[]> queryItemByPageID(int pageID) {
-        List bytes = new ArrayList();
-        for (var s:maps.values()){
-            bytes.add(s);
-        }
-        return bytes;
+    public List<byte[]> listItemByPageId(int pageId) {
+        return new ArrayList<>(maps.values());
     }
 
     @Override
-    public void updateItemByUUID(long uuid, byte[] item) throws UUIDException {
-        if (maps.containsKey(uuid)){
-            maps.put(uuid,item);
-        }else{
+    public void updateItemByUuid(long uuid, byte[] item) throws UUIDException {
+        if (maps.containsKey(uuid)) {
+            maps.put(uuid, item);
+        } else {
             throw new UUIDException(2);
         }
     }
@@ -136,11 +132,15 @@ public class MockItemStorage implements IItemStorage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         MockItemStorage that = (MockItemStorage) o;
         return tempFreePage == that.tempFreePage &&
-                headerUUID == that.headerUUID &&
+                headerUuid == that.headerUuid &&
                 Objects.equals(fileName, that.fileName) &&
                 Objects.equals(maps, that.maps) &&
                 Arrays.equals(meta, that.meta);
@@ -148,7 +148,7 @@ public class MockItemStorage implements IItemStorage {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(fileName, tempFreePage, headerUUID, maps);
+        int result = Objects.hash(fileName, tempFreePage, headerUuid, maps);
         result = 31 * result + Arrays.hashCode(meta);
         return result;
     }

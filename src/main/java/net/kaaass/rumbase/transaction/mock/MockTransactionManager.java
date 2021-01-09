@@ -4,9 +4,7 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionManager;
 import net.kaaass.rumbase.transaction.TransactionStatus;
-import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
 
-import javax.transaction.xa.Xid;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +20,7 @@ public class MockTransactionManager implements TransactionManager {
     /**
      * 事务状态持久化文件名
      */
-    private static final String logFileName = "xid.log";
+    private static final String LOG_FILE_NAME = "xid.log";
 
     /**
      * Mock事务数量存储

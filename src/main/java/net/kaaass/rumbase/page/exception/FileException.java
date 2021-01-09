@@ -15,8 +15,8 @@ import java.util.Map;
  *
  * @author XuanLaoYee
  */
-public class FileExeception extends RumbaseException {
-    public static final Map<Integer, String> REASONS = new HashMap<Integer, String>(){{
+public class FileException extends RumbaseException {
+    public static final Map<Integer, String> REASONS = new HashMap<Integer, String>() {{
         put(1, "创建文件失败");
         put(2, "写入文件失败");
         put(3, "文件打开失败");
@@ -26,9 +26,9 @@ public class FileExeception extends RumbaseException {
     /**
      * 文件异常
      *
-     * @param subId  子错误号
+     * @param subId 子错误号
      */
-    public FileExeception(int subId){
+    public FileException(int subId) {
         super(9001, subId, REASONS.get(subId));
     }
 }

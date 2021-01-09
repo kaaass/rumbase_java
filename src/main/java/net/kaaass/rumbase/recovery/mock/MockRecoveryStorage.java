@@ -12,7 +12,9 @@ public class MockRecoveryStorage implements IRecoveryStorage {
     public MockRecoveryStorage() {
         bytes = new ArrayList<>();
     }
-    // 模拟日志记录
+    /**
+     * 模拟日志记录
+     */
     public List<byte[]> bytes;
 
     @Override

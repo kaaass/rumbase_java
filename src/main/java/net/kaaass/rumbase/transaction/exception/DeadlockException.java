@@ -11,6 +11,8 @@ import java.util.Map;
  * <p>
  * E6001-1 发生死锁
  * </p>
+ *
+ * @author criki
  */
 public class DeadlockException extends RumbaseException {
 

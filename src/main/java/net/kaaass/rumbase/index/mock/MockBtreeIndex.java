@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.index.Index;
 import net.kaaass.rumbase.index.Pair;
-import net.kaaass.rumbase.record.mock.MockRecordStorage;
 
 import java.util.*;
 
@@ -21,8 +20,8 @@ public class MockBtreeIndex implements Index {
     @Override
     public void replace(Map<Long, Long> uuidMap) {
         var values = hashMap.values();
-        for (List<Long> value : values){
-            for (Long old : value){
+        for (List<Long> value : values) {
+            for (Long old : value) {
                 if (uuidMap.containsKey(old)) {
                     value.remove(old);
                     value.add(uuidMap.get(old));
@@ -33,26 +32,26 @@ public class MockBtreeIndex implements Index {
 
     @Override
     public void insert(long dataHash, long uuid) {
-        hashMap.computeIfAbsent(dataHash,k -> new ArrayList<>()).add(uuid);
+        hashMap.computeIfAbsent(dataHash, k -> new ArrayList<>()).add(uuid);
     }
 
     @Override
-    public List<Long> query(long keyHash) {
-        return hashMap.get(keyHash) == null ? new LinkedList<>() : hashMap.get(keyHash);
+    public List<Long> query(long dataHash) {
+        return hashMap.get(dataHash) == null ? new LinkedList<>() : hashMap.get(dataHash);
     }
 
     @Override
-    public Iterator<Pair> queryWith(long keyHash) {
-        return new MockIterator(this, keyHash,  true);
+    public Iterator<Pair> findFirst(long keyHash) {
+        return new MockIterator(this, keyHash, true);
     }
 
     @Override
-    public Iterator<Pair> queryWithout(long keyHash) {
+    public Iterator<Pair> findUpperbound(long keyHash) {
         return new MockIterator(this, keyHash, false);
     }
 
     @Override
-    public Iterator<Pair> getFirst() {
+    public Iterator<Pair> findFirst() {
         return new MockIterator(this);
     }
 }
