@@ -3,26 +3,31 @@ package net.kaaass.rumbase.index.mock;
 import net.kaaass.rumbase.index.Pair;
 
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class MockIterator implements Iterator {
-    private MockBtreeIndex mockBtreeIndex;
-    private Iterator tempIterator;
+    private Iterator<Map.Entry<Long, List<Long>>> indexIterator;
+    private Iterator<Long> tempIterator;
     private long tempKey;
     private boolean state = true;
 
     public MockIterator(MockBtreeIndex mockBtreeIndex) {
-        this.mockBtreeIndex = mockBtreeIndex;
-        var v = mockBtreeIndex.getHashMap().entrySet().iterator().next();
-        tempIterator = v.getValue().iterator();
-        tempKey = v.getKey();
+        indexIterator = mockBtreeIndex.getHashMap().entrySet().iterator();
+        if (!indexIterator.hasNext()) {
+            state = false;
+            return;
+        }
+        var f = indexIterator.next();
+        tempIterator = f.getValue().iterator();
+        tempKey = f.getKey();
     }
 
     public MockIterator(MockBtreeIndex mockBtreeIndex,long keyHash,boolean isWith) {
-        this.mockBtreeIndex = mockBtreeIndex;
+        indexIterator = mockBtreeIndex.getHashMap().entrySet().iterator();
         if (isWith == true){
             do {
-                var v = mockBtreeIndex.getHashMap().entrySet().iterator().next();
+                var v = indexIterator.next();
                 if (v == null) {
                     state = false;
                     break;
@@ -34,7 +39,7 @@ public class MockIterator implements Iterator {
         else
         {
             do {
-                var v = mockBtreeIndex.getHashMap().entrySet().iterator().next();
+                var v = indexIterator.next();
                 if (v == null) {
                     state = false;
                     break;
@@ -47,17 +52,20 @@ public class MockIterator implements Iterator {
 
     @Override
     public boolean hasNext() {
-        return mockBtreeIndex.getHashMap().entrySet().iterator().hasNext();
+        return indexIterator.hasNext() || (tempIterator!=null && tempIterator.hasNext());
     }
 
 
     @Override
     public Object next() {
         if (state == false) return null;
-        Pair res = new Pair(tempKey, (Long) tempIterator.next());
+        Pair res = new Pair(tempKey, tempIterator.next());
         if (!tempIterator.hasNext()) {
-            var v = mockBtreeIndex.getHashMap().entrySet().iterator().next();
-            if (v == null) return null;
+            if (!indexIterator.hasNext()) {
+                state = false;
+                return res;
+            }
+            var v = indexIterator.next();
             tempIterator = v.getValue().iterator();
             tempKey = v.getKey();
         }
