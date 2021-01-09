@@ -8,10 +8,22 @@ import lombok.Getter;
  * @author criki
  */
 public enum TransactionIsolation {
-    READ_UNCOMMITTED(0),   //读未提交
-    READ_COMMITTED(1),     //读已提交
-    REPEATABLE_READ(2),    //重复读
-    SERIALIZABLE(3);        //串行化
+    /**
+     * 读未提交
+     */
+    READ_UNCOMMITTED(0),
+    /**
+     * 读已提交
+     */
+    READ_COMMITTED(1),
+    /**
+     * 重复读
+     */
+    REPEATABLE_READ(2),
+    /**
+     * 串行化
+     */
+    SERIALIZABLE(3);
 
     /**
      * 事务隔离度Id
