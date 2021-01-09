@@ -89,11 +89,11 @@ public class TransactionContextTest extends TestCase {
     public void testAddLock() {
         var manager = new MockTransactionManager();
         var transaction = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-
+        String tableName = "test";
         // 加共享锁
-        transaction.sharedLock(1);
+        transaction.sharedLock(1, tableName);
 
         // 加排他锁
-        transaction.exclusiveLock(2);
+        transaction.exclusiveLock(2, tableName);
     }
 }

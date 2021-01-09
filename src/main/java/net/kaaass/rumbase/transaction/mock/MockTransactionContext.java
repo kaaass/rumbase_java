@@ -89,12 +89,12 @@ public class MockTransactionContext implements TransactionContext {
     }
 
     @Override
-    public void sharedLock(long uuid) {
+    public void sharedLock(long uuid, String tableName) {
 
     }
 
     @Override
-    public void exclusiveLock(long uuid) {
+    public void exclusiveLock(long uuid, String tableName) {
 
     }
 }
