@@ -49,7 +49,6 @@ public interface IRecordStorage {
      */
     void delete(TransactionContext txContext, long recordId);
 
-
     /**
      * 获得记录存储的元信息（与单个记录无关）
      *

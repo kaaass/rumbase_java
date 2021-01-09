@@ -1,7 +1,10 @@
 package net.kaaass.rumbase.transaction.mock;
 
 import lombok.Getter;
-import net.kaaass.rumbase.transaction.*;
+import net.kaaass.rumbase.transaction.TransactionContext;
+import net.kaaass.rumbase.transaction.TransactionIsolation;
+import net.kaaass.rumbase.transaction.TransactionManager;
+import net.kaaass.rumbase.transaction.TransactionStatus;
 
 import java.util.ArrayList;
 import java.util.List;

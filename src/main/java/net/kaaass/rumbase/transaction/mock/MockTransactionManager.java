@@ -4,9 +4,7 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionManager;
 import net.kaaass.rumbase.transaction.TransactionStatus;
-import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
 
-import javax.transaction.xa.Xid;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;

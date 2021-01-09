@@ -60,14 +60,14 @@ public interface TransactionContext {
     void rollback();
 
     /**
-     * 对记录加共享锁
+     * 对记录加共享锁 FIXME: 锁是针对某表的记录。需要+表字段（字符串）
      *
      * @param uuid 记录id
      */
     void sharedLock(long uuid);
 
     /**
-     * 对记录加排他锁
+     * 对记录加排他锁 FIXME: 锁是针对某表的记录。需要+表字段（字符串）
      *
      * @param uuid 记录id
      */

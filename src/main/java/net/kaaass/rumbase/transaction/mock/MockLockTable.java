@@ -12,7 +12,6 @@ import net.kaaass.rumbase.transaction.LockTable;
 public class MockLockTable implements LockTable {
 
 
-
     @Override
     public void addSharedLock(int xid, long uuid) {
 
