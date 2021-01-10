@@ -5,11 +5,6 @@ import net.kaaass.rumbase.page.PageManager;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 
-import java.io.File;
-import java.io.RandomAccessFile;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 public class MockPage implements Page {
     private byte[] data;
     long pageId;
@@ -40,7 +35,8 @@ public class MockPage implements Page {
     }
 
     @Override
-    public void flush() throws FileException { }
+    public void flush() throws FileException {
+    }
 
     @Override
     public void pin() {

@@ -23,14 +23,14 @@ public interface IItemStorage {
      * <p>
      * 如果数据项已经存在，就将数据更新在已存在的数据项所在空间上；
      * 如果数据项不存在，则以此UUID插入数据项
-     *</p>
+     * </p>
+     *
      * @param item 数据项
      * @param uuid 编号
      */
     void insertItemWithUuid(byte[] item, long uuid);
 
     /**
-     *
      * 通过UUID查询数据项
      *
      * @param uuid 编号
@@ -38,7 +38,6 @@ public interface IItemStorage {
      * @throws UUIDException UUID找不到的异常
      */
     byte[] queryItemByUuid(long uuid) throws UUIDException;
-
 
 
     /**
@@ -51,6 +50,7 @@ public interface IItemStorage {
 
     /**
      * 根据UUID更新数据项
+     *
      * @param uuid 编号
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常

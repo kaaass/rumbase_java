@@ -1,7 +1,5 @@
 package net.kaaass.rumbase.page;
 
-import net.kaaass.rumbase.page.exception.FileException;
-
 /**
  * 用于管理一系列连续页的存储对象，隐藏任何关于存储的物理细节
  *
@@ -11,6 +9,7 @@ public interface PageStorage {
 
     /**
      * 获取该页存储中的某一页
+     *
      * @param pageId 页号
      * @return 该页页对象
      */

@@ -4,7 +4,6 @@ import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * 记录存储接口，提供由记录ID存取数据的容器

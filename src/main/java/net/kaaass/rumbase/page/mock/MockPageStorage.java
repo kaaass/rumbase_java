@@ -1,15 +1,10 @@
 package net.kaaass.rumbase.page.mock;
 
 import net.kaaass.rumbase.page.Page;
-import net.kaaass.rumbase.page.PageStorage;
 import net.kaaass.rumbase.page.PageManager;
+import net.kaaass.rumbase.page.PageStorage;
 import net.kaaass.rumbase.page.exception.FileException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +20,7 @@ public class MockPageStorage implements PageStorage {
         this.fakeFile = new byte[1024 * 4 * 20];
         for (int i = 0; i < 20; i++) {
             for (int j = 0; j < 1024 * 4; j++) {
-                this.fakeFile[1024 * 4 * i + j] = (byte)i;
+                this.fakeFile[1024 * 4 * i + j] = (byte) i;
             }
         }
     }
@@ -35,7 +30,7 @@ public class MockPageStorage implements PageStorage {
         //文件会预留5页作为文件头
         try {
             byte[] data = new byte[PageManager.PAGE_SIZE];
-            System.arraycopy(fakeFile, (int) (pageId + PageManager.FILE_HEAD_SIZE)*PageManager.PAGE_SIZE, data, 0, data.length);
+            System.arraycopy(fakeFile, (int) (pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE, data, 0, data.length);
             Integer tmpId = (int) pageId;
             if (pageMap.containsKey(tmpId)) {
                 return pageMap.get(tmpId);

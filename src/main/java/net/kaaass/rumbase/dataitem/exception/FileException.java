@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *  在创建、打开数据库时
+ * 在创建、打开数据库时
+ *
  * @author kaito
  */
 public class FileException extends RumbaseException {

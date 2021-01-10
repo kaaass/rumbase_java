@@ -35,22 +35,22 @@ public class MockBuffer {
         try {
             System.arraycopy(bytes, 0, this.byteBuffer, offset, bytes.length);
             this.size--;
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             lock.unlock();
         }
     }
 
     public byte[] get(int offset) {
         lock.lock();
-        try{
+        try {
             byte[] temp = new byte[PageManager.PAGE_SIZE];
             System.arraycopy(this.byteBuffer, offset, temp, offset, PageManager.PAGE_SIZE);
             return temp;
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             lock.unlock();
         }
         return null;
@@ -58,11 +58,11 @@ public class MockBuffer {
 
     public void free(int offset) {
         lock.lock();
-        try{
+        try {
             System.arraycopy(this.byteBuffer, offset, new byte[PageManager.PAGE_SIZE], 0, PageManager.PAGE_SIZE);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally{
+        } finally {
             lock.unlock();
         }
     }

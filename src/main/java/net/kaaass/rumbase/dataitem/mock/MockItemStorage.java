@@ -30,16 +30,16 @@ public class MockItemStorage implements IItemStorage {
      */
     private Map<Long, byte[]> maps;
     /**
-     *  模拟的文件头信息
+     * 模拟的文件头信息
      */
     private byte[] meta;
 
     /**
      * 模拟的构造函数
      *
-     * @param fileName 文件名
+     * @param fileName     文件名
      * @param tempFreePage 当前第一个空闲页号
-     * @param headerUuid 头信息对应UUID
+     * @param headerUuid   头信息对应UUID
      */
     public MockItemStorage(String fileName, int tempFreePage, long headerUuid) {
         this.fileName = fileName;
@@ -68,7 +68,7 @@ public class MockItemStorage implements IItemStorage {
     /**
      * 新建数据库，并写入表头
      *
-     * @param fileName 文件名
+     * @param fileName    文件名
      * @param tableHeader 表头信息
      * @return 返回数据项管理器
      */
@@ -87,15 +87,15 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void insertItemWithUuid(byte[] item, long uuid){
-        maps.put(uuid,item);
+    public void insertItemWithUuid(byte[] item, long uuid) {
+        maps.put(uuid, item);
     }
 
     @Override
     public byte[] queryItemByUuid(long uuid) throws UUIDException {
-        if (maps.containsKey(uuid)){
+        if (maps.containsKey(uuid)) {
             return maps.get(uuid);
-        }else {
+        } else {
             throw new UUIDException(2);
         }
     }

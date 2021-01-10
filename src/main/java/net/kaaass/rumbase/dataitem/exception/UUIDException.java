@@ -6,8 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *  关于Uuid的相关错误
- * @author  kaito
+ * 关于Uuid的相关错误
+ *
+ * @author kaito
  */
 public class UUIDException extends RumbaseException {
 
