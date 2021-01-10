@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
+
 /**
  * TODO 文档
  */
@@ -26,6 +28,8 @@ public class IRecoveryTest extends TestCase {
         List<byte[]> result = new ArrayList<>();
         result.add(beginStr.getBytes());
         result.add(snapStr.getBytes());
-        assertEquals(result, content);
+        assertEquals(result.size(), content.size());
+        assertArrayEquals(result.get(0), content.get(0));
+        assertArrayEquals(result.get(1), content.get(1));
     }
 }

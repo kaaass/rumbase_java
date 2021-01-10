@@ -4,10 +4,8 @@ import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
 
 /**
  * 事务上下文
- *
  * <p>
  * 存储事务状态，对事务进行操作
- * </p>
  *
  * @author criki
  */

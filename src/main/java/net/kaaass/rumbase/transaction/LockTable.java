@@ -11,8 +11,8 @@ public interface LockTable {
     /**
      * 添加共享锁
      *
-     * @param xid  事务id
-     * @param uuid 记录id
+     * @param xid       事务id
+     * @param uuid      记录id
      * @param tableName 表名
      */
     void addSharedLock(int xid, long uuid, String tableName);
@@ -20,8 +20,8 @@ public interface LockTable {
     /**
      * 添加排他锁
      *
-     * @param xid  事务id
-     * @param uuid 记录id
+     * @param xid       事务id
+     * @param uuid      记录id
      * @param tableName 表名
      */
     void addExclusiveLock(int xid, long uuid, String tableName);

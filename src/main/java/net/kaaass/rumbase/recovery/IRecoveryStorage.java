@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * 日志管理的接口，用来进行日志的写入和恢复
+ *
  * @author kaito
  */
 public interface IRecoveryStorage {
