@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * E9002 文件异常
  * <p>
- * E9002-1  创建文件失败 TODO 不一致
+ * E9002-1  回写数据偏移与大小之和超过规定
  *
  * @author XuanLaoYee
  */

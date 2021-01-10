@@ -21,61 +21,40 @@ public class MockPageStorage implements PageStorage {
 
     public MockPageStorage(String filepath) throws FileException {
         this.filepath = filepath;
-        File file = new File(filepath);
         pageMap = new HashMap<>();
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-                OutputStream os = null;
-                try {
-                    os = new FileOutputStream(file, true);
-                    byte[] data = new byte[PageManager.PAGE_SIZE];
-                    for (int i = 0; i < 10; i++) {
-                        os.write(data, 0, data.length);
-                        os.flush();
-                    }
-                } catch (Exception e) {
-                    throw new FileException(2);
-                }
-            } catch (Exception e) {
-                throw new FileException(1);
+        this.fakeFile = new byte[1024 * 4 * 20];
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 1024 * 4; j++) {
+                this.fakeFile[1024 * 4 * i + j] = (byte)i;
             }
         }
     }
 
     @Override
-    public Page get(long pageId) throws FileException {
-        File file = new File(filepath);
+    public Page get(long pageId) {
         //文件会预留5页作为文件头
         try {
-            FileInputStream in = new FileInputStream(file);
             byte[] data = new byte[PageManager.PAGE_SIZE];
-            try {
-                in.skip((pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
-                int readNumber = in.read(data);
-                if (readNumber < PageManager.PAGE_SIZE) {
-                    throw new FileException(4);
-                }
-            } catch (Exception e) {
-                throw new FileException(4);
-            }
+            System.arraycopy(fakeFile, (int) (pageId + PageManager.FILE_HEAD_SIZE)*PageManager.PAGE_SIZE, data, 0, data.length);
             Integer tmpId = (int) pageId;
-            if(pageMap.containsKey(tmpId)){
+            if (pageMap.containsKey(tmpId)) {
                 return pageMap.get(tmpId);
             }
             Page page = new MockPage(data, pageId, this.filepath);
             pageMap.put(tmpId, page);
             return page;
         } catch (Exception e) {
-            throw new FileException(3);
+            e.printStackTrace();
         }
+        return null;
     }
 
     @Override
     public void flush() {
-        //TODO
     }
-    private Map<Integer,Page> pageMap;
+
+    private Map<Integer, Page> pageMap;
 
     private String filepath;
+    private byte[] fakeFile;
 }

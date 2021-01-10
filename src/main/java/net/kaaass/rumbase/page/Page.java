@@ -66,7 +66,7 @@ public interface Page {
      * 将字节数据写入页
      *
      * @param data 待写入字节数据
-     * @throws PageException TODO
+     * @throws PageException 若写入的数据超出页的范围则抛出异常
      */
     default void writeData(byte[] data) throws PageException {
         patchData(0, data);
@@ -77,7 +77,7 @@ public interface Page {
      *
      * @param offset 页内偏移值，以字节为单位
      * @param data   待写入数据
-     * @throws PageException TODO
+     * @throws PageException 若写入的数据超出页的范围则抛出异常
      */
     void patchData(int offset, byte[] data) throws PageException;
 

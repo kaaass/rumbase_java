@@ -15,28 +15,26 @@ import static org.junit.Assert.assertArrayEquals;
  */
 public class PageTest extends TestCase {
 
-    // TODO Mock的测试不应该和文件有关，本测试仅仅测试接口对上层的意义。而物理文件对上层不可见
     public void testGetData() {
         try {
             PageStorage pc = PageManager.fromFile("testFile");
             Page p0 = pc.get(0);
             Page p3 = pc.get(3);
+            byte[] data0 = new byte[1024 * 4];
+            byte[] data3 = new byte[1024 * 4];
+            p0.getData().read(data0);
+            p3.getData().read(data3);
+            byte[] testData0 = new byte[1024 * 4];
+            for (int j = 0; j < 1024 * 4; j++) {
+                testData0[j] = (byte)5;
+            }
+            byte[] testData3 = new byte[1024 * 4];
+            for (int j = 0; j < 1024 * 4; j++) {
+                testData3[j] = (byte)8;
+            }
+            assertArrayEquals(testData0,data0);
+            assertArrayEquals(testData3,data3);
 
-            File file = new File("testFile");
-            FileInputStream in0 = new FileInputStream(file);
-            in0.skip((PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
-            byte[] data0 = new byte[PageManager.PAGE_SIZE];
-            int readNumber1 = in0.read(data0);
-            in0.close();
-            assertArrayEquals(data0, p0.getDataBytes());
-            assertEquals(PageManager.PAGE_SIZE, readNumber1);
-            FileInputStream in3 = new FileInputStream(file);
-            in3.skip((3 + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
-            byte[] data3 = new byte[PageManager.PAGE_SIZE];
-            int readNumber3 = in3.read(data3);
-            assertArrayEquals(data3, p3.getDataBytes());
-            assertEquals(PageManager.PAGE_SIZE, readNumber3);
-            in3.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -78,24 +76,6 @@ public class PageTest extends TestCase {
             System.arraycopy(originalData, 0, newData, 0, offset);
             System.arraycopy(data, 0, newData, offset, data.length);
             assertArrayEquals(newData, p0.getDataBytes());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void testFlush() {
-        byte[] data = new byte[PageManager.PAGE_SIZE];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (i % 120);
-        }
-
-        try {
-            PageStorage pc = PageManager.fromFile("testFile");
-            Page p0 = pc.get(0);
-            p0.writeData(data);
-            p0.flush();
-            p0 = pc.get(0);
-            assertArrayEquals(data, p0.getDataBytes());
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -13,9 +13,8 @@ public interface PageStorage {
      * 获取该页存储中的某一页
      * @param pageId 页号
      * @return 该页页对象
-     * @throws FileException TODO 为什么要抛出FileException？此步骤应该隐藏文件接口的任何细节
      */
-    Page get(long pageId) throws FileException;
+    Page get(long pageId);
 
     /**
      * 将页存储中的所有脏页写回文件
