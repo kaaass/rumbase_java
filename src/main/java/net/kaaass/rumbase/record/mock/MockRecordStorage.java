@@ -30,19 +30,19 @@ public class MockRecordStorage implements IRecordStorage {
     @Getter
     private final String mockId;
 
-    private final Map<UUID, byte[]> memoryStorage = new HashMap<>();
+    private final Map<Long, byte[]> memoryStorage = new HashMap<>();
 
     private byte[] metadata = new byte[0];
 
     @Override
-    public UUID insert(TransactionContext txContext, byte[] rawData) {
-        var uuid = UUID.randomUUID();
+    public long insert(TransactionContext txContext, byte[] rawData) {
+        var uuid = UUID.randomUUID().getLeastSignificantBits();
         this.memoryStorage.put(uuid, rawData);
         return uuid;
     }
 
     @Override
-    public byte[] query(TransactionContext txContext, UUID recordId) throws RecordNotFoundException {
+    public byte[] query(TransactionContext txContext, long recordId) throws RecordNotFoundException {
         if (!this.memoryStorage.containsKey(recordId)) {
             throw new RecordNotFoundException(1);
         }
@@ -50,7 +50,16 @@ public class MockRecordStorage implements IRecordStorage {
     }
 
     @Override
-    public void delete(TransactionContext txContext, UUID recordId) {
+    public Optional<byte[]> queryOptional(TransactionContext txContext, long recordId) {
+        try {
+            return Optional.ofNullable(query(txContext, recordId));
+        } catch (RecordNotFoundException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void delete(TransactionContext txContext, long recordId) {
         this.memoryStorage.remove(recordId);
     }
 
