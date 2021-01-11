@@ -2,8 +2,8 @@ package net.kaaass.rumbase.dataitem;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
-import net.kaaass.rumbase.dataitem.exception.FileException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.exception.FileException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,9 +22,13 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试能否从已有文件中解析得到数据项管理器
      */
-    public void testGetFromFile() throws FileException {
+    public void testGetFromFile()  {
         String fileName = "testGetFromFile.db";
-        var itemStorage = ItemManager.fromFile(fileName);
+        try {
+            var itemStorage = ItemManager.fromFile(fileName);
+        } catch (FileException e) {
+            e.printStackTrace();
+        }
 
         // 如果表中没有对应的文件，那么就抛出错误
         String failFileName = "error.db";
