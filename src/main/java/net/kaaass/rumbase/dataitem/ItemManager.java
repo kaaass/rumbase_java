@@ -31,7 +31,7 @@ public class ItemManager {
         if (maps.containsKey(fileName)) {
             return maps.get(fileName);
         } else {
-            IItemStorage iItemStorage = ItemStorage.ofFile(fileName);
+            IItemStorage iItemStorage = MockItemStorage.ofFile(fileName);
             maps.put(fileName, iItemStorage);
             return iItemStorage;
         }
