@@ -2,7 +2,10 @@ package net.kaaass.rumbase.transaction;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.mock.MockTransactionManager;
+
+import java.io.IOException;
 
 /**
  * 测试事务上下文
@@ -15,8 +18,8 @@ public class TransactionContextTest extends TestCase {
     /**
      * 测试创建事务
      */
-    public void testCreateTransaction() {
-        var manager = new MockTransactionManager();
+    public void testCreateTransaction() throws IOException, FileException {
+        var manager = new TransactionManagerImpl();
 
         // 空事务
         var emptyTransaction = TransactionContext.empty();
@@ -36,6 +39,7 @@ public class TransactionContextTest extends TestCase {
      * 测试事务变化
      */
     public void testChangeStatus() {
+        // TODO 将Mock类改成实现类
         var manager = new MockTransactionManager();
         var committedTransaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         // 事务初始状态
@@ -60,6 +64,7 @@ public class TransactionContextTest extends TestCase {
      * 测试事务持久化
      */
     public void testTransactionPersistence() {
+        // TODO 将Mock类改成实现类
         var manager = new MockTransactionManager();
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -87,6 +92,7 @@ public class TransactionContextTest extends TestCase {
      * 测试事务上锁
      */
     public void testAddLock() {
+        // TODO 将Mock类改成实现类
         var manager = new MockTransactionManager();
         var transaction = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";

@@ -1,7 +1,5 @@
 package net.kaaass.rumbase.transaction;
 
-import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
-
 /**
  * 事务上下文
  * <p>
@@ -18,7 +16,7 @@ public interface TransactionContext {
      * @return 空事务上下文
      */
     static TransactionContext empty() {
-        return new MockTransactionContext();
+        return new TransactionContextImpl();
     }
 
     /**
