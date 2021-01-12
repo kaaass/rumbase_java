@@ -47,9 +47,9 @@ public class ItemManager {
      */
     public static IItemStorage createFile(String fileName, byte[] metadata) throws FileException {
         // 如果文件已经存在，那么就抛出文件已存在异常
-            // 若文件不存在，则创建文件。
-            IItemStorage iItemStorage = MockItemStorage.ofNewFile(fileName, metadata);
-            maps.put(fileName, iItemStorage);
-            return iItemStorage;
+        // 若文件不存在，则创建文件。
+        IItemStorage iItemStorage = MockItemStorage.ofNewFile(fileName, metadata);
+        maps.put(fileName, iItemStorage);
+        return iItemStorage;
     }
 }
