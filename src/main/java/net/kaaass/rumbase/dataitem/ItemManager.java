@@ -1,7 +1,7 @@
 package net.kaaass.rumbase.dataitem;
 
-import net.kaaass.rumbase.dataitem.exception.FileException;
 import net.kaaass.rumbase.dataitem.mock.MockItemStorage;
+import net.kaaass.rumbase.page.exception.FileException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,10 +22,10 @@ public class ItemManager {
      * @param fileName 文件名
      * @return 数据项管理器，用于管理数据项
      */
-    public static IItemStorage fromFile(String fileName) throws FileException {
+    public static IItemStorage fromFile(String fileName) throws FileException{
         String errorFileName = "error.db";
         if (errorFileName.equals(fileName)) {
-            throw new FileException(2);
+            throw new FileException(1);
         }
 
         if (maps.containsKey(fileName)) {
@@ -47,14 +47,9 @@ public class ItemManager {
      */
     public static IItemStorage createFile(String fileName, byte[] metadata) throws FileException {
         // 如果文件已经存在，那么就抛出文件已存在异常
-        if (maps.containsKey(fileName)) {
-            throw new FileException(1);
-        } else {
-            // 若文件不存在，则创建文件。
-            IItemStorage iItemStorage = MockItemStorage.ofNewFile(fileName, metadata);
-            maps.put(fileName, iItemStorage);
-            return iItemStorage;
-        }
-
+        // 若文件不存在，则创建文件。
+        IItemStorage iItemStorage = MockItemStorage.ofNewFile(fileName, metadata);
+        maps.put(fileName, iItemStorage);
+        return iItemStorage;
     }
 }
