@@ -2,6 +2,8 @@ package net.kaaass.rumbase.transaction;
 
 import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
 
+import java.util.List;
+
 /**
  * 事务上下文
  * <p>
@@ -22,6 +24,13 @@ public interface TransactionContext {
     }
 
     /**
+     * 获取当前事务快照信息
+     *
+     * @return 事务快照
+     */
+    static List<Integer> getSnapShot() { return MockTransactionContext.getSNAPSHOT(); }
+
+    /**
      * 获取事务隔离度
      *
      * @return 事务隔离度
@@ -34,6 +43,13 @@ public interface TransactionContext {
      * @return 事务状态
      */
     TransactionStatus getStatus();
+
+    /**
+     * 获取事务管理器
+     *
+     * @return 事务管理器
+     */
+    TransactionManager getManager();
 
     /**
      * 获取事务id
