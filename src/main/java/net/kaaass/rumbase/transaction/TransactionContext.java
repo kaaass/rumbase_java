@@ -28,7 +28,7 @@ public interface TransactionContext {
      *
      * @return 事务快照
      */
-    static List<Integer> getSnapShot() { return MockTransactionContext.getSNAPSHOT(); }
+    List<Integer> getSnapshot();
 
     /**
      * 获取事务隔离度

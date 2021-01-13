@@ -17,13 +17,6 @@ import java.util.List;
 @Deprecated
 public class MockTransactionContext implements TransactionContext {
 
-    @Getter
-    private static final List<Integer> SNAPSHOT;
-
-    static {
-        SNAPSHOT = new ArrayList<>();
-    }
-
     /**
      * 事务Id
      */
@@ -41,18 +34,24 @@ public class MockTransactionContext implements TransactionContext {
      */
     @Getter
     private final TransactionManager manager;
-
+    /**
+     * 事务快照
+     */
+    @Getter
+    private final List<Integer> snapshot;
     /**
      * 事务状态
      */
     @Getter
     private TransactionStatus status;
 
+
     public MockTransactionContext() {
         this.xid = 0;
         this.status = TransactionStatus.COMMITTED;
         this.isolation = TransactionIsolation.READ_UNCOMMITTED;
         this.manager = null;
+        this.snapshot = new ArrayList<>();
     }
 
     /**
@@ -66,6 +65,7 @@ public class MockTransactionContext implements TransactionContext {
         this.status = TransactionStatus.PREPARING;
         this.isolation = isolation;
         this.manager = manager;
+        this.snapshot = new ArrayList<>();
     }
 
     /**
@@ -81,6 +81,7 @@ public class MockTransactionContext implements TransactionContext {
         this.isolation = isolation;
         this.manager = manager;
         this.status = status;
+        this.snapshot = new ArrayList<>();
     }
 
     @Override
