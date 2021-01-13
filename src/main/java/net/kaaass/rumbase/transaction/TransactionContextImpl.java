@@ -12,13 +12,6 @@ import java.util.List;
  */
 public class TransactionContextImpl implements TransactionContext {
 
-    @Getter
-    private static final List<Integer> SNAPSHOT;
-
-    static {
-        SNAPSHOT = new ArrayList<>();
-    }
-
     /**
      * 事务Id
      */
@@ -32,23 +25,34 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 存储创建它的管理器
      */
+    @Getter
     private final TransactionManager manager;
+    /**
+     * 事务快照
+     */
+    @Getter
+    private final List<Integer> snapshot;
     /**
      * 事务状态
      */
     @Getter
     private TransactionStatus status;
 
+    /**
+     * 事务上下文
+     */
     public TransactionContextImpl() {
         this.xid = 0;
         this.status = TransactionStatus.COMMITTED;
         this.isolation = TransactionIsolation.READ_UNCOMMITTED;
         this.manager = null;
+        this.snapshot = new ArrayList<>();
     }
 
     /**
      * 事务上下文
      *
+     * @param xid       事务id
      * @param isolation 事务隔离度
      * @param manager   创建事务的管理器
      */
@@ -57,6 +61,56 @@ public class TransactionContextImpl implements TransactionContext {
         this.status = TransactionStatus.PREPARING;
         this.isolation = isolation;
         this.manager = manager;
+        this.snapshot = new ArrayList<>();
+    }
+
+    /**
+     * 事务上下文
+     *
+     * @param xid       事务id
+     * @param isolation 事务隔离度
+     * @param manager   创建事务的管理器
+     * @param status    事务状态
+     */
+    public TransactionContextImpl(int xid, TransactionIsolation isolation, TransactionManager manager, TransactionStatus status) {
+        this.xid = xid;
+        this.isolation = isolation;
+        this.manager = manager;
+        this.status = status;
+        this.snapshot = new ArrayList<>();
+    }
+
+    /**
+     * 事务上下文
+     *
+     * @param xid       事务id
+     * @param isolation 事务隔离度
+     * @param manager   创建事务的管理器
+     * @param snapshot  事务状态
+     */
+    public TransactionContextImpl(int xid, TransactionIsolation isolation, TransactionManager manager, List<Integer> snapshot) {
+        this.xid = xid;
+        this.isolation = isolation;
+        this.manager = manager;
+        this.status = TransactionStatus.PREPARING;
+        this.snapshot = snapshot;
+    }
+
+    /**
+     * 事务上下文
+     *
+     * @param xid       事务id
+     * @param isolation 事务隔离度
+     * @param manager   创建事务的管理器
+     * @param snapshot  事务快照
+     * @param status    事务状态
+     */
+    public TransactionContextImpl(int xid, TransactionIsolation isolation, TransactionManager manager, List<Integer> snapshot, TransactionStatus status) {
+        this.xid = xid;
+        this.isolation = isolation;
+        this.manager = manager;
+        this.snapshot = snapshot;
+        this.status = status;
     }
 
     /**
@@ -69,9 +123,6 @@ public class TransactionContextImpl implements TransactionContext {
             manager.changeTransactionStatus(xid, TransactionStatus.ACTIVE);
         }
 
-        synchronized (SNAPSHOT) {
-            SNAPSHOT.add(xid);
-        }
     }
 
     /**
@@ -79,10 +130,6 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void commit() {
-        synchronized (SNAPSHOT) {
-            SNAPSHOT.remove(Integer.valueOf(xid));
-        }
-
         this.status = TransactionStatus.COMMITTED;
         if (manager != null) {
             manager.changeTransactionStatus(xid, TransactionStatus.COMMITTED);
@@ -94,10 +141,6 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void rollback() {
-        synchronized (SNAPSHOT) {
-            SNAPSHOT.remove(Integer.valueOf(xid));
-        }
-
         this.status = TransactionStatus.ABORTED;
         if (manager != null) {
             manager.changeTransactionStatus(xid, TransactionStatus.ABORTED);

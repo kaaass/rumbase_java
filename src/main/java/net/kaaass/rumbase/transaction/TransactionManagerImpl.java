@@ -11,6 +11,9 @@ import net.kaaass.rumbase.page.exception.FileException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -43,6 +46,13 @@ public class TransactionManagerImpl implements TransactionManager {
      * 事务状态日志
      */
     private final PageStorage storage;
+
+    /**
+     * 事务缓存
+     * <p>
+     * TODO 实现事务缓存调度
+     */
+    private Map<Integer, TransactionContext> txCache;
 
     /**
      * Mock事务管理器
@@ -101,7 +111,17 @@ public class TransactionManagerImpl implements TransactionManager {
             page.unpin();
         }
 
-        return new TransactionContextImpl(xid, isolation, this);
+        List<Integer> snapshot = new ArrayList<>();
+
+        synchronized (txCache) {
+            for (TransactionContext context : txCache.values()) {
+                snapshot.add(context.getXid());
+            }
+        }
+
+        TransactionContext context = new TransactionContextImpl(xid, isolation, this, snapshot);
+        txCache.put(xid, context);
+        return context;
     }
 
     /**
@@ -154,7 +174,39 @@ public class TransactionManagerImpl implements TransactionManager {
         } finally {
             page.unpin();
         }
+
+        TransactionContext oldContext = txCache.get(xid);
+        TransactionContext newContext = new TransactionContextImpl(oldContext.getXid(), oldContext.getIsolation(), oldContext.getManager(), oldContext.getSnapshot(), status);
+        txCache.put(xid, newContext);
     }
 
+    /**
+     * 根据事务id获取事务上下文
+     *
+     * @param xid 事务id
+     * @return 事务id为xid的事务上下文
+     */
+    @Override
+    public TransactionContext getContext(int xid) {
+        if (txCache.containsKey(xid)) {
+            return txCache.get(xid);
+        }
 
+        int pageId = xid / TX_NUM_PER_PAGE + 1;
+        int statusOffset = xid % TX_NUM_PER_PAGE * 2;
+        int isolationOffset = xid % TX_NUM_PER_PAGE * 2 + 1;
+
+        Page page = storage.get(pageId);
+        page.pin();
+        byte[] bytes = page.getDataBytes();
+        byte statusId = bytes[statusOffset];
+        byte isolationId = bytes[isolationOffset];
+
+        TransactionStatus status = TransactionStatus.getStatusById(statusId);
+        TransactionIsolation isolation = TransactionIsolation.getStatusById(isolationId);
+
+        page.unpin();
+
+        return new TransactionContextImpl(xid, isolation, this, status);
+    }
 }
