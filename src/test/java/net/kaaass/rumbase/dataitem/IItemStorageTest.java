@@ -2,9 +2,13 @@ package net.kaaass.rumbase.dataitem;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
-import net.kaaass.rumbase.dataitem.exception.FileException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.transaction.TransactionContext;
+import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -22,10 +26,9 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试能否从已有文件中解析得到数据项管理器
      */
-    public void testGetFromFile() throws FileException {
+    public void testGetFromFile() throws FileException, IOException, PageException {
         String fileName = "testGetFromFile.db";
         var itemStorage = ItemManager.fromFile(fileName);
-
         // 如果表中没有对应的文件，那么就抛出错误
         String failFileName = "error.db";
         try {
@@ -39,18 +42,19 @@ public class IItemStorageTest extends TestCase {
      * 测试能否新建文件并得到数据项管理器
      */
     public void testCreateFile() {
+        TransactionContext txContext = new MockTransactionContext();
         String fileName = "testCreateFile.db";
         byte[] metadata = new byte[1024];
         // 第一次执行的时候，表中没有数据，不会报错
         try {
-            var iItemStorage = ItemManager.createFile(fileName, metadata);
+            var iItemStorage = ItemManager.createFile(txContext,fileName, metadata);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
-            IItemStorage iItemStorage = ItemManager.createFile(fileName, metadata);
-        } catch (FileException e) {
+            IItemStorage iItemStorage = ItemManager.createFile(txContext,fileName, metadata);
+        } catch (Exception e) {
             log.error("Exception Error :", e);
         }
     }
@@ -58,11 +62,12 @@ public class IItemStorageTest extends TestCase {
     /**
      * 进行插入的测试
      */
-    public void testInsert() throws FileException {
+    public void testInsert() throws FileException, IOException, PageException {
         String fileName = "testInsert.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
-        long uuid = iItemStorage.insertItem(bytes);
+        TransactionContext txContext = new MockTransactionContext();
+        long uuid = iItemStorage.insertItem(txContext,bytes);
         try {
             assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
         } catch (UUIDException e) {
@@ -73,13 +78,14 @@ public class IItemStorageTest extends TestCase {
     /**
      * 对插入一个已分配UUID的测试
      */
-    public void testInsertWithUUID() throws FileException {
+    public void testInsertWithUUID() throws FileException, IOException, PageException {
         String fileName = "testInsertWithUUID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         long uuid = 50;
+        TransactionContext txContext = new MockTransactionContext();
         // 第一次插入，表中没有该UUID，可以正常执行
-        iItemStorage.insertItemWithUuid(bytes, uuid);
+        iItemStorage.insertItemWithUuid(txContext,bytes, uuid);
         try {
             assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
         } catch (UUIDException e) {
@@ -87,18 +93,19 @@ public class IItemStorageTest extends TestCase {
         }
 
         // 第二次插入
-        iItemStorage.insertItemWithUuid(bytes, uuid);
+        iItemStorage.insertItemWithUuid(txContext,bytes, uuid);
 
     }
 
     /**
      * 对查询进行测试
      */
-    public void testQuery() throws FileException {
+    public void testQuery() throws FileException, IOException, PageException {
         String fileName = "testQuery.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
-        long uuid = iItemStorage.insertItem(bytes);
+        TransactionContext txContext = new MockTransactionContext();
+        long uuid = iItemStorage.insertItem(txContext,bytes);
         // 查询可以正常执行
         try {
             assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
@@ -120,14 +127,15 @@ public class IItemStorageTest extends TestCase {
     /**
      * 获取整个页的数据项进行测试
      */
-    public void testQueryByPageID() throws FileException {
+    public void testQueryByPageID() throws FileException, IOException, PageException {
         String fileName = "testQueryByPageID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
-        long uuid = iItemStorage.insertItem(bytes);
+        TransactionContext txContext = new MockTransactionContext();
+        long uuid = iItemStorage.insertItem(txContext,bytes);
 
         byte[] bytes1 = new byte[]{2, 3, 4, 5};
-        long uuid1 = iItemStorage.insertItem(bytes1);
+        long uuid1 = iItemStorage.insertItem(txContext,bytes1);
 
         Comparator<byte[]> comparator = new Comparator<byte[]>() {
             @Override
@@ -162,15 +170,16 @@ public class IItemStorageTest extends TestCase {
     /**
      * 对更新进行测试
      */
-    public void testUpdate() throws FileException {
+    public void testUpdate() throws FileException, IOException, PageException {
         String fileName = "testUpdate.db";
+        TransactionContext txContext = new MockTransactionContext();
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
-        long uuid = iItemStorage.insertItem(bytes);
+        long uuid = iItemStorage.insertItem(txContext,bytes);
         // 正常情况下进行修改
         byte[] result = new byte[]{2, 3, 4, 5};
         try {
-            iItemStorage.updateItemByUuid(uuid, result);
+            iItemStorage.updateItemByUuid(txContext,uuid, result);
             byte[] bs = iItemStorage.queryItemByUuid(uuid);
             assertEquals(bs, result);
         } catch (UUIDException e) {
@@ -182,7 +191,7 @@ public class IItemStorageTest extends TestCase {
             s += 1;
         }
         try {
-            iItemStorage.updateItemByUuid(s, result);
+            iItemStorage.updateItemByUuid(txContext,s, result);
         } catch (UUIDException e) {
             e.printStackTrace();
         }
@@ -191,12 +200,12 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试修改和获取表头信息
      */
-    public void testMeta() throws FileException {
+    public void testMeta() throws FileException, IOException, PageException {
         String fileName = "testMeta.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] result = new byte[]{1, 2, 3, 4};
-
-        iItemStorage.setMetadata(result);
+        TransactionContext txContext = new MockTransactionContext();
+        iItemStorage.setMetadata(txContext,result);
         byte[] bs = iItemStorage.getMetadata();
         assertEquals(result, bs);
 

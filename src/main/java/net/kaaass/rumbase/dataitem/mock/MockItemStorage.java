@@ -3,6 +3,7 @@ package net.kaaass.rumbase.dataitem.mock;
 import lombok.Data;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.util.*;
 
@@ -72,14 +73,14 @@ public class MockItemStorage implements IItemStorage {
      * @param tableHeader 表头信息
      * @return 返回数据项管理器
      */
-    public static IItemStorage ofNewFile(String fileName, byte[] tableHeader) {
+    public static IItemStorage ofNewFile(TransactionContext txContext ,String fileName, byte[] tableHeader) {
         // TODO: 因为是新建的文件，所以需要给文件头写入头信息数据。
         return new MockItemStorage(fileName, 0, 0);
     }
 
 
     @Override
-    public long insertItem(byte[] item) {
+    public long insertItem(TransactionContext txContext,byte[] item) {
         Random ran = new Random();
         long r = ran.nextLong();
         maps.put(r, item);
@@ -87,7 +88,7 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void insertItemWithUuid(byte[] item, long uuid) {
+    public void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid) {
         maps.put(uuid, item);
     }
 
@@ -106,7 +107,7 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void updateItemByUuid(long uuid, byte[] item) throws UUIDException {
+    public void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException {
         if (maps.containsKey(uuid)) {
             maps.put(uuid, item);
         } else {
@@ -120,7 +121,7 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void setMetadata(byte[] metadata) {
+    public void setMetadata(TransactionContext txContext, byte[] metadata) {
         this.meta = metadata;
     }
 
