@@ -1,7 +1,10 @@
 package net.kaaass.rumbase.transaction.mock;
 
 import lombok.Getter;
-import net.kaaass.rumbase.transaction.*;
+import net.kaaass.rumbase.transaction.TransactionContext;
+import net.kaaass.rumbase.transaction.TransactionIsolation;
+import net.kaaass.rumbase.transaction.TransactionManager;
+import net.kaaass.rumbase.transaction.TransactionStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,12 +89,12 @@ public class MockTransactionContext implements TransactionContext {
     }
 
     @Override
-    public void sharedLock(long uuid) {
+    public void sharedLock(long uuid, String tableName) {
 
     }
 
     @Override
-    public void exclusiveLock(long uuid) {
+    public void exclusiveLock(long uuid, String tableName) {
 
     }
 }

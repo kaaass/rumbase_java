@@ -66,7 +66,7 @@ public interface Index extends Iterable<Pair> {
      * 向索引中加入键值对“数据Hash-UUID”
      *
      * @param dataHash 数据Hash
-     * @param uuid 对应记录UUID
+     * @param uuid     对应记录UUID
      */
     void insert(long dataHash, long uuid);
 
@@ -115,6 +115,7 @@ public interface Index extends Iterable<Pair> {
 
     /**
      * 返回遍历索引的迭代器
+     *
      * @return 第一个键值对的迭代器
      */
     @Override

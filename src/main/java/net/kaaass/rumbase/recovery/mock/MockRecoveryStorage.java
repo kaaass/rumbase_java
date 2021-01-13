@@ -12,14 +12,17 @@ public class MockRecoveryStorage implements IRecoveryStorage {
     public MockRecoveryStorage() {
         bytes = new ArrayList<>();
     }
-    // 模拟日志记录
+
+    /**
+     * 模拟日志记录
+     */
     public List<byte[]> bytes;
 
     @Override
     public void begin(int xid, List<Integer> snapshots) {
-        String beginStr = "begin "+ xid;
+        String beginStr = "begin " + xid;
         bytes.add(beginStr.getBytes());
-        String snapStr = "snap "+snapshots.toString();
+        String snapStr = "snap " + snapshots.toString();
         bytes.add(snapStr.getBytes());
     }
 
@@ -31,33 +34,33 @@ public class MockRecoveryStorage implements IRecoveryStorage {
 
     @Override
     public void commit(int xid) {
-        String commitStr = "commit " +xid;
+        String commitStr = "commit " + xid;
         bytes.add(commitStr.getBytes());
     }
 
     @Override
     public void insert(int xid, long uuid, byte[] item) {
-        String insertStr = "insert "+xid + " " + uuid+" ";
+        String insertStr = "insert " + xid + " " + uuid + " ";
         // 对控制语句、数据两部分进行合并得到最终日志记录
         byte[] first = insertStr.getBytes();
-        byte[] result = Arrays.copyOf(first,first.length + item.length);
-        System.arraycopy(item,0,result,first.length,item.length);
+        byte[] result = Arrays.copyOf(first, first.length + item.length);
+        System.arraycopy(item, 0, result, first.length, item.length);
         bytes.add(result);
     }
 
     @Override
     public void update(int xid, long uuid, byte[] item) {
-        String updateStr = "update "+xid + " " + uuid+" ";
+        String updateStr = "update " + xid + " " + uuid + " ";
         // 对控制语句、数据两部分进行合并得到最终日志记录
         byte[] first = updateStr.getBytes();
-        byte[] result = Arrays.copyOf(first,first.length + item.length);
-        System.arraycopy(item,0,result,first.length,item.length);
+        byte[] result = Arrays.copyOf(first, first.length + item.length);
+        System.arraycopy(item, 0, result, first.length, item.length);
         bytes.add(result);
     }
 
     @Override
     public void updateMeta(int xid, long metaUUID) {
-        String updateMetaStr = "meta " + xid +" " + metaUUID;
+        String updateMetaStr = "meta " + xid + " " + metaUUID;
         bytes.add(updateMetaStr.getBytes());
     }
 

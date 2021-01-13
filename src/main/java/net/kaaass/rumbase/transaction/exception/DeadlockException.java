@@ -10,7 +10,6 @@ import java.util.Map;
  * E6001 死锁异常
  * <p>
  * E6001-1 发生死锁
- * </p>
  *
  * @author criki
  */

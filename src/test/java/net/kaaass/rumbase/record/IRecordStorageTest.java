@@ -23,12 +23,12 @@ public class IRecordStorageTest extends TestCase {
         var storage = RecordManager.fromFile("test_query");
         var context = TransactionContext.empty();
 
-        var result = storage.queryOptional(context, UUID.randomUUID());
+        var result = storage.queryOptional(context, UUID.randomUUID().getLeastSignificantBits());
 
         assertTrue("unknown uuid should get empty", result.isEmpty());
 
         try {
-            storage.query(context, UUID.randomUUID());
+            storage.query(context, UUID.randomUUID().getLeastSignificantBits());
             fail("unknown uuid should get exception");
         } catch (RecordNotFoundException e) {
             log.error("Exception expected: ", e);

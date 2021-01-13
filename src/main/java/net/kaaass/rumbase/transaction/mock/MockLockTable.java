@@ -12,14 +12,13 @@ import net.kaaass.rumbase.transaction.LockTable;
 public class MockLockTable implements LockTable {
 
 
-
     @Override
-    public void addSharedLock(int xid, long uuid) {
+    public void addSharedLock(int xid, long uuid, String tableName) {
 
     }
 
     @Override
-    public void addExclusiveLock(int xid, long uuid) {
+    public void addExclusiveLock(int xid, long uuid, String tableName) {
 
     }
 

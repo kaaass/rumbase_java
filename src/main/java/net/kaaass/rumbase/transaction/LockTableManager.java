@@ -9,7 +9,6 @@ import java.util.Map;
  * 锁表管理器
  * <p>
  * 管理锁表
- * </p>
  *
  * @author criki
  */

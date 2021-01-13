@@ -8,12 +8,12 @@ import java.util.Map;
 /**
  * E9002 文件异常
  * <p>
- * E9002-1  创建文件失败
+ * E9002-1  回写数据偏移与大小之和超过规定
  *
  * @author XuanLaoYee
  */
 public class PageException extends RumbaseException {
-    public static final Map<Integer, String> REASONS = new HashMap<Integer, String>(){{
+    public static final Map<Integer, String> REASONS = new HashMap<Integer, String>() {{
         put(1, "回写数据偏移与大小之和超过规定");
     }};
 
@@ -22,7 +22,7 @@ public class PageException extends RumbaseException {
      *
      * @param subId 主错误号
      */
-    public PageException(int subId){
+    public PageException(int subId) {
         super(9002, subId, REASONS.get(subId));
     }
 }

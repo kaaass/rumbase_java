@@ -3,6 +3,7 @@ package net.kaaass.rumbase.dataitem.mock;
 import lombok.Data;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.util.*;
 
@@ -30,16 +31,16 @@ public class MockItemStorage implements IItemStorage {
      */
     private Map<Long, byte[]> maps;
     /**
-     *  模拟的文件头信息
+     * 模拟的文件头信息
      */
     private byte[] meta;
 
     /**
      * 模拟的构造函数
      *
-     * @param fileName 文件名
+     * @param fileName     文件名
      * @param tempFreePage 当前第一个空闲页号
-     * @param headerUuid 头信息对应UUID
+     * @param headerUuid   头信息对应UUID
      */
     public MockItemStorage(String fileName, int tempFreePage, long headerUuid) {
         this.fileName = fileName;
@@ -68,18 +69,18 @@ public class MockItemStorage implements IItemStorage {
     /**
      * 新建数据库，并写入表头
      *
-     * @param fileName 文件名
+     * @param fileName    文件名
      * @param tableHeader 表头信息
      * @return 返回数据项管理器
      */
-    public static IItemStorage ofNewFile(String fileName, byte[] tableHeader) {
+    public static IItemStorage ofNewFile(TransactionContext txContext ,String fileName, byte[] tableHeader) {
         // TODO: 因为是新建的文件，所以需要给文件头写入头信息数据。
         return new MockItemStorage(fileName, 0, 0);
     }
 
 
     @Override
-    public long insertItem(byte[] item) {
+    public long insertItem(TransactionContext txContext,byte[] item) {
         Random ran = new Random();
         long r = ran.nextLong();
         maps.put(r, item);
@@ -87,15 +88,15 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void insertItemWithUuid(byte[] item, long uuid){
-        maps.put(uuid,item);
+    public void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid) {
+        maps.put(uuid, item);
     }
 
     @Override
     public byte[] queryItemByUuid(long uuid) throws UUIDException {
-        if (maps.containsKey(uuid)){
+        if (maps.containsKey(uuid)) {
             return maps.get(uuid);
-        }else {
+        } else {
             throw new UUIDException(2);
         }
     }
@@ -106,7 +107,7 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void updateItemByUuid(long uuid, byte[] item) throws UUIDException {
+    public void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException {
         if (maps.containsKey(uuid)) {
             maps.put(uuid, item);
         } else {
@@ -120,7 +121,7 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void setMetadata(byte[] metadata) {
+    public void setMetadata(TransactionContext txContext, byte[] metadata) {
         this.meta = metadata;
     }
 

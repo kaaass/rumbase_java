@@ -2,10 +2,8 @@ package net.kaaass.rumbase.transaction;
 
 /**
  * 事务管理器
- *
  * <p>
  * 管理事务的状态
- * </p>
  *
  * @author criki
  */
