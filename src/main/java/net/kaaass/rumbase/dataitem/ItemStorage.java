@@ -195,101 +195,109 @@ public class ItemStorage implements IItemStorage {
     public void removeItems(List<Long> uuids) {
 
     }
-}
 
-/**
- * 表头
- */
-class TableHeader {
     /**
-     * 是否是表头的标志
+     * 表头
      */
-    @Bin
-    int  headerFlag;
-    /**
-     * 第一个可使用的空闲页编号
-     */
-    @Bin
-    int tempFreePage;
-    /**
-     * 是否有表头信息
-     */
-    @Bin
-    byte hasHeaderInfo;
-    /**
-     * 表头信息对应的UUID
-     */
-    @Bin
-    long headerUuid;
-}
+    public static class TableHeader {
+        /**
+         * 是否是表头的标志
+         */
+        @Bin
+        int  headerFlag;
+        /**
+         * 第一个可使用的空闲页编号
+         */
+        @Bin
+        int tempFreePage;
+        /**
+         * 是否有表头信息
+         */
+        @Bin
+        byte hasHeaderInfo;
+        /**
+         * 表头信息对应的UUID
+         */
+        @Bin
+        long headerUuid;
 
-/**
- * 每个数据项对应的相关信息
- */
-class Item{
-    /**
-     * 数据项大小
-     */
-    @Bin
-    public int size;
-    /**
-     * 数据项编号
-     */
-    @Bin
-    public long uuid;
-    /**
-     * 页内偏移
-     */
-    @Bin
-    public int offset;
-}
-
-/**
- * 页头
- */
-class PageHeader{
-    /**
-     * 页头标志
-     */
-    @Bin
-    public int pageFlag;
-    /**
-     * 当前页号
-     */
-    @Bin
-    public int pageId;
-    /**
-     * 日志记录编号
-     */
-    @Bin
-    long lsn;
-    /**
-     * 剩余空间大小
-     */
-    @Bin
-    int leftSpace;
-    /**
-     * 页内记录总数
-     */
-    @Bin
-    int recordNumber;
-    /**
-     * 页内记录的相关信息
-     */
-    @Bin
-    Item[] item;
-
-    public PageHeader() { }
-
-    public PageHeader(int pageFlag, int pageId, long lsn, int leftSpace, int recordNumber) {
-        this.pageFlag = pageFlag;
-        this.pageId = pageId;
-        this.lsn = lsn;
-        this.leftSpace = leftSpace;
-        this.recordNumber = recordNumber;
+        public Object newInstance(Class<?> klazz){
+            return klazz == TableHeader.class ? new TableHeader() : null;
+        }
     }
 
-    public Object newInstance(Class<?> klazz){
-        return klazz == Item.class ? new Item() : null;
+    /**
+     * 每个数据项对应的相关信息
+     */
+    public static class Item{
+        /**
+         * 数据项大小
+         */
+        @Bin
+        public int size;
+        /**
+         * 数据项编号
+         */
+        @Bin
+        public long uuid;
+        /**
+         * 页内偏移
+         */
+        @Bin
+        public int offset;
+
+        public Object newInstance(Class<?> klazz){
+            return klazz == Item.class ? new Item() : null;
+        }
+    }
+
+    /**
+     * 页头
+     */
+    public static class PageHeader{
+        /**
+         * 页头标志
+         */
+        @Bin
+        public int pageFlag;
+        /**
+         * 当前页号
+         */
+        @Bin
+        public int pageId;
+        /**
+         * 日志记录编号
+         */
+        @Bin
+        long lsn;
+        /**
+         * 剩余空间大小
+         */
+        @Bin
+        int leftSpace;
+        /**
+         * 页内记录总数
+         */
+        @Bin
+        int recordNumber;
+        /**
+         * 页内记录的相关信息
+         */
+        @Bin
+        Item[] item;
+
+        public PageHeader() { }
+
+        public PageHeader(int pageFlag, int pageId, long lsn, int leftSpace, int recordNumber) {
+            this.pageFlag = pageFlag;
+            this.pageId = pageId;
+            this.lsn = lsn;
+            this.leftSpace = leftSpace;
+            this.recordNumber = recordNumber;
+        }
+
+        public Object newInstance(Class<?> klazz){
+            return klazz == PageHeader.class ? new PageHeader() : null;
+        }
     }
 }
