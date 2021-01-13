@@ -19,7 +19,7 @@ import static org.junit.Assert.assertArrayEquals;
 @Slf4j
 public class IRecordStorageTest extends TestCase {
 
-    public void testQuery() {
+    public void testQuery() throws RecordNotFoundException {
         var storage = RecordManager.fromFile("test_query");
         var context = TransactionContext.empty();
 
@@ -35,7 +35,7 @@ public class IRecordStorageTest extends TestCase {
         }
     }
 
-    public void testInsert() {
+    public void testInsert() throws RecordNotFoundException {
         var storage = RecordManager.fromFile("test_insert");
         var context = TransactionContext.empty();
 
@@ -46,7 +46,7 @@ public class IRecordStorageTest extends TestCase {
         assertArrayEquals(new byte[]{0x1, 0x2, 0x1f}, result.get());
     }
 
-    public void testDelete() {
+    public void testDelete() throws RecordNotFoundException {
         var storage = RecordManager.fromFile("test_delete");
         var context = TransactionContext.empty();
 
