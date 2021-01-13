@@ -39,4 +39,14 @@ public enum TransactionStatus {
     TransactionStatus(int statusId) {
         this.statusId = (byte) statusId;
     }
+
+    public static TransactionStatus getStatusById(byte id) {
+        for (TransactionStatus value : values()) {
+            if (id == value.statusId) {
+                return value;
+            }
+        }
+
+        return null;
+    }
 }
