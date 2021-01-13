@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.dataitem;
 
 import com.igormaznitsa.jbbp.JBBPParser;
+import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.Page;
@@ -11,15 +12,17 @@ import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.IRecoveryStorage;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 数据项管理器的具体实现
  *
  * <p>
  *     每个表的头信息都是一致的，为
- *     |头信息标志位：1234(共4字节)|当前可用的第一个空闲页(2字节)|是否写入表头信息(1字节)，写入为123|头信息所对应的UUID(8字节)
+ *     |头信息标志位：1234(共4字节)|当前可用的第一个空闲页(4字节)|是否写入表头信息(1字节)，写入为123|头信息所对应的UUID(8字节)
  *
  *     同时
  * </p>
@@ -83,12 +86,12 @@ public class ItemStorage implements IItemStorage {
         var header = pageStorage.get(0);
         if (checkTableHeader(header)){
             // 如果表头标志存在，就解析对应表头信息
-            var h = JBBPParser.prepare("long headerFlag;int tempFreePage;byte hasHeaderInfo;long headerUuid;").parse(header.getData()).mapTo(new TableHeader());
+            var h = JBBPParser.prepare("int headerFlag;int tempFreePage;byte hasHeaderInfo;long headerUuid;").parse(header.getData()).mapTo(new TableHeader());
             return new ItemStorage(fileName,h.tempFreePage,h.headerUuid,pageStorage);
         }else {
             // 若表头标志不存在，就初始化对应的表信息。
             // 只初始化headerFlag和tempFreePage，表头信息位置统一由setMetadata来实现
-            byte[] bytes = new byte[]{1,2,3,4,0,1};
+            byte[] bytes = new byte[]{1,2,3,4,0,0,0,1};
             header.patchData(0,bytes);
             return new ItemStorage(fileName,1,0,pageStorage);
         }
@@ -106,19 +109,55 @@ public class ItemStorage implements IItemStorage {
         return pageStorage;
     }
 
-    private PageHeader getPageHeader(Page page) throws IOException {
-        var data = page.getData();
-        var pageHeader = JBBPParser.prepare("long pageFlag;int pageId;long lsn;int leftSpace;int recordNumber;" +
-                "Item[recordNumber]{int size;long uuid;int offset;}").parse(data).mapTo(new PageHeader());
-        return pageHeader;
+    /**
+     *  检查一个页头标志位是否存在，表示其是否已经被初始化。若初始化则标志位为2345
+     * @param page 页
+     * @return 该页是否已经被初始化
+     * @throws IOException
+     */
+    private boolean checkPageHeader(Page page) throws IOException {
+        byte[] pageFlag = new byte[4];
+        var n = page.getData().read(pageFlag);
+        return pageFlag[0] == 2 && pageFlag[1] == 3 && pageFlag[2] == 4 && pageFlag[3] == 5;
     }
 
+    private Optional<PageHeader> getPageHeader(Page page) throws IOException {
+        if (!checkPageHeader(page)){
+            // 如果页头信息正确，就解析得到页头信息的对象。
+            var data = page.getData();
+            byte[] s = new byte[40];
+            var pageHeader = JBBPParser.prepare("int pageFlag;int pageId;long lsn;int leftSpace;int recordNumber;" +
+                    "item [_]{int size;long uuid;int offset;}").parse(s);
+            var p = pageHeader.mapTo(new PageHeader());
+            return Optional.of(p);
+        }else {
+            // 否则返回空，交由上层处理。
+            return Optional.empty();
+        }
+    }
+
+    private PageHeader initPage(Page page,int pageId) throws IOException, PageException {
+        final byte[] bytes = JBBPOut.BeginBin().
+                Byte(2,3,4,5). // 页头标志位
+                Int(pageId).   // pageId
+                Long(0).       // 日志记录位置，以后若有日志记录点则使用
+                Int(4072).         // 剩余空间大小
+                Int(0).        // 记录数目
+                End().toByteArray();
+        page.patchData(0,bytes);
+        return new PageHeader(0,pageId,0,4072,0);
+    }
 
     @Override
-    public long insertItem(TransactionContext txContext, byte[] item) throws IOException {
+    public long insertItem(TransactionContext txContext, byte[] item) throws IOException, PageException {
         var page = pageStorage.get(this.tempFreePage);
         var pageHeader = getPageHeader(page);
+        if (pageHeader.isEmpty()){
+            // 如果获取的页没有页头信息，则进行初始化。
+            var p = initPage(page,this.tempFreePage);
+        }else {
 
+        }
         return 0;
     }
 
@@ -166,7 +205,7 @@ class TableHeader {
      * 是否是表头的标志
      */
     @Bin
-    long headerFlag;
+    int  headerFlag;
     /**
      * 第一个可使用的空闲页编号
      */
@@ -192,17 +231,17 @@ class Item{
      * 数据项大小
      */
     @Bin
-    int size;
+    public int size;
     /**
      * 数据项编号
      */
     @Bin
-    long uuid;
+    public long uuid;
     /**
      * 页内偏移
      */
     @Bin
-    int offset;
+    public int offset;
 }
 
 /**
@@ -213,12 +252,12 @@ class PageHeader{
      * 页头标志
      */
     @Bin
-    long pageFlag;
+    public int pageFlag;
     /**
      * 当前页号
      */
     @Bin
-    int pageId;
+    public int pageId;
     /**
      * 日志记录编号
      */
@@ -239,4 +278,18 @@ class PageHeader{
      */
     @Bin
     Item[] item;
+
+    public PageHeader() { }
+
+    public PageHeader(int pageFlag, int pageId, long lsn, int leftSpace, int recordNumber) {
+        this.pageFlag = pageFlag;
+        this.pageId = pageId;
+        this.lsn = lsn;
+        this.leftSpace = leftSpace;
+        this.recordNumber = recordNumber;
+    }
+
+    public Object newInstance(Class<?> klazz){
+        return klazz == Item.class ? new Item() : null;
+    }
 }

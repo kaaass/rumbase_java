@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.dataitem;
 
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @return 返回数据项的UUID
      */
-    long insertItem(TransactionContext txContext, byte[] item) throws IOException;
+    long insertItem(TransactionContext txContext, byte[] item) throws IOException, PageException;
 
     /**
      * 插入一个有UUID的数据项，唯一使用的地方是日志恢复时使用

@@ -36,7 +36,7 @@ public class ItemManager {
         if (maps.containsKey(fileName)) {
             return maps.get(fileName);
         } else {
-            IItemStorage iItemStorage = MockItemStorage.ofFile(fileName);
+            IItemStorage iItemStorage = ItemStorage.ofFile(fileName);
             maps.put(fileName, iItemStorage);
             return iItemStorage;
         }
@@ -57,7 +57,7 @@ public class ItemManager {
             throw new FileException(1);
         } else {
             // 若文件不存在，则创建文件。
-            IItemStorage iItemStorage = MockItemStorage.ofNewFile(txContext,fileName, metadata);
+            IItemStorage iItemStorage = ItemStorage.ofNewFile(txContext,fileName, metadata);
             maps.put(fileName, iItemStorage);
             return iItemStorage;
         }
