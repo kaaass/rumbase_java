@@ -29,15 +29,19 @@ public class MockTransactionContext implements TransactionContext {
      */
     @Getter
     private final int xid;
+
     /**
      * 事务隔离度
      */
     @Getter
     private final TransactionIsolation isolation;
+
     /**
      * 存储创建它的管理器
      */
+    @Getter
     private final TransactionManager manager;
+
     /**
      * 事务状态
      */

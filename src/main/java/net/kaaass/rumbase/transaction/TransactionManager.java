@@ -23,7 +23,7 @@ public interface TransactionManager {
      * @param xid 事务id
      * @return 事务id为xid的事务上下文
      */
-    TransactionContext getTransactionContext(int xid);
+    TransactionContext getContext(int xid);
 
     /**
      * 改变事务日志中的事务状态

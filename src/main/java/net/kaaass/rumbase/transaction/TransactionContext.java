@@ -45,6 +45,13 @@ public interface TransactionContext {
     TransactionStatus getStatus();
 
     /**
+     * 获取事务管理器
+     *
+     * @return 事务管理器
+     */
+    TransactionManager getManager();
+
+    /**
      * 获取事务id
      *
      * @return 事务id

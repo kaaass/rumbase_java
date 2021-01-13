@@ -93,13 +93,13 @@ public class TransactionContextTest extends TestCase {
         int xid = transaction1.getXid();
 
         // 复原事务
-        var transactionR = manager.getTransactionContext(xid);
+        var transactionR = manager.getContext(xid);
         assertEquals(TransactionStatus.PREPARING, transactionR.getStatus());
         assertEquals(TransactionIsolation.READ_UNCOMMITTED, transactionR.getIsolation());
 
         // 改变事务状态
         transaction1.start();
-        transactionR = manager.getTransactionContext(xid);
+        transactionR = manager.getContext(xid);
         assertEquals(TransactionStatus.ACTIVE, transactionR.getStatus());
     }
 

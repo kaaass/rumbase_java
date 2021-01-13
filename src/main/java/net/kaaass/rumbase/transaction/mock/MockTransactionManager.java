@@ -74,7 +74,7 @@ public class MockTransactionManager implements TransactionManager {
      * @return 事务id为xid的事务上下文
      */
     @Override
-    public TransactionContext getTransactionContext(int xid) {
+    public TransactionContext getContext(int xid) {
         TransactionStatus status = TransactionStatus.getStatusById(XidLog.get(xid));
 
         // 此处为了mock，事务隔离度均为TransactionIsolation.READ_UNCOMMITTED
