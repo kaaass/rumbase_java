@@ -46,4 +46,18 @@ public class RumbaseException extends Exception {
         this.mainId = mainId;
         this.subId = subId;
     }
+
+    /**
+     * 构造Rumbase异常
+     *
+     * @param mainId 主错误号
+     * @param subId  子错误号
+     * @param reason 错误原因
+     * @param cause  源错误
+     */
+    public RumbaseException(int mainId, int subId, String reason, Throwable cause) {
+        super(String.format("E%d-%d: %s", mainId, subId, reason), cause);
+        this.mainId = mainId;
+        this.subId = subId;
+    }
 }
