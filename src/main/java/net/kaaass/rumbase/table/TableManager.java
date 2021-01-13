@@ -2,8 +2,7 @@ package net.kaaass.rumbase.table;
 
 import lombok.NoArgsConstructor;
 import net.kaaass.rumbase.table.field.BaseField;
-import net.kaaass.rumbase.table.exception.TableExistException;
-import net.kaaass.rumbase.table.exception.TableNotFoundException;
+import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
@@ -13,9 +12,9 @@ import java.util.*;
  * 表管理器
  * <p>
  * ITableManager用于管理表结构, 已经为上层模块提供更加高级和抽象的接口.
- * </p><p>
+ * <p>
  * ITableManager会依赖index模块进行索引, 依赖record模块进行表单数据查找.
- * </p>
+ * <p>
  *
  * @author @KveinAxel
  */
@@ -37,30 +36,12 @@ public class TableManager {
     private final Map<TransactionContext, List<Table>> transactionTableCache = new HashMap<>();
 
     /**
-     * 通过系统配置表读取所有的表
-     */
-    public void loadMeta() {
-
-        // todo 读取并加载配置表
-    }
-
-    /**
-     * 开始一个事务
-     *
-     * @param isRepeatableRead 是否可重复读
-     * @return 事务context
-     */
-    TransactionContext begin(boolean isRepeatableRead) {
-        return TransactionContext.empty();
-    }
-
-    /**
      * 提交一个事务
      *
      * @param context 事务context
      */
     public void commit(TransactionContext context) {
-        // todo commit tx
+        context.commit();
     }
 
     /**
@@ -69,7 +50,7 @@ public class TableManager {
      * @param context 事务context
      */
     public void abort(TransactionContext context) {
-        // todo abort tx
+        context.rollback();
     }
 
     /**
@@ -97,22 +78,24 @@ public class TableManager {
             TransactionContext context,
             String tableName,
             List<BaseField> baseFields
-    ) throws TableExistException {
+    ) throws TableExistenceException {
         if (tableCache.containsKey(tableName)) {
-            throw new TableExistException(1);
+            throw new TableExistenceException(1);
         }
 
         var table = new Table(tableName, baseFields);
-        table.create(context);
+        table.persist(context);
+
+        // todo 加入全局配置表
 
         tableCache.put(tableName, table);
     }
 
-    public Table getTable(String tableName) throws TableNotFoundException {
+    public Table getTable(String tableName) throws TableExistenceException {
         var table = tableCache.get(tableName);
 
         if (table == null) {
-            throw new TableNotFoundException(1);
+            throw new TableExistenceException(1);
         } else {
             return table;
         }

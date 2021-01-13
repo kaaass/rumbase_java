@@ -17,5 +17,31 @@ public enum FieldType {
     /**
      * 带最大长度的可变长字符串
      */
-    VARCHAR
+    VARCHAR;
+
+    @Override
+    public String toString() {
+        switch (this) {
+            case INT:
+                return "int";
+            case FLOAT:
+                return "float";
+            case VARCHAR:
+                return "varchar";
+            default:
+                return "";
+        }
+    }
+
+    public FieldType fromString(String value) {
+        var intType = "int";
+        var floatType = "float";
+        if (value.equals(intType)) {
+            return INT;
+        } else if (value.equals(floatType)) {
+            return FLOAT;
+        } else {
+            return VARCHAR;
+        }
+    }
 }

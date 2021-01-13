@@ -12,20 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TableManagerTest extends TestCase {
 
-    public void testBegin() {
-        // todo
-    }
-
-    public void testCommit() {
-        // todo
-
-    }
-
-    public void testAbort() {
-        // todo
-
-    }
-
     public  void testShowTables() {
         // todo
 

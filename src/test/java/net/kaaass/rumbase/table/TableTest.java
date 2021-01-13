@@ -22,11 +22,11 @@ import static org.junit.Assert.assertArrayEquals;
 @Slf4j
 public class TableTest extends TestCase {
 
-    public void testParseSelf() {
+    public void testLoad() {
         // todo
     }
 
-    public void testPersistSelf() {
+    public void testPersist() {
         // todo
     }
 
@@ -61,14 +61,14 @@ public class TableTest extends TestCase {
         failEntry.add("test varchar");
         failEntry.add("1.2");
 
-        var intField = new IntField("testCheckStringEntryInt");
-        var floatField = new FloatField("testCheckStringEntryFloat");
-        var varcharField = new VarcharField("testCheckStringEntryVarchar", 20);
         var fieldList = new ArrayList<BaseField>();
+        var table = new Table("testCheckStringEntryTable", fieldList);
+        var intField = new IntField("testCheckStringEntryInt", table);
+        var floatField = new FloatField("testCheckStringEntryFloat", table);
+        var varcharField = new VarcharField("testCheckStringEntryVarchar", 20, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
-        var table = new Table("testCheckStringEntryTable", fieldList);
 
         assertTrue(table.checkStringEntry(passEntry));
         assertFalse(table.checkStringEntry(failEntry));
@@ -86,14 +86,14 @@ public class TableTest extends TestCase {
         failEntry.add("test varchar");
         failEntry.add("1.2");
 
-        var intField = new IntField("testStringEntryToBytesInt");
-        var floatField = new FloatField("testStringEntryToBytesFloat");
-        var varcharField = new VarcharField("testStringEntryToBytesVarchar", 20);
         var fieldList = new ArrayList<BaseField>();
+        var table = new Table("testStringEntryToBytesTable", fieldList);
+        var intField = new IntField("testStringEntryToBytesInt", table);
+        var floatField = new FloatField("testStringEntryToBytesFloat", table);
+        var varcharField = new VarcharField("testStringEntryToBytesVarchar", 20, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
-        var table = new Table("testStringEntryToBytesTable", fieldList);
 
         try {
             var bytes = table.stringEntryToBytes(passEntry);
@@ -138,19 +138,19 @@ public class TableTest extends TestCase {
                 63, -103, -103, -102, // float 1.2
         };
 
-        var intField = new IntField("testParseEntryInt");
-        var floatField = new FloatField("testParseEntryFloat");
-        var varcharField = new VarcharField("testParseEntryVarchar", 20);
         var fieldList = new ArrayList<BaseField>();
+        var table = new Table("testParseEntryTable", fieldList);
+        var intField = new IntField("testParseEntryInt", table);
+        var floatField = new FloatField("testParseEntryFloat", table);
+        var varcharField = new VarcharField("testParseEntryVarchar", 20, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
-        var table = new Table("testParseEntryTable", fieldList);
 
         try {
             var list = table.parseEntry(passEntry);
             assertEquals(33, (int) list.get(0));
-            assertEquals(1.2f, (float) list.get(1));
+            assertEquals(1.2f, list.get(1));
             assertEquals("test varchar", (String) list.get(2));
         } catch (TableConflictException | IOException e) {
             log.error("Exception expected: ", e);

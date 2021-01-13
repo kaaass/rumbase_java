@@ -1,11 +1,15 @@
 package net.kaaass.rumbase.table;
 
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.*;
 import net.kaaass.rumbase.exception.RumbaseException;
+import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
 import net.kaaass.rumbase.table.field.BaseField;
-import net.kaaass.rumbase.table.exception.TableNotFoundException;
+import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
@@ -30,17 +34,15 @@ public class Table {
      * 表名
      */
     @NonNull
+    @Getter
     String tableName;
 
     /**
      * 表所在文件的记录接口
      */
-    IRecordStorage recordStorage = null;
-
-    /**
-     * 表类型的uuid
-     */
-    UUID selfUuid = null;
+    @Getter
+    @NonNull
+    IRecordStorage recordStorage;
 
     /**
      * 表的状态，可能的状态有：
@@ -59,14 +61,14 @@ public class Table {
      */
     @Setter
     @Getter
-    UUID next = null;
+    long next;
 
     /**
      * 表结构拥有的字段
      */
     @Getter
     @Setter
-    List<BaseField> baseFields = new ArrayList<>();
+    List<BaseField> fields = new ArrayList<>();
 
     /**
      * 直接通过表名、字段创建表
@@ -75,42 +77,64 @@ public class Table {
      * </p>
      *
      * @param tableName 表名
-     * @param baseFields    表的字段结构
+     * @param fields    表的字段结构
      */
-    public Table(@NonNull String tableName, @NonNull List<BaseField> baseFields) {
+    public Table(@NonNull String tableName, @NonNull List<BaseField> fields) {
         // fixme remove mock
         this.recordStorage = MockRecordStorage.ofFile(tableName);
         this.tableName = tableName;
-        this.baseFields = baseFields;
+        this.fields = fields;
         this.status = TableStatus.NORMAL;
+        this.next = -1;
     }
 
     /**
-     * 根据配置信息解析获取表属性
-     *
-     * @param raw 配置信息
+     * 将当前表结构信息持久化到外存中
      */
-    public void parseSelf(byte[] raw) {
-        // todo
+    public void persist(TransactionContext context) {
+
+        var byteOutStream = new ByteArrayOutputStream();
+        var out = new JBBPBitOutputStream(byteOutStream);
+
+        try {
+            out.writeString(tableName, JBBPByteOrder.BIG_ENDIAN);
+            out.writeString(status.toString(), JBBPByteOrder.BIG_ENDIAN);
+            out.writeLong(next, JBBPByteOrder.BIG_ENDIAN);
+            out.writeInt(fields.size(), JBBPByteOrder.BIG_ENDIAN);
+            for (var f: fields) {
+                f.persist(byteOutStream);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        recordStorage.setMetadata(context, byteOutStream.toByteArray());
     }
 
-    /**
-     * 将自己持久化成字节数组
-     *
-     * @return 字节数组
-     */
-    public byte[] persistSelf() {
-        // todo
-        return new byte[0];
-    }
+    public static Table load(IRecordStorage recordStorage) {
 
-    /**
-     * 创建当前表
-     *
-     * @param context 事务context
-     */
-    public void create(TransactionContext context) {
-        // todo
+        var context = TransactionContext.empty();
+        var meta = recordStorage.getMetadata(context);
+        var stream = new ByteArrayInputStream(meta);
+        var in = new JBBPBitInputStream(stream);
+        try {
+            var name = in.readString(JBBPByteOrder.BIG_ENDIAN);
+            var next = in.readLong(JBBPByteOrder.BIG_ENDIAN);
+            var fieldNum = in.readInt(JBBPByteOrder.BIG_ENDIAN);
+            var fieldList = new ArrayList<BaseField>();
+            var table = new Table(name, fieldList);
+            for (int i = 0; i < fieldNum; i++) {
+                var f = BaseField.load(stream, table);
+                if (f != null) {
+                    fieldList.add(f);
+                }
+            }
+            table.next = next;
+            return table;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -119,7 +143,7 @@ public class Table {
      * @param context 事务context
      * @param uuid    元组的uuid
      */
-    public void delete(TransactionContext context, UUID uuid) {
+    public void delete(TransactionContext context, long uuid) {
         recordStorage.delete(context, uuid);
     }
 
@@ -130,7 +154,7 @@ public class Table {
      * @param uuid     元组的uuid
      * @param entry    新的行的字符串值列表
      */
-    public void update(TransactionContext context, UUID uuid, List<String> entry) throws RumbaseException {
+    public void update(TransactionContext context, long uuid, List<String> entry) throws RumbaseException {
 
         if(!checkStringEntry(entry)) {
             throw new TableConflictException(3);
@@ -141,7 +165,13 @@ public class Table {
         recordStorage.delete(context, uuid);
         var newUuid = recordStorage.insert(context, raw);
 
-        // todo 更新索引
+        var l = entry.size();
+        for (int i = 0; i < l; i++) {
+            var field = fields.get(i);
+            if (field.indexed()) {
+                field.insertIndex(entry.get(i), newUuid);
+            }
+        }
     }
 
 
@@ -151,15 +181,15 @@ public class Table {
      * @param entry 待检查entry
      * @return 满足情况
      */
-    boolean checkStringEntry(List<String> entry) {
-        if (baseFields.size() != entry.size()) {
+    public boolean checkStringEntry(List<String> entry) {
+        if (fields.size() != entry.size()) {
             return false;
         }
 
-        var len = baseFields.size();
+        var len = fields.size();
 
         for (int i = 0; i < len; i++) {
-            if (!baseFields.get(i).checkStr(entry.get(i))) {
+            if (!fields.get(i).checkStr(entry.get(i))) {
                 return false;
             }
         }
@@ -173,14 +203,14 @@ public class Table {
      * @param context 事务context
      * @param uuid    元组的uuid
      * @return 元组
-     * @throws TableNotFoundException         要查询的表不存在
+     * @throws TableExistenceException         要查询的表不存在
      * @throws TableConflictException 查询到的entry和当前表冲突
      */
-    public List<Object> read(TransactionContext context, UUID uuid) throws TableNotFoundException, TableConflictException {
+    public List<Object> read(TransactionContext context, long uuid) throws TableExistenceException, TableConflictException {
 
         var bytes = recordStorage
                 .queryOptional(context, uuid)
-                .orElseThrow(() -> new TableNotFoundException(4));
+                .orElseThrow(() -> new TableExistenceException(4));
 
         try {
             return parseEntry(bytes);
@@ -199,25 +229,125 @@ public class Table {
      * @param entry 新的元组
      * @throws TableConflictException 插入的元组不满足表约束
      */
-    public void insert(TransactionContext context, List<String> entry) throws TableConflictException {
+    public void insert(TransactionContext context, List<String> entry) throws TableConflictException, TableExistenceException {
 
         var bytes = stringEntryToBytes(entry);
 
         var uuid = recordStorage.insert(context, bytes);
 
-        // todo add to index
+        var l = entry.size();
+        for (int i = 0; i < l; i++) {
+            var field = fields.get(i);
+            if (field.indexed()) {
+                field.insertIndex(entry.get(i), uuid);
+            }
+        }
     }
 
     /**
      * @param fieldName 字段名
-     * @param left      查询区间左端点
-     * @param right     查询区间右端点
+     * @param fieldValue 字段值
      * @return 查询到的uuid列表
-     * @throws TableNotFoundException 要查询的表不存在
+     * @throws TableExistenceException 要查询的表不存在
      */
-    public List<UUID> search(String fieldName, BaseField left, BaseField right) throws TableNotFoundException {
+    public List<Long> search(String fieldName, String fieldValue) throws TableExistenceException, TableConflictException {
+        BaseField field = null;
 
-        throw new TableNotFoundException(4);
+        for (var f: fields) {
+            if (f.getName().equals(fieldName)) {
+                field = f;
+            }
+        }
+
+        if (field == null) {
+            throw new TableExistenceException(2);
+        }
+
+        return field.queryIndex(fieldValue);
+    }
+
+    /**
+     * 以指定的索引查询全部记录
+     * <p>
+     * 返回第一个记录的迭代器，以(字段值, 记录uuid)的方式返回
+     * <p>
+     * 返回的uuid不保证可见
+     *
+     * @param fieldName 字段名
+     * @return (字段值, 记录uuid)形式的第一个迭代器
+     * @throws TableExistenceException 字段不存在(2), 索引不存在(6)
+     */
+    public Iterator<Pair> searchAll(String fieldName) throws TableExistenceException {
+        BaseField field = null;
+
+        for (var f: fields) {
+            if (f.getName().equals(fieldName)) {
+                field = f;
+            }
+        }
+
+        if (field == null) {
+            throw new TableExistenceException(2);
+        }
+
+        return field.queryFirst();
+    }
+
+
+    /**
+     * 查询第一个满足字段值的迭代器
+     * <p>
+     * 返回第一个记录的迭代器，以(字段值, 记录uuid)的方式返回
+     * <p>
+     * 返回的uuid不保证可见
+     *
+     * @param fieldName 字段名
+     * @param key 字段值
+     * @return (字段值, 记录uuid)形式的第一个迭代器
+     * @throws TableExistenceException 字段不存在(2), 索引不存在(6)
+     * @throws TableConflictException 字段类型不匹配
+     */
+    public Iterator<Pair> searchFirst(String fieldName, String key) throws TableExistenceException, TableConflictException {
+        BaseField field = null;
+
+        for (var f: fields) {
+            if (f.getName().equals(fieldName)) {
+                field = f;
+            }
+        }
+
+        if (field == null) {
+            throw new TableExistenceException(2);
+        }
+
+        return field.queryFirstMeet(key);
+    }
+
+    /**
+     * 查询第一个满足值且与查询键不相等的迭代器
+     * <p>
+     * 返回第一个记录的迭代器，以(字段值, 记录uuid)的方式返回
+     * <p>
+     * 返回的uuid不保证可见
+     *
+     * @param fieldName 字段名
+     * @return (字段值, 记录uuid)形式的第一个迭代器
+     * @throws TableExistenceException 字段不存在(2), 索引不存在(6)
+     */
+    public Iterator<Pair> searchFirstNotEqual(String fieldName, String key) throws TableExistenceException, TableConflictException {
+        BaseField field = null;
+
+        for (var f: fields) {
+            if (f.getName().equals(fieldName)) {
+                field = f;
+            }
+        }
+
+        if (field == null) {
+            throw new TableExistenceException(2);
+        }
+
+        return field.queryFirstMeetNotEqual(key);
     }
 
     /**
@@ -226,17 +356,17 @@ public class Table {
      * @param entry 元组
      * @return 字节数组
      */
-    byte[] stringEntryToBytes(List<String > entry) throws TableConflictException {
+    public byte[] stringEntryToBytes(List<String> entry) throws TableConflictException {
         var stream = new ByteArrayOutputStream();
 
         if (!checkStringEntry(entry)) {
             throw new TableConflictException(3);
         }
 
-        var len = baseFields.size();
+        var len = fields.size();
 
         for (int i = 0; i < len; i++) {
-            baseFields.get(i).serialize(stream, entry.get(i));
+            fields.get(i).serialize(stream, entry.get(i));
         }
 
         return stream.toByteArray();
@@ -248,11 +378,11 @@ public class Table {
      * @param raw 字节数组
      * @return 元组
      */
-    List<Object> parseEntry(byte[] raw) throws TableConflictException, IOException {
+    public List<Object> parseEntry(byte[] raw) throws TableConflictException, IOException {
         var stream = new ByteArrayInputStream(raw);
         var list = new ArrayList<>();
 
-        for (var field : baseFields) {
+        for (var field : fields) {
             list.add(field.deserialize(stream));
         }
 

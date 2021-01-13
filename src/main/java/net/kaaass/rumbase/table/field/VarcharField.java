@@ -4,13 +4,17 @@ import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.NonNull;
+import net.kaaass.rumbase.index.Pair;
+import net.kaaass.rumbase.table.Table;
 import net.kaaass.rumbase.table.exception.TableConflictException;
+import net.kaaass.rumbase.table.exception.TableExistenceException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Iterator;
+import java.util.List;
 
-import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
 
 /**
  * 可变长字符串类型的字段
@@ -24,9 +28,23 @@ public class VarcharField extends BaseField {
      */
     private final int limit;
 
-    public VarcharField(@NonNull String name, int limit) {
-        super(name, FieldType.VARCHAR);
+    public VarcharField(@NonNull String name, int limit, @NonNull Table parentTable) {
+        super(name, FieldType.VARCHAR, parentTable);
         this.limit = limit;
+    }
+
+    @Override
+    public void persist(OutputStream stream) {
+        var out = new JBBPBitOutputStream(stream);
+
+        try {
+            out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
+            out.writeString(getType().toString(), JBBPByteOrder.BIG_ENDIAN);
+            out.writeInt(limit, JBBPByteOrder.BIG_ENDIAN);
+            // todo （字段约束）
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -87,8 +105,47 @@ public class VarcharField extends BaseField {
     }
 
     @Override
-    public void insertIndex(Object value, long uuid) {
+    public void insertIndex(String value, long uuid) throws TableExistenceException {
+        if (index == null) {
+            throw new TableExistenceException(6);
+        }
+        index.insert(strToHash(value), uuid);
+    }
 
+    @Override
+    public List<Long> queryIndex(String value) throws TableExistenceException {
+        if (index == null) {
+            throw new TableExistenceException(6);
+        }
+
+        return index.query(strToHash(value));
+    }
+
+    @Override
+    public Iterator<Pair> queryFirst() throws TableExistenceException {
+        if (index == null) {
+            throw new TableExistenceException(6);
+        }
+
+        return index.findFirst();
+    }
+
+    @Override
+    public Iterator<Pair> queryFirstMeet(String key) throws TableExistenceException {
+        if (index == null) {
+            throw new TableExistenceException(6);
+        }
+
+        return index.findFirst(strToHash(key));
+    }
+
+    @Override
+    public Iterator<Pair> queryFirstMeetNotEqual(String key) throws TableExistenceException {
+        if (index == null) {
+            throw new TableExistenceException(6);
+        }
+
+        return index.findUpperbound(strToHash(key));
     }
 
 }
