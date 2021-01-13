@@ -90,6 +90,7 @@ public class MvccRecordStorage implements IRecordStorage {
      */
     private boolean isVisible(TransactionContext txContext, byte[] data) {
         var isolation = txContext.getIsolation();
+        var xid = txContext.getXid();
         var xmin = readXmin(data);
         var xmax = readXmax(data);
         if (isolation == TransactionIsolation.READ_UNCOMMITTED) {
@@ -97,14 +98,47 @@ public class MvccRecordStorage implements IRecordStorage {
             return xmax == 0;
         } else if (isolation == TransactionIsolation.READ_COMMITTED) {
             // 读已提交
-            if (xmin == txContext.getXid() && xmax == 0) {
-                // 事务自身创建
+            // 事务自身创建，且未被删除
+            if (xmin == xid && xmax == 0) {
                 return true;
             }
-            // TODO
+            // 记录已提交
+            if (statusOf(xmin, txContext) == TransactionStatus.COMMITTED) {
+                // 未被删除
+                if (xmax == 0) {
+                    return true;
+                }
+                // 被自身删除则不可见
+                if (xmax == xid) {
+                    return false;
+                }
+                // 被删除但是删除事务未提交
+                return statusOf(xmax, txContext) != TransactionStatus.COMMITTED;
+            }
             return false;
         } else if (isolation == TransactionIsolation.REPEATABLE_READ) {
-
+            // 可重复读
+            // 事务自身创建，且未被删除
+            if (xmin == xid && xmax == 0) {
+                return true;
+            }
+            // 记录被可见事务提交
+            if (xmin < xid && !txContext.getSnapshot().contains(xmin)
+                    && statusOf(xmin, txContext) == TransactionStatus.COMMITTED) {
+                // 未被删除
+                if (xmax == 0) {
+                    return true;
+                }
+                // 被自身删除则不可见
+                if (xmax == xid) {
+                    return false;
+                }
+                // 被删除但是删除事务未提交
+                if (xmax > xid || txContext.getSnapshot().contains(xmax)
+                        || statusOf(xmax, txContext) != TransactionStatus.COMMITTED) {
+                    return true;
+                }
+            }
         } else if (isolation == TransactionIsolation.SERIALIZABLE) {
             // 可串行化：没被删除，依靠2PL保证事务性
             return xmax == 0;
