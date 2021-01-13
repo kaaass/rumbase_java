@@ -5,6 +5,7 @@ import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionManager;
 import net.kaaass.rumbase.transaction.TransactionStatus;
 
+import javax.transaction.xa.Xid;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,6 +65,21 @@ public class MockTransactionManager implements TransactionManager {
         changeTransactionStatus(xid, TransactionStatus.PREPARING);
 
         return new MockTransactionContext(xid, isolation, this);
+    }
+
+    /**
+     * 根据事务id获取事务上下文
+     *
+     * @param xid 事务id
+     * @return 事务id为xid的事务上下文
+     */
+    @Override
+    public TransactionContext getContext(int xid) {
+        TransactionStatus status = TransactionStatus.getStatusById(XidLog.get(xid));
+
+        // 此处为了mock，事务隔离度均为TransactionIsolation.READ_UNCOMMITTED
+
+        return new MockTransactionContext(xid, TransactionIsolation.READ_UNCOMMITTED, this, status);
     }
 
     /**

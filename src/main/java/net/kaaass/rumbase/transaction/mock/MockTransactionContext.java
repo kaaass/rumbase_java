@@ -29,15 +29,19 @@ public class MockTransactionContext implements TransactionContext {
      */
     @Getter
     private final int xid;
+
     /**
      * 事务隔离度
      */
     @Getter
     private final TransactionIsolation isolation;
+
     /**
      * 存储创建它的管理器
      */
+    @Getter
     private final TransactionManager manager;
+
     /**
      * 事务状态
      */
@@ -62,6 +66,21 @@ public class MockTransactionContext implements TransactionContext {
         this.status = TransactionStatus.PREPARING;
         this.isolation = isolation;
         this.manager = manager;
+    }
+
+    /**
+     * 用于恢复的事务上下文构造函数
+     *
+     * @param xid       事务id
+     * @param isolation 事务隔离度
+     * @param manager   创建事务的管理器
+     * @param status    事务状态
+     */
+    public MockTransactionContext(int xid, TransactionIsolation isolation, TransactionManager manager, TransactionStatus status) {
+        this.xid = xid;
+        this.isolation = isolation;
+        this.manager = manager;
+        this.status = status;
     }
 
     @Override
