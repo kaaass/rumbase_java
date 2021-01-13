@@ -28,4 +28,13 @@ public class RecordNotFoundException extends RumbaseException {
     public RecordNotFoundException(int subId) {
         super(5001, subId, REASONS.get(subId));
     }
+
+    /**
+     * 记录不存在异常
+     *
+     * @param subId 子错误号
+     */
+    public RecordNotFoundException(int subId, Throwable cause) {
+        super(5001, subId, REASONS.get(subId), cause);
+    }
 }

@@ -1,8 +1,11 @@
 package net.kaaass.rumbase.record;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.dataitem.IItemStorage;
+import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.record.exception.StorageCorruptedException;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -17,11 +20,14 @@ import java.util.Optional;
  * @author kaaass
  */
 @Slf4j
+@RequiredArgsConstructor
 public class MvccRecordStorage implements IRecordStorage {
 
-    private IItemStorage storage;
+    @NonNull
+    private final IItemStorage storage;
 
-    private String identifiedName;
+    @NonNull
+    private final String identifiedName;
 
     /**
      * 元数据缓存。仅在第一条metadata可见时有效
@@ -31,7 +37,7 @@ public class MvccRecordStorage implements IRecordStorage {
     @SneakyThrows
     @Override
     public long insert(TransactionContext txContext, byte[] rawData) {
-        var data = new byte[rawData.length + 16];
+        var data = new byte[rawData.length + 8];
         // 拼接data
         writeXmin(data, txContext.getXid());
         writeXmax(data, 0);
@@ -41,7 +47,6 @@ public class MvccRecordStorage implements IRecordStorage {
         return storage.insertItem(txContext, data);
     }
 
-    @SneakyThrows
     @Override
     public Optional<byte[]> queryOptional(TransactionContext txContext, long recordId) throws RecordNotFoundException {
         // 串行化事务则申请读锁
@@ -49,7 +54,12 @@ public class MvccRecordStorage implements IRecordStorage {
             txContext.sharedLock(recordId, this.identifiedName);
         }
         // 读取数据
-        var data = storage.queryItemByUuid(recordId);
+        byte[] data;
+        try {
+            data = storage.queryItemByUuid(recordId);
+        } catch (UUIDException e) {
+            throw new RecordNotFoundException(1, e);
+        }
         // 检查可见性
         if (isVisible(txContext, data)) {
             return Optional.of(readPayload(data));
@@ -69,9 +79,13 @@ public class MvccRecordStorage implements IRecordStorage {
         }
         // 申请互斥锁
         txContext.exclusiveLock(recordId, this.identifiedName);
+        var xid = txContext.getXid();
+        if (xid == 0) {
+            xid = -1;
+        }
         // 是否已经被删除
         var xmax = readXmax(data);
-        if (xmax == txContext.getXid()) {
+        if (xmax == xid) {
             return;
         }
         // 版本跳跃检查
@@ -81,12 +95,12 @@ public class MvccRecordStorage implements IRecordStorage {
             return;
         }
         // 更新记录
-        writeXmax(data, txContext.getXid());
+        writeXmax(data, xid);
         storage.updateItemByUuid(txContext, recordId, data);
     }
 
     /**
-     * TODO 判断可见性
+     * 判断可见性
      */
     private boolean isVisible(TransactionContext txContext, byte[] data) {
         var isolation = txContext.getIsolation();
@@ -174,6 +188,10 @@ public class MvccRecordStorage implements IRecordStorage {
             var uuids = storage.getMetadata();
             for (int st = 0; st < uuids.length; st += 8) {
                 var uuid = MvccUtil.readLong(uuids, st);
+                // 用0作终止符 FIXME 下层默认应该返回空字节数组
+                if (uuid == 0) {
+                    break;
+                }
                 Optional<byte[]> result;
                 try {
                     result = queryOptional(txContext, uuid);
@@ -211,12 +229,10 @@ public class MvccRecordStorage implements IRecordStorage {
     }
 
     private static TransactionStatus statusOf(int xid, TransactionContext txContext) {
+        if (xid == 0 || xid == -1) {
+            return TransactionStatus.COMMITTED;
+        }
         return txContext.getManager().getContext(xid).getStatus();
-    }
-
-    private static boolean isFinished(int xid, TransactionContext txContext) {
-        var status = statusOf(xid, txContext);
-        return status == TransactionStatus.COMMITTED || status == TransactionStatus.ABORTED;
     }
 
     private static void writeXmin(byte[] data, int xmin) {

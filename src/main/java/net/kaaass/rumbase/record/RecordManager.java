@@ -1,5 +1,7 @@
 package net.kaaass.rumbase.record;
 
+import lombok.SneakyThrows;
+import net.kaaass.rumbase.dataitem.ItemManager;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
 
 /**
@@ -16,7 +18,10 @@ public class RecordManager {
      * @param filepath 记录文件
      * @return 记录存储对象
      */
+    @SneakyThrows
     public static IRecordStorage fromFile(String filepath) {
-        return MockRecordStorage.ofFile(filepath);
+        var itemStorage = ItemManager.fromFile(filepath);
+        var identifier = "TBL_" + filepath;
+        return new MvccRecordStorage(itemStorage, identifier);
     }
 }
