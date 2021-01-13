@@ -42,8 +42,8 @@ public interface Page {
      * 将页从内存中取消固定
      *
      * <p>
-     * 执行完指定查询或插入之后需要调用，pin和unpin需要成对出现
-     * </p>
+     * 执行完指定查询或插入之后需要调用，
+     * </p>pin和unpin需要成对出现
      */
     public void unpin();
 

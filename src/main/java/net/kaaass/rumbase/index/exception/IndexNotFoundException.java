@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * TODO 文档
+ * 当加载一个索引时，如果索引实现不存在相应的持久化信息，则无法加载，并抛出此异常
+ * @author 无索魏
  */
 public class IndexNotFoundException extends RumbaseException {
     /**
