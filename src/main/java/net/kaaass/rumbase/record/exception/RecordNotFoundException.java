@@ -14,14 +14,14 @@ import java.util.Map;
  */
 public class RecordNotFoundException extends RumbaseException {
 
-    public static final Map<Integer, String> REASONS = new HashMap<>(){{
+    public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "物理记录不存在");
     }};
 
     /**
      * 记录不存在异常
      *
-     * @param subId  子错误号
+     * @param subId 子错误号
      */
     public RecordNotFoundException(int subId) {
         super(5001, subId, REASONS.get(subId));
