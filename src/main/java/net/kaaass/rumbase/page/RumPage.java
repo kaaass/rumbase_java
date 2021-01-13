@@ -7,6 +7,10 @@ import java.io.File;
 import java.io.RandomAccessFile;
 
 /**
+ * Page实现
+ * <p>
+ * 页持有的是整个缓冲区的指针和偏移。页在patchData时本身并不加锁，如果防止冲突需要在上层加锁。
+ * </p>
  * @author XuanLaoYee
  */
 public class RumPage implements Page {
@@ -18,6 +22,10 @@ public class RumPage implements Page {
         this.offset = offset;//在内存中的偏移,指的是以页为单位的偏移
     }
 
+    /**
+     * 得到的是数据的副本，而非缓冲区的指针。
+     * @return clone后的数据
+     */
     @Override
     public byte[] getDataBytes() {
         synchronized (this) {
@@ -27,6 +35,12 @@ public class RumPage implements Page {
         }
     }
 
+    /**
+     *
+     * @param offset 页内偏移值，以字节为单位 ，该过程不加锁
+     * @param data   待写入数据
+     * @throws PageException 回写数据偏移与大小之和超过规定，则抛出异常
+     */
     @Override
     public void patchData(int offset, byte[] data) throws PageException {
         if (offset + data.length > PageManager.PAGE_SIZE) {

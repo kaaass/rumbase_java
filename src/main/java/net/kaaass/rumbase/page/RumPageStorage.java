@@ -2,12 +2,10 @@ package net.kaaass.rumbase.page;
 
 import net.kaaass.rumbase.page.exception.BufferException;
 import net.kaaass.rumbase.page.exception.FileException;
-import net.kaaass.rumbase.page.mock.MockPage;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 

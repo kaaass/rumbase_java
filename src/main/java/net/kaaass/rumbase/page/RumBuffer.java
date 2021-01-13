@@ -10,6 +10,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 内存管理
+ * <p>
+ * 使用单例模式，使用byte数组开辟连续空间，内存的大小不得超过BYTE_BUFFER_SIZE，RumBuffer在操作时直接将整块内存锁住
+ * </p>
  * @author XuanLaoYee
  */
 public class RumBuffer {
@@ -41,7 +44,7 @@ public class RumBuffer {
     }
 
     /**
-     *
+     * 将页大小的byte数组写入至缓冲的对应偏移中
      * @param offset 这里的偏移指的是按照页的大小进行偏移，比如3代表缓存数组中第3*PAGE_SIZE的位置
      * @param bytes 这里的数组大小等于PAGE_SIZE
      * @throws BufferException 若缓冲大小为0，则抛出内存不足的异常。若占用已装入内存空间，则抛出占用非空内存位置异常
@@ -64,6 +67,12 @@ public class RumBuffer {
             lock.unlock();
         }
     }
+
+    /**
+     * 从内存中读取指定位置的长度为页长的数据
+     * @param offset 这里的偏移指的是按照页的大小进行偏移
+     * @return 返回大小为页长的数组，该数组占用的内存与缓冲区无关
+     */
     public byte[] get(int offset) {
         lock.lock();
         try {
@@ -78,6 +87,10 @@ public class RumBuffer {
         return null;
     }
 
+    /**
+     * 释放缓冲区偏移为offset * page_size 处，大小为页长的空间
+     * @param offset 这里的偏移指的是按照页的大小进行偏移
+     */
     public void free(int offset) {
         lock.lock();
         try {
@@ -90,9 +103,19 @@ public class RumBuffer {
             lock.unlock();
         }
     }
+
+    /**
+     * 返回缓冲区指针
+     * @return 缓冲区指针
+     */
     public byte[] buffer(){
         return byteBuffer;
     }
+
+    /**
+     * 返回空闲页的偏移
+     * @return 空闲页的偏移
+     */
     public int getFreeOffset() {
         synchronized (this){
             return this.freePage.get(0);
