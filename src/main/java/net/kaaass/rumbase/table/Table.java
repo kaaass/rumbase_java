@@ -4,7 +4,7 @@ import lombok.*;
 import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
-import net.kaaass.rumbase.table.Field.Field;
+import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableNotFoundException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -40,7 +40,7 @@ public class Table {
     /**
      * 表类型的uuid
      */
-    UUID selfUUID = null;
+    UUID selfUuid = null;
 
     /**
      * 表的状态，可能的状态有：
@@ -66,7 +66,7 @@ public class Table {
      */
     @Getter
     @Setter
-    List<Field> fields = new ArrayList<>();
+    List<BaseField> baseFields = new ArrayList<>();
 
     /**
      * 直接通过表名、字段创建表
@@ -75,13 +75,13 @@ public class Table {
      * </p>
      *
      * @param tableName 表名
-     * @param fields    表的字段结构
+     * @param baseFields    表的字段结构
      */
-    public Table(@NonNull String tableName, @NonNull List<Field> fields) {
+    public Table(@NonNull String tableName, @NonNull List<BaseField> baseFields) {
         // fixme remove mock
         this.recordStorage = MockRecordStorage.ofFile(tableName);
         this.tableName = tableName;
-        this.fields = fields;
+        this.baseFields = baseFields;
         this.status = TableStatus.NORMAL;
     }
 
@@ -132,13 +132,14 @@ public class Table {
      */
     public void update(TransactionContext context, UUID uuid, List<String> entry) throws RumbaseException {
 
-        if(!checkStringEntry(entry))
+        if(!checkStringEntry(entry)) {
             throw new TableConflictException(3);
+        }
 
         var raw = stringEntryToBytes(entry);
 
         recordStorage.delete(context, uuid);
-        var newUUID = recordStorage.insert(context, raw);
+        var newUuid = recordStorage.insert(context, raw);
 
         // todo 更新索引
     }
@@ -151,15 +152,16 @@ public class Table {
      * @return 满足情况
      */
     boolean checkStringEntry(List<String> entry) {
-        if (fields.size() != entry.size()) {
+        if (baseFields.size() != entry.size()) {
             return false;
         }
 
-        var len = fields.size();
+        var len = baseFields.size();
 
         for (int i = 0; i < len; i++) {
-            if (!fields.get(i).checkStr(entry.get(i)))
+            if (!baseFields.get(i).checkStr(entry.get(i))) {
                 return false;
+            }
         }
 
         return true;
@@ -213,7 +215,7 @@ public class Table {
      * @return 查询到的uuid列表
      * @throws TableNotFoundException 要查询的表不存在
      */
-    public List<UUID> search(String fieldName, Field left, Field right) throws TableNotFoundException {
+    public List<UUID> search(String fieldName, BaseField left, BaseField right) throws TableNotFoundException {
 
         throw new TableNotFoundException(4);
     }
@@ -227,13 +229,14 @@ public class Table {
     byte[] stringEntryToBytes(List<String > entry) throws TableConflictException {
         var stream = new ByteArrayOutputStream();
 
-        if (!checkStringEntry(entry))
+        if (!checkStringEntry(entry)) {
             throw new TableConflictException(3);
+        }
 
-        var len = fields.size();
+        var len = baseFields.size();
 
         for (int i = 0; i < len; i++) {
-            fields.get(i).serialize(stream, entry.get(i));
+            baseFields.get(i).serialize(stream, entry.get(i));
         }
 
         return stream.toByteArray();
@@ -247,13 +250,17 @@ public class Table {
      */
     List<Object> parseEntry(byte[] raw) throws TableConflictException, IOException {
         var stream = new ByteArrayInputStream(raw);
-        var list = new ArrayList<Object>();
+        var list = new ArrayList<>();
 
-        for (var field : fields) {
+        for (var field : baseFields) {
             list.add(field.deserialize(stream));
         }
 
-        return list;
+        if (stream.available() == 0) {
+            return list;
+        } else {
+            throw new TableConflictException(2);
+        }
     }
 
 }

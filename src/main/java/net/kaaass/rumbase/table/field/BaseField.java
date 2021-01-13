@@ -1,4 +1,4 @@
-package net.kaaass.rumbase.table.Field;
+package net.kaaass.rumbase.table.field;
 
 import lombok.*;
 import net.kaaass.rumbase.table.exception.TableConflictException;
@@ -17,7 +17,7 @@ import java.io.OutputStream;
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public abstract class Field<T> {
+public abstract class BaseField {
 
     /**
      * 字段名
@@ -45,11 +45,12 @@ public abstract class Field<T> {
      * @param str 待转换字符串
      * @return 哈希
      */
-    public abstract long strToHash(String str);
+    public abstract long strToHash(String str) throws TableConflictException;
 
     /**
      * 从输入流中反序列化出一个满足当前字段约束的值对象
      * @param inputStream 输入流
+     * @throws TableConflictException 输入流中读出对象与字段类型不匹配
      * @return 值对象
      */
     public abstract Object deserialize(InputStream inputStream) throws TableConflictException;
@@ -65,6 +66,7 @@ public abstract class Field<T> {
      * 将值对象序列化到输出流中
      * @param outputStream 输出流
      * @param strVal 值对象
+     * @throws TableConflictException 类型不匹配
      */
     public abstract void serialize(OutputStream outputStream, String strVal) throws TableConflictException;
 

@@ -1,7 +1,7 @@
 package net.kaaass.rumbase.table;
 
 import lombok.NoArgsConstructor;
-import net.kaaass.rumbase.table.Field.Field;
+import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistException;
 import net.kaaass.rumbase.table.exception.TableNotFoundException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
@@ -47,10 +47,10 @@ public class TableManager {
     /**
      * 开始一个事务
      *
-     * @param IsRepeatableRead 是否可重复读
+     * @param isRepeatableRead 是否可重复读
      * @return 事务context
      */
-    TransactionContext begin(boolean IsRepeatableRead) {
+    TransactionContext begin(boolean isRepeatableRead) {
         return TransactionContext.empty();
     }
 
@@ -90,19 +90,19 @@ public class TableManager {
      *
      * @param context   事务context
      * @param tableName 表名
-     * @param fields    表的字段
+     * @param baseFields    表的字段
      * @throws TableConflictException 该表已存在
      */
     public void createTable(
             TransactionContext context,
             String tableName,
-            List<Field> fields
+            List<BaseField> baseFields
     ) throws TableExistException {
         if (tableCache.containsKey(tableName)) {
             throw new TableExistException(1);
         }
 
-        var table = new Table(tableName, fields);
+        var table = new Table(tableName, baseFields);
         table.create(context);
 
         tableCache.put(tableName, table);
@@ -111,10 +111,11 @@ public class TableManager {
     public Table getTable(String tableName) throws TableNotFoundException {
         var table = tableCache.get(tableName);
 
-        if (table == null)
+        if (table == null) {
             throw new TableNotFoundException(1);
-        else
+        } else {
             return table;
+        }
     }
 
 }
