@@ -29,7 +29,10 @@ public interface IRecordStorage {
      * @return 记录数据字节
      * @throws RecordNotFoundException 若记录不存在、不可见，抛出错误
      */
-    byte[] query(TransactionContext txContext, long recordId) throws RecordNotFoundException;
+    default byte[] query(TransactionContext txContext, long recordId) throws RecordNotFoundException {
+        var result = queryOptional(txContext, recordId);
+        return result.orElseThrow(() -> new RecordNotFoundException(2));
+    }
 
     /**
      * 由记录ID查询记录数据，并忽略由事务造成的记录不可见。若物理记录不存在，将抛出运行时错误
@@ -38,7 +41,7 @@ public interface IRecordStorage {
      * @param recordId  记录ID
      * @return 记录数据字节，若记录不可见则返回Optional.empty()
      */
-    Optional<byte[]> queryOptional(TransactionContext txContext, long recordId);
+    Optional<byte[]> queryOptional(TransactionContext txContext, long recordId) throws RecordNotFoundException;
 
     /**
      * 由记录ID删除记录数据
