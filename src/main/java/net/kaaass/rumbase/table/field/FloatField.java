@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 
 /**
@@ -34,7 +35,7 @@ public class FloatField extends BaseField {
 
         try {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
-            out.writeString(getType().toString(), JBBPByteOrder.BIG_ENDIAN);
+            out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
             // todo （字段约束）
         } catch (IOException e) {
             e.printStackTrace();

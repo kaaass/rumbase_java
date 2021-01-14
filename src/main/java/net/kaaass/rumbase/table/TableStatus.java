@@ -2,6 +2,8 @@ package net.kaaass.rumbase.table;
 
 /**
  * 表状态的枚举
+ *
+ * @author @KveinAxel
  */
 public enum TableStatus {
     /**

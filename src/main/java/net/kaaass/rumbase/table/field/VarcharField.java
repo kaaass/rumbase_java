@@ -3,6 +3,7 @@ package net.kaaass.rumbase.table.field;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import lombok.Getter;
 import lombok.NonNull;
 import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.table.Table;
@@ -14,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 
 /**
@@ -26,6 +28,7 @@ public class VarcharField extends BaseField {
     /**
      * 字符串长度的限制
      */
+    @Getter
     private final int limit;
 
     public VarcharField(@NonNull String name, int limit, @NonNull Table parentTable) {
@@ -39,7 +42,7 @@ public class VarcharField extends BaseField {
 
         try {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
-            out.writeString(getType().toString(), JBBPByteOrder.BIG_ENDIAN);
+            out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
             out.writeInt(limit, JBBPByteOrder.BIG_ENDIAN);
             // todo （字段约束）
         } catch (IOException e) {

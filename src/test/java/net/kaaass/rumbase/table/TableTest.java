@@ -1,13 +1,16 @@
 package net.kaaass.rumbase.table;
 
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
-import net.kaaass.rumbase.table.field.BaseField;
-import net.kaaass.rumbase.table.field.FloatField;
-import net.kaaass.rumbase.table.field.IntField;
-import net.kaaass.rumbase.table.field.VarcharField;
+import net.kaaass.rumbase.table.exception.TableExistenceException;
+import net.kaaass.rumbase.table.field.*;
+import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -23,27 +26,180 @@ import static org.junit.Assert.assertArrayEquals;
 public class TableTest extends TestCase {
 
     public void testLoad() {
-        // todo
+        var bytes = new byte[]{
+                13,
+                116, 101, 115, 116,
+                76, 111, 97, 100,
+                84, 97, 98, 108,
+                101,
+
+                6,
+                78, 79, 82, 77,
+                65, 76,
+
+                -1, -1, -1, -1,
+                -1, -1, -1, -1,
+
+                0, 0, 0, 3,
+
+                11,
+                116, 101, 115, 116,
+                76, 111, 97, 100,
+                73, 110, 116,
+
+                3,
+                73, 78, 84,
+
+                13,
+                116, 101, 115, 116,
+                76, 111, 97, 100,
+                70, 108, 111, 97,
+                116,
+
+                5,
+                70, 76, 79, 65,
+                84,
+
+                15,
+                116, 101, 115, 116,
+                76, 111, 97, 100,
+                86, 97, 114, 99,
+                104, 97, 114,
+
+                7,
+                86, 65, 82, 67,
+                72, 65, 82,
+
+                0, 0, 0, 12
+        };
+
+        var storage = RecordManager.fromFile("testLoadTable");
+        storage.setMetadata(TransactionContext.empty(), bytes);
+
+        var table = Table.load("testLoadTable");
+
+        assertNotNull(table);
+        assertEquals("testLoadTable", table.getTableName());
+        assertEquals(-1L, table.getNext());
+        assertEquals(TableStatus.NORMAL, table.getStatus());
+
+        var fields = table.getFields();
+        assertEquals("testLoadInt", fields.get(0).getName());
+        assertEquals(FieldType.INT, fields.get(0).getType());
+        assertEquals("testLoadFloat", fields.get(1).getName());
+        assertEquals(FieldType.FLOAT, fields.get(1).getType());
+        assertEquals("testLoadVarchar", fields.get(2).getName());
+        assertEquals(FieldType.VARCHAR, fields.get(2).getType());
+        assertEquals(12, ((VarcharField)fields.get(2)).getLimit());
     }
 
     public void testPersist() {
-        // todo
+        var fieldList = new ArrayList<BaseField>();
+        var table = new Table("testPersistTable", fieldList);
+        var context = TransactionContext.empty();
+
+        fieldList.add(new IntField("testPersistInt", table));
+        fieldList.add(new FloatField("testPersistFloat", table));
+        fieldList.add(new VarcharField("testPersistVarchar", 12, table));
+
+        var expected = new byte[]{
+                // testPersistTable
+                16,
+                116, 101, 115, 116,
+                80, 101, 114, 115,
+                105, 115, 116, 84,
+                97, 98, 108, 101,
+
+                // NORMAL
+                6,
+                78, 79, 82, 77,
+                65, 76,
+
+                // -1
+                -1, -1, -1, -1,
+                -1, -1, -1, -1,
+
+                // 3
+                0, 0, 0, 3,
+
+                // testPersistInt
+                14,
+                116, 101, 115, 116,
+                80, 101, 114, 115,
+                105, 115, 116, 73,
+                110, 116,
+
+                // INT
+                3,
+                73, 78, 84,
+
+                // testPersistFloat
+                16,
+                116, 101, 115, 116,
+                80, 101, 114, 115,
+                105, 115, 116, 70,
+                108, 111, 97, 116,
+
+                // FLOAT
+                5,
+                70, 76, 79, 65,
+                84,
+
+                // testPersistVarchar
+                18,
+                116, 101, 115, 116,
+                80, 101, 114, 115,
+                105, 115, 116, 86,
+                97, 114, 99, 104,
+                97, 114,
+
+                // VARCHAR
+                7,
+                86, 65, 82, 67,
+                72, 65, 82,
+
+                // 12
+                0, 0, 0, 12
+        };
+
+        assertArrayEquals(new byte[0], table.getRecordStorage().getMetadata(context));
+        table.persist(TransactionContext.empty());
+        assertArrayEquals(expected, table.getRecordStorage().getMetadata(context));
+
     }
 
-    public void testDelete() {
-        // todo
-    }
+    public void testCURD() { // todo 未完成
+        var storage = RecordManager.fromFile("testDelete");
 
-    public void testUpdate() {
-        // todo
-    }
+        var fieldList = new ArrayList<BaseField>();
+        var table = new Table("testPersistTable", fieldList);
+        var context = TransactionContext.empty();
 
-    public void testRead() {
-        // todo
-    }
+        var intField = new IntField("testPersistInt", table);
+        var floatField = new FloatField("testPersistFloat", table);
+        var varcharField = new VarcharField("testPersistVarchar", 12, table);
+        fieldList.add(intField);
+        fieldList.add(floatField);
+        fieldList.add(varcharField);
 
-    public void testInsert() {
-        // todo
+        try {
+            intField.createIndex();
+            floatField.createIndex();
+        } catch (IndexAlreadyExistException e) {
+            log.error("Exception expected: ", e);
+            fail();          }
+
+        var data = new ArrayList<String>();
+        data.add("33");
+        data.add("1.2");
+        data.add("test varchar");
+        try {
+            table.insert(context, data);
+            // todo
+        } catch (TableConflictException | TableExistenceException e) {
+            log.error("Exception expected: ", e);
+            fail();
+        }
     }
 
     public void testSearch() {

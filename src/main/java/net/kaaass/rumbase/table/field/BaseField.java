@@ -77,6 +77,7 @@ public abstract class BaseField {
                     return new VarcharField(name, in.readInt(JBBPByteOrder.BIG_ENDIAN), table);
             }
         } catch (IOException e) {
+            // todo
             e.printStackTrace();
         }
         return null;

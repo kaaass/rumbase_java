@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
-import net.kaaass.rumbase.table.field.BaseField;
-import net.kaaass.rumbase.table.field.FloatField;
-import net.kaaass.rumbase.table.field.IntField;
-import net.kaaass.rumbase.table.field.VarcharField;
+import net.kaaass.rumbase.table.field.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -408,5 +405,118 @@ public class BaseFieldTest extends TestCase {
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
             fail();        }
+    }
+
+    public void testLoad() {
+        var bytes = new byte[]{
+                // testLoadInt
+                11,
+                116, 101, 115, 116,
+                76, 111, 97, 100,
+                73, 110, 116,
+
+                // INT
+                3,
+                73, 78, 84,
+
+                // testLoadFloat
+                13,
+                116, 101, 115, 116,
+                76, 111, 97, 100,
+                70, 108, 111, 97, 116,
+
+                // FLOAT
+                5,
+                70, 76, 79, 65, 84,
+
+                // testLoadVarchar
+                15,
+                116, 101, 115, 116,
+                76, 111, 97, 100,
+                86, 97, 114, 99,
+                104, 97, 114,
+
+                // VARCHAR
+                7,
+                86, 65, 82, 67,
+                72, 65, 82,
+
+                // 12
+                0, 0, 0, 12
+
+        };
+        var stream = new ByteArrayInputStream(bytes);
+        var dummy = new Table("testLoadTable", new ArrayList<>());
+
+        var intField = BaseField.load(stream, dummy);
+        assertNotNull(intField);
+        assertEquals("testLoadInt", intField.getName());
+        assertEquals(FieldType.INT, intField.getType());
+
+        var floatField = BaseField.load(stream, dummy);
+        assertNotNull(floatField);
+        assertEquals("testLoadFloat", floatField.getName());
+        assertEquals(FieldType.FLOAT, floatField.getType());
+
+        var varcharField = BaseField.load(stream, dummy);
+        assertNotNull(varcharField);
+        assertEquals("testLoadVarchar", varcharField.getName());
+        assertEquals(FieldType.VARCHAR, varcharField.getType());
+        assertEquals(12, ((VarcharField)varcharField).getLimit());
+
+    }
+
+    public void testPersist() {
+        var dummy = new Table("testLoadTable", new ArrayList<>());
+        var out = new ByteArrayOutputStream();
+
+        var intField = new IntField("testPersistInt", dummy);
+        var floatField = new FloatField("testPersistFloat", dummy);
+        var varcharField = new VarcharField("testPersistVarchar", 12, dummy);
+
+        intField.persist(out);
+        floatField.persist(out);
+        varcharField.persist(out);
+
+        var expected = new byte[]{
+                // testPersistInt
+                14,
+                116, 101, 115, 116,
+                80, 101, 114, 115,
+                105, 115, 116, 73, 110, 116,
+
+                // INT
+                3,
+                73, 78, 84,
+
+                // testPersistFloat
+                16,
+                116, 101, 115, 116,
+                80, 101, 114, 115,
+                105, 115, 116, 70,
+                108, 111, 97, 116,
+
+                // FLOAT
+                5,
+                70, 76, 79, 65, 84,
+
+                // testPersistVarchar
+                18,
+                116, 101, 115, 116,
+                80, 101, 114, 115,
+                105, 115, 116, 86,
+                97, 114, 99, 104, 97, 114,
+
+                // VARCHAR
+                7,
+                86, 65, 82, 67,
+                72, 65, 82,
+
+                // 12
+                0, 0, 0, 12
+        };
+
+        var res = out.toByteArray();
+        assertArrayEquals(expected, out.toByteArray());
     }
 }

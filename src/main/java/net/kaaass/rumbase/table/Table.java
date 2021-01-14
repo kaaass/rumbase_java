@@ -7,6 +7,7 @@ import lombok.*;
 import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.record.IRecordStorage;
+import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -98,7 +99,7 @@ public class Table {
 
         try {
             out.writeString(tableName, JBBPByteOrder.BIG_ENDIAN);
-            out.writeString(status.toString(), JBBPByteOrder.BIG_ENDIAN);
+            out.writeString(status.toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
             out.writeLong(next, JBBPByteOrder.BIG_ENDIAN);
             out.writeInt(fields.size(), JBBPByteOrder.BIG_ENDIAN);
             for (var f: fields) {
@@ -111,14 +112,18 @@ public class Table {
         recordStorage.setMetadata(context, byteOutStream.toByteArray());
     }
 
-    public static Table load(IRecordStorage recordStorage) {
+    public static Table load(String tableName) {
 
+        var recordStorage = RecordManager.fromFile(tableName);
+
+        // fixme context
         var context = TransactionContext.empty();
         var meta = recordStorage.getMetadata(context);
         var stream = new ByteArrayInputStream(meta);
         var in = new JBBPBitInputStream(stream);
         try {
             var name = in.readString(JBBPByteOrder.BIG_ENDIAN);
+            var status = in.readString(JBBPByteOrder.BIG_ENDIAN);
             var next = in.readLong(JBBPByteOrder.BIG_ENDIAN);
             var fieldNum = in.readInt(JBBPByteOrder.BIG_ENDIAN);
             var fieldList = new ArrayList<BaseField>();
@@ -130,6 +135,7 @@ public class Table {
                 }
             }
             table.next = next;
+            table.status = TableStatus.valueOf(status);
             return table;
         } catch (IOException e) {
             e.printStackTrace();
