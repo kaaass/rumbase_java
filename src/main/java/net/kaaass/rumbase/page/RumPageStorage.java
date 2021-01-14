@@ -21,6 +21,7 @@ public class RumPageStorage implements PageStorage {
     @Override
     public Page get(long pageId) {
         File file = new File(filepath);
+        //文件不存在时创建新文件
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -34,6 +35,7 @@ public class RumPageStorage implements PageStorage {
         try {
             FileInputStream in = new FileInputStream(file);
             byte[] data = new byte[PageManager.PAGE_SIZE];
+            //当文件存储容量不够时追加
             try {
                 while (in.available() < (pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
                     FileWriter fw = new FileWriter(file, true);
@@ -68,7 +70,8 @@ public class RumPageStorage implements PageStorage {
                     }
                 }
             }
-            Page page = new RumPage(RumBuffer.getInstance().buffer(), pageId, this.filepath, offset);
+            RumPage page = new RumPage(RumBuffer.getInstance().buffer(), pageId, this.filepath, offset);
+            Replacer.getInstance().insert(page);
             pageMap.put(tmpId, page);
             return page;
         } catch (Exception e) {

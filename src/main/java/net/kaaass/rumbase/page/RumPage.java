@@ -53,6 +53,10 @@ public class RumPage implements Page {
         System.arraycopy(data, 0, this.data, this.offset * PageManager.PAGE_SIZE + offset, data.length);
     }
 
+    /**
+     * double write 先将页写在文件头再写
+     * @throws FileException
+     */
     @Override
     public void flush() throws FileException {
         File file = new File(this.filepath);

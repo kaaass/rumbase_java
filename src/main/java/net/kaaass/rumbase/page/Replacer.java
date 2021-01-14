@@ -27,9 +27,15 @@ public class Replacer {
     public void insert(RumPage value) {
         synchronized (this) {
             if (!this.table.containsKey(value)) {//如果页没在内存中
-                this.tail.next = new Node(value, null);
-                this.tail = this.tail.next;
-                this.table.put(value, this.tail);
+                Node tmp = new Node(value, null);
+                if(head==null){
+                    this.head = tmp;
+                    this.tail = tmp;
+                }else{
+                    this.tail.next = tmp;
+                    this.tail = this.tail.next;
+                    this.table.put(value, this.tail);
+                }
                 ++size;
             } else {
                 Node hitNode = this.table.get(value);
