@@ -21,6 +21,6 @@ public class PageManager {
      * @throws FileException 若文件不存在则创建，创建过程中出现错误会抛出错误
      */
     public static PageStorage fromFile(String filepath) throws FileException {
-        return new MockPageStorage(filepath);
+        return new RumPageStorage(filepath);
     }
 }

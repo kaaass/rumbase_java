@@ -5,10 +5,15 @@ import net.kaaass.rumbase.page.exception.FileException;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author 11158
+ */
 public class RumPageStorage implements PageStorage {
     public RumPageStorage(String filepath) throws FileException {
         this.filepath = filepath;
@@ -18,11 +23,24 @@ public class RumPageStorage implements PageStorage {
     @Override
     public Page get(long pageId) {
         File file = new File(filepath);
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+                FileOutputStream out = new FileOutputStream(file);
+                out.write(new byte[PageManager.PAGE_SIZE * 10]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         //文件会预留5页作为文件头
         try {
             FileInputStream in = new FileInputStream(file);
             byte[] data = new byte[PageManager.PAGE_SIZE];
             try {
+                while(in.available()<pageId + PageManager.FILE_HEAD_SIZE){
+                    FileOutputStream out = new FileOutputStream(file);
+                    out.write(new byte[PageManager.PAGE_SIZE * (int)(in.available()/PageManager.PAGE_SIZE)]);
+                }
                 in.skip((pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
                 int readNumber = in.read(data);
                 if (readNumber < PageManager.PAGE_SIZE) {
@@ -32,26 +50,26 @@ public class RumPageStorage implements PageStorage {
                 throw new FileException(4);
             }
             Integer tmpId = (int) pageId;
-            if(pageMap.containsKey(tmpId)){
+            if (pageMap.containsKey(tmpId)) {
                 return pageMap.get(tmpId);
             }
             int offset = -1;
-            while(offset<0){
-                synchronized (this){//并非区间锁，而是将整个内存全部锁住
-                    try{
+            while (offset < 0) {
+                synchronized (this) {//并非区间锁，而是将整个内存全部锁住
+                    try {
                         offset = RumBuffer.getInstance().getFreeOffset();
-                        RumBuffer.getInstance().put(offset,data);
-                    }catch (BufferException e) {
+                        RumBuffer.getInstance().put(offset, data);
+                    } catch (BufferException e) {
                         //下面的这个换出算法没有考虑到在此过程中其他进程再次pin()的情况
                         RumPage p = Replacer.getInstance().victim();
-                        if(p.dirty()){
+                        if (p.dirty()) {
                             p.flush();
                         }
                         RumBuffer.getInstance().free(p.offset);
                     }
                 }
             }
-            Page page = new RumPage(RumBuffer.getInstance().buffer(), pageId, this.filepath,offset);
+            Page page = new RumPage(RumBuffer.getInstance().buffer(), pageId, this.filepath, offset);
             pageMap.put(tmpId, page);
             return page;
         } catch (Exception e) {

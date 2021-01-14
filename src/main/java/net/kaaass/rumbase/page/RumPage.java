@@ -46,6 +46,9 @@ public class RumPage implements Page {
         if (offset + data.length > PageManager.PAGE_SIZE) {
             throw new PageException(1);
         }
+        synchronized (this) {
+            this.dirty = true;
+        }
         //直接往缓冲内写入
         System.arraycopy(data, 0, this.data, this.offset * PageManager.PAGE_SIZE + offset, data.length);
     }
