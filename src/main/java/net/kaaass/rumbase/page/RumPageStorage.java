@@ -3,10 +3,8 @@ package net.kaaass.rumbase.page;
 import net.kaaass.rumbase.page.exception.BufferException;
 import net.kaaass.rumbase.page.exception.FileException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -37,9 +35,9 @@ public class RumPageStorage implements PageStorage {
             FileInputStream in = new FileInputStream(file);
             byte[] data = new byte[PageManager.PAGE_SIZE];
             try {
-                while(in.available()<pageId + PageManager.FILE_HEAD_SIZE){
-                    FileOutputStream out = new FileOutputStream(file);
-                    out.write(new byte[PageManager.PAGE_SIZE * (int)(in.available()/PageManager.PAGE_SIZE)]);
+                while (in.available() < (pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
+                    FileWriter fw = new FileWriter(file, true);
+                    fw.append(Arrays.toString(new byte[PageManager.PAGE_SIZE * (int) (in.available() / PageManager.PAGE_SIZE)]));
                 }
                 in.skip((pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
                 int readNumber = in.read(data);
@@ -49,6 +47,7 @@ public class RumPageStorage implements PageStorage {
             } catch (Exception e) {
                 throw new FileException(4);
             }
+
             Integer tmpId = (int) pageId;
             if (pageMap.containsKey(tmpId)) {
                 return pageMap.get(tmpId);
