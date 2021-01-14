@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.create.index.CreateIndex;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.insert.Insert;
@@ -77,5 +78,12 @@ public class SqlTest extends TestCase {
         );
         log.info("Table: {}", stmt.getTable());
         log.info("Columns: {}", stmt.getColumnDefinitions());
+    }
+
+    public void testCreateIndex() throws JSQLParserException {
+        CreateIndex stmt = (CreateIndex) CCJSqlParserUtil.parse("CREATE INDEX PersonIndex ON Person (LastName) ");
+        log.info("Table: {}", stmt.getTable());
+        log.info("Name: {}", stmt.getIndex().getName());
+        log.info("Columns: {}", stmt.getIndex().getColumns());
     }
 }
