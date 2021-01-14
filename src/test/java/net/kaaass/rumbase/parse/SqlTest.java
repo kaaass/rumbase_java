@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.PlainSelect;
@@ -61,5 +62,20 @@ public class SqlTest extends TestCase {
         Delete stmt = (Delete) CCJSqlParserUtil.parse("DELETE FROM Person WHERE LastName = 'Wilson'");
         log.info("Table: {}", stmt.getTable());
         log.info("Where: {}", stmt.getWhere());
+    }
+
+    public void testParseCreateTable() throws JSQLParserException {
+        CreateTable stmt = (CreateTable) CCJSqlParserUtil.parse(
+                "CREATE TABLE Persons\n" +
+                        "(\n" +
+                        "Id_P int,\n" +
+                        "LastName varchar(255),\n" +
+                        "FirstName varchar(255),\n" +
+                        "Address varchar(255),\n" +
+                        "City varchar(255)\n" +
+                        ")"
+        );
+        log.info("Table: {}", stmt.getTable());
+        log.info("Columns: {}", stmt.getColumnDefinitions());
     }
 }
