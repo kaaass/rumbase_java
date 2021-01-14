@@ -35,9 +35,9 @@ public class RumPageStorage implements PageStorage {
         try {
             FileInputStream in = new FileInputStream(file);
             byte[] data = new byte[PageManager.PAGE_SIZE];
-            //当文件存储容量不够时追加
             try {
-                while (in.available() < (pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
+                //当文件存储容量不够时追加
+                while (in.available() < (pageId + 1 + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
                     FileWriter fw = new FileWriter(file, true);
                     fw.append(Arrays.toString(new byte[PageManager.PAGE_SIZE * (int) (in.available() / PageManager.PAGE_SIZE)]));
                 }
@@ -50,7 +50,7 @@ public class RumPageStorage implements PageStorage {
                 throw new FileException(4);
             }
 
-            Integer tmpId = (int) pageId;
+            Long tmpId = pageId;
             if (pageMap.containsKey(tmpId)) {
                 return pageMap.get(tmpId);
             }
@@ -67,6 +67,7 @@ public class RumPageStorage implements PageStorage {
                             p.flush();
                         }
                         RumBuffer.getInstance().free(p.offset);
+                        this.pageMap.remove(p.pageId());
                     }
                 }
             }
@@ -82,8 +83,8 @@ public class RumPageStorage implements PageStorage {
 
     @Override
     public void flush() {
-        Set<Map.Entry<Integer, Page>> entrySet = this.pageMap.entrySet();
-        for (Map.Entry<Integer, Page> entry : entrySet) {
+        Set<Map.Entry<Long, Page>> entrySet = this.pageMap.entrySet();
+        for (Map.Entry<Long, Page> entry : entrySet) {
             try {
                 entry.getValue().flush();
             } catch (Exception e) {
@@ -92,6 +93,6 @@ public class RumPageStorage implements PageStorage {
         }
     }
 
-    private final Map<Integer, Page> pageMap;
+    private final Map<Long, Page> pageMap;
     private final String filepath;
 }
