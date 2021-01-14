@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectVisitorAdapter;
@@ -11,7 +12,7 @@ import net.sf.jsqlparser.statement.select.SelectVisitorAdapter;
 @Slf4j
 public class SqlTest extends TestCase {
 
-    public void testParse() throws JSQLParserException {
+    public void testParseSelect() throws JSQLParserException {
         Select select = (Select) CCJSqlParserUtil.parse(
                 "SELECT name, a.ID as aid, `account`.`balance` " +
                 "from `account` as a join `payment` as p on a.ID = p.ID, `file` as f " +
@@ -32,5 +33,14 @@ public class SqlTest extends TestCase {
         log.info("Where: {}", selectStmt.getWhere());
         log.info("OrderBy: {}", selectStmt.getOrderByElements());
         var expr = selectStmt.getWhere();
+    }
+
+    public void testParseInsert() throws JSQLParserException {
+        Insert insert = (Insert) CCJSqlParserUtil.parse(
+                "INSERT INTO Persons (LastName, Address) VALUES ('Wilson', 'Champs-Elysees')"
+        );
+        log.info("Table: {}", insert.getTable());
+        log.info("Values: {}", insert.getItemsList());
+        log.info("Columns: {}",insert.getColumns());
     }
 }
