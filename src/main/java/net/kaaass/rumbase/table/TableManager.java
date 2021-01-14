@@ -1,11 +1,19 @@
 package net.kaaass.rumbase.table;
 
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.NoArgsConstructor;
+import net.kaaass.rumbase.record.IRecordStorage;
+import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -18,8 +26,10 @@ import java.util.*;
  *
  * @author @KveinAxel
  */
-@NoArgsConstructor
+
 public class TableManager {
+
+    private final IRecordStorage metaRecord = RecordManager.fromFile("metadata.db");
 
     /**
      * 对所有的表结构的缓存
@@ -29,11 +39,6 @@ public class TableManager {
      * 同样地，创建表、删除表需要维护这个结构
      */
     private final Map<String, Table> tableCache = new HashMap<>();
-
-    /**
-     * 事务开启的表
-     */
-    private final Map<TransactionContext, List<Table>> transactionTableCache = new HashMap<>();
 
     /**
      * 提交一个事务
@@ -53,12 +58,47 @@ public class TableManager {
         context.rollback();
     }
 
+
+    public TableManager() {
+        load();
+    }
+
+    public void load() {
+        var context = TransactionContext.empty();
+        var meta = metaRecord.getMetadata(context);
+
+        var byteInStream = new ByteArrayInputStream(meta);
+        var stream = new JBBPBitInputStream(byteInStream);
+
+        int num;
+        try {
+            num = stream.readInt(JBBPByteOrder.BIG_ENDIAN);
+        } catch (IOException e) {
+            return;
+        }
+        for (int i = 0; i < num; i++) {
+            try {
+                var key = stream.readString(JBBPByteOrder.BIG_ENDIAN);
+                var val = stream.readString(JBBPByteOrder.BIG_ENDIAN);
+                // 加载表
+                if (key.startsWith("tablePath$")) {
+                    var tableName = key.split("\\$")[1];
+                    var table = Table.load(RecordManager.fromFile(val));
+                    tableCache.put(tableName, table);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
     /**
      * 显示所有的表名
      *
      * @return 表名的列表
      */
-    List<String> showTables() {
+    public List<String> showTables() {
         List<String> list = new ArrayList<>();
 
         tableCache.forEach((k, v) -> list.add(k));
@@ -77,16 +117,44 @@ public class TableManager {
     public void createTable(
             TransactionContext context,
             String tableName,
-            List<BaseField> baseFields
+            List<BaseField> baseFields,
+            String path
     ) throws TableExistenceException {
         if (tableCache.containsKey(tableName)) {
             throw new TableExistenceException(1);
         }
 
         var table = new Table(tableName, baseFields);
+
+        for (var f: baseFields) {
+            f.setParentTable(table);
+        }
+
         table.persist(context);
 
-        // todo 加入全局配置表
+        var meta = metaRecord.getMetadata(TransactionContext.empty());
+
+        var in = new ByteArrayInputStream(meta);
+        var inStream = new JBBPBitInputStream(in);
+
+        int cnt;
+        try {
+            cnt = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
+
+        } catch (IOException e) {
+            cnt = 0;
+        }
+
+        var byteOutStream = new ByteArrayOutputStream();
+        var stream = new JBBPBitOutputStream(byteOutStream);
+        try {
+            stream.writeInt(cnt + 1, JBBPByteOrder.BIG_ENDIAN);
+            stream.write(in.readAllBytes());
+            stream.writeString("tablePath$" + tableName, JBBPByteOrder.BIG_ENDIAN);
+            stream.writeString(path, JBBPByteOrder.BIG_ENDIAN);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         tableCache.put(tableName, table);
     }

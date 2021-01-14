@@ -516,7 +516,6 @@ public class BaseFieldTest extends TestCase {
                 0, 0, 0, 12
         };
 
-        var res = out.toByteArray();
         assertArrayEquals(expected, out.toByteArray());
     }
 }

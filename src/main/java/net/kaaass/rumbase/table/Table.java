@@ -85,7 +85,6 @@ public class Table {
         this.recordStorage = MockRecordStorage.ofFile(tableName);
         this.tableName = tableName;
         this.fields = fields;
-        this.status = TableStatus.NORMAL;
         this.next = -1;
     }
 
@@ -112,9 +111,7 @@ public class Table {
         recordStorage.setMetadata(context, byteOutStream.toByteArray());
     }
 
-    public static Table load(String tableName) {
-
-        var recordStorage = RecordManager.fromFile(tableName);
+    public static Table load(IRecordStorage recordStorage) {
 
         // fixme context
         var context = TransactionContext.empty();
@@ -160,7 +157,7 @@ public class Table {
      * @param uuid     元组的uuid
      * @param entry    新的行的字符串值列表
      */
-    public void update(TransactionContext context, long uuid, List<String> entry) throws RumbaseException {
+    public void update(TransactionContext context, long uuid, List<String> entry) throws TableConflictException, TableExistenceException {
 
         if(!checkStringEntry(entry)) {
             throw new TableConflictException(3);
@@ -212,18 +209,20 @@ public class Table {
      * @throws TableExistenceException         要查询的表不存在
      * @throws TableConflictException 查询到的entry和当前表冲突
      */
-    public List<Object> read(TransactionContext context, long uuid) throws TableExistenceException, TableConflictException {
+    public Optional<List<Object>> read(TransactionContext context, long uuid) throws TableExistenceException, TableConflictException {
 
         var bytes = recordStorage
-                .queryOptional(context, uuid)
-                .orElseThrow(() -> new TableExistenceException(4));
+                .queryOptional(context, uuid);
 
-        try {
-            return parseEntry(bytes);
-        } catch (IOException e) {
-            // fixme 不该出现这样的事情（吧）
-            // 查询到的entry和当前表冲突
-            throw new TableConflictException(3);
+        if (bytes.isPresent()) {
+            try {
+                return Optional.of(parseEntry(bytes.get()));
+            } catch (IOException e) {
+                // fixme 不该出现这样的事情（吧）
+                // 查询到的entry和当前表冲突
+                throw new TableConflictException(3);            }
+        } else {
+            return Optional.empty();
         }
 
     }

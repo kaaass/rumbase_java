@@ -47,7 +47,8 @@ public abstract class BaseField {
 
     @NonNull
     @Getter
-    private final Table parentTable;
+    @Setter
+    private Table parentTable;
 
     /**
      * 向输出流中写入当前字段格式信息
