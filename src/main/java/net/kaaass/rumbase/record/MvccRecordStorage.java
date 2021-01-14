@@ -148,16 +148,14 @@ public class MvccRecordStorage implements IRecordStorage {
                     return false;
                 }
                 // 被删除但是删除事务未提交
-                if (xmax > xid || txContext.getSnapshot().contains(xmax)
-                        || statusOf(xmax, txContext) != TransactionStatus.COMMITTED) {
-                    return true;
-                }
+                return xmax > xid || txContext.getSnapshot().contains(xmax)
+                        || statusOf(xmax, txContext) != TransactionStatus.COMMITTED;
             }
         } else if (isolation == TransactionIsolation.SERIALIZABLE) {
             // 可串行化：没被删除，依靠2PL保证事务性
             return xmax == 0;
         }
-        return true;
+        return false;
     }
 
     /**

@@ -2,7 +2,6 @@ package net.kaaass.rumbase.record;
 
 import lombok.SneakyThrows;
 import net.kaaass.rumbase.dataitem.ItemManager;
-import net.kaaass.rumbase.record.mock.MockRecordStorage;
 
 /**
  * 记录管理类
