@@ -13,6 +13,7 @@ public class ConditionExpression {
 
     /**
      * 根据参数列表求值
+     *
      * @param paramMap 参数列表，其中参数必须是原生类型的装箱对象，如Integer、String
      */
     public boolean evaluate(Map<ColumnIdentifier, Object> paramMap) {
