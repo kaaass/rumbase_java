@@ -17,38 +17,41 @@ import java.util.List;
 @Deprecated
 public class MockTransactionContext implements TransactionContext {
 
-    @Getter
-    private static final List<Integer> SNAPSHOT;
-
-    static {
-        SNAPSHOT = new ArrayList<>();
-    }
-
     /**
      * 事务Id
      */
     @Getter
     private final int xid;
+
     /**
      * 事务隔离度
      */
     @Getter
     private final TransactionIsolation isolation;
+
     /**
      * 存储创建它的管理器
      */
+    @Getter
     private final TransactionManager manager;
+    /**
+     * 事务快照
+     */
+    @Getter
+    private final List<Integer> snapshot;
     /**
      * 事务状态
      */
     @Getter
     private TransactionStatus status;
 
+
     public MockTransactionContext() {
         this.xid = 0;
         this.status = TransactionStatus.COMMITTED;
         this.isolation = TransactionIsolation.READ_UNCOMMITTED;
         this.manager = null;
+        this.snapshot = new ArrayList<>();
     }
 
     /**
@@ -62,6 +65,23 @@ public class MockTransactionContext implements TransactionContext {
         this.status = TransactionStatus.PREPARING;
         this.isolation = isolation;
         this.manager = manager;
+        this.snapshot = new ArrayList<>();
+    }
+
+    /**
+     * 用于恢复的事务上下文构造函数
+     *
+     * @param xid       事务id
+     * @param isolation 事务隔离度
+     * @param manager   创建事务的管理器
+     * @param status    事务状态
+     */
+    public MockTransactionContext(int xid, TransactionIsolation isolation, TransactionManager manager, TransactionStatus status) {
+        this.xid = xid;
+        this.isolation = isolation;
+        this.manager = manager;
+        this.status = status;
+        this.snapshot = new ArrayList<>();
     }
 
     @Override
