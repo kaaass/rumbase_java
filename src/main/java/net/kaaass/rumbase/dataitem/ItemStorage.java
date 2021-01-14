@@ -15,7 +15,9 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  * 数据项管理器的具体实现
@@ -91,7 +93,10 @@ public class ItemStorage implements IItemStorage {
         }else {
             // 若表头标志不存在，就初始化对应的表信息。
             // 只初始化headerFlag和tempFreePage，表头信息位置统一由setMetadata来实现
-            byte[] bytes = new byte[]{1,2,3,4,0,0,0,1};
+            var bytes = JBBPOut.BeginBin().
+                    Byte(1,2,3,4).
+                    Int(1).
+                    End().toByteArray();
             header.patchData(0,bytes);
             return new ItemStorage(fileName,1,0,pageStorage);
         }
@@ -122,12 +127,11 @@ public class ItemStorage implements IItemStorage {
     }
 
     private Optional<PageHeader> getPageHeader(Page page) throws IOException {
-        if (!checkPageHeader(page)){
+        if (checkPageHeader(page)){
             // 如果页头信息正确，就解析得到页头信息的对象。
             var data = page.getData();
-            byte[] s = new byte[40];
-            var pageHeader = JBBPParser.prepare("int pageFlag;int pageId;long lsn;int leftSpace;int recordNumber;" +
-                    "item [_]{int size;long uuid;int offset;}").parse(s);
+            var pageHeader = JBBPParser.prepare("int pageFlag;long lsn;int leftSpace;int recordNumber;" +
+                    "item [recordNumber]{int uuid;int offset;}").parse(data);
             var p = pageHeader.mapTo(new PageHeader());
             return Optional.of(p);
         }else {
@@ -136,29 +140,94 @@ public class ItemStorage implements IItemStorage {
         }
     }
 
-    private PageHeader initPage(Page page,int pageId) throws IOException, PageException {
+    private PageHeader initPage(Page page) throws IOException, PageException {
         final byte[] bytes = JBBPOut.BeginBin().
                 Byte(2,3,4,5). // 页头标志位
-                Int(pageId).   // pageId
                 Long(0).       // 日志记录位置，以后若有日志记录点则使用
                 Int(4072).         // 剩余空间大小
                 Int(0).        // 记录数目
                 End().toByteArray();
         page.patchData(0,bytes);
-        return new PageHeader(0,pageId,0,4072,0);
+        return new PageHeader(0,0,4072,0);
+    }
+
+    /**
+     * 修改当前第一个可用页
+     */
+    private void addTempFreePage() throws IOException, PageException {
+        this.tempFreePage += 1;
+        var page = pageStorage.get(0);
+        page.pin();
+        var tempFreePage = JBBPOut.BeginBin().
+                Int(this.tempFreePage)
+                .End().toByteArray();
+        page.patchData(4,tempFreePage);
+        page.unpin();
     }
 
     @Override
     public long insertItem(TransactionContext txContext, byte[] item) throws IOException, PageException {
-        var page = pageStorage.get(this.tempFreePage);
-        var pageHeader = getPageHeader(page);
-        if (pageHeader.isEmpty()){
+        var page = getPage(this.tempFreePage);
+        var pageHeaderOp = getPageHeader(page);
+        if (pageHeaderOp.isEmpty()){
             // 如果获取的页没有页头信息，则进行初始化。
-            var p = initPage(page,this.tempFreePage);
-        }else {
-
+            pageHeaderOp = Optional.of(initPage(page));
         }
-        return 0;
+        var pageHeader = pageHeaderOp.get();
+        if (pageHeader.leftSpace - Math.min(item.length,MAX_RECORD_SIZE) <= MIN_LEFT_SPACE){
+            // 如果剩余空间过小的话，就切换到下一个页进行，同时修改表头信息.并且，若数据过大则使用拉链，所以取512和数据大小较小的
+            addTempFreePage();
+            releasePage(page);
+            return insertItem(txContext,item);
+        }else {
+            // 剩余空间足够，则插入
+            int rnd = Math.abs(new Random().nextInt());
+            long s= this.tempFreePage;
+            long uuid = ((s << 32) + (long)(rnd));
+            // 保证uuid不重复
+            while (checkUuidExist(uuid)){
+                rnd = Math.abs(new Random().nextInt());
+                uuid = ((s << 32) + (long)(rnd));
+            }
+            insertToPage(page,pageHeader,txContext,item,rnd);
+            releasePage(page);
+            return uuid;
+        }
+    }
+
+    /**
+     * 将数据插入到页内对应位置，并修改页头信息
+     */
+    private void insertToPage(Page page,PageHeader pageHeader,TransactionContext txContext,byte[] item,int rnd) throws IOException, PageException {
+        if (item.length < MAX_RECORD_SIZE){
+            int offset = 0 ;
+            if (pageHeader.recordNumber == 0){
+                // 如果页没有元素的话
+                offset = 4095 - item.length - DATA_EXTRA_SIZE;
+            }else {
+                // 如果页内有插入的数据，则读取其offset并推算自己的offset
+                offset = pageHeader.item[pageHeader.recordNumber-1].offset - item.length - DATA_EXTRA_SIZE;
+            }
+
+            //修改数据项头信息
+            var i = JBBPOut.BeginBin().
+                    Int(rnd).
+                    Int(offset).
+                    End().toByteArray();
+            page.patchData(ITEM_OFFSET + pageHeader.recordNumber * ITEM_SIZE ,i);
+            //修改数据信息
+            var data = JBBPOut.BeginBin().
+                    Byte(123).
+                    Int(item.length).
+                    Byte(item).End().toByteArray();
+            page.patchData(offset,data);
+            //修改页头信息
+            var headerInfo = JBBPOut.BeginBin().
+                    Int(pageHeader.leftSpace - item.length - DATA_EXTRA_SIZE).
+                    Int(pageHeader.recordNumber + 1).
+                    End().toByteArray();
+            page.patchData(LEFT_SPACE_OFFSET,headerInfo);
+        }
     }
 
     @Override
@@ -166,9 +235,77 @@ public class ItemStorage implements IItemStorage {
 
     }
 
+    /**
+     * 根据uuid获取page
+     */
+    private Page getPage(long uuid){
+        var pageId = uuid >> 32;
+        Page page = pageStorage.get(pageId);
+        page.pin();
+        return page;
+    }
+
+    private Page getPage(int pageId){
+        Page page = pageStorage.get(pageId);
+        page.pin();
+        return page;
+    }
+
+    /**
+     * 释放page的操作
+     * @param page
+     */
+    private void releasePage(Page page){
+        page.unpin();
+    }
+    /**
+     * 检查uuid是否存在
+     * @param uuid
+     * @return
+     */
+    private boolean checkUuidExist(long uuid) throws IOException {
+        var page = getPage(uuid);
+        int id = (int) (uuid & 0xFFFFFFFF);
+        var pageHeader = getPageHeader(page);
+        if (pageHeader.isEmpty()){
+            return false;
+        }else {
+            for (var item : pageHeader.get().item){
+                if (id == item.uuid){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
-    public byte[] queryItemByUuid(long uuid) throws UUIDException {
-        return new byte[0];
+    public byte[] queryItemByUuid(long uuid) throws UUIDException, IOException {
+        if (checkUuidExist(uuid)){
+            var page = getPage(uuid);
+            var header = getPageHeader(page);
+            if (header.isEmpty()){
+                releasePage(page);
+                throw new UUIDException(2);
+            }else {
+                // 遍历所有的item读取数据
+                var items = header.get().item;
+                int id = (int) (uuid & 0xFFFFFFFF);
+                for (var item : items){
+                    if (item.uuid == id){
+                        int offset = item.offset;
+                        var data = page.getData();
+                        data.skip(offset);
+                        var content = JBBPParser.prepare("byte type;int size;byte[size] data;").parse(data).mapTo(new ItemContent());
+                        releasePage(page);
+                        return content.data;
+                    }
+                }
+            }
+            return new byte[0];
+        }else {
+            throw new UUIDException(2);
+        }
     }
 
     @Override
@@ -195,6 +332,36 @@ public class ItemStorage implements IItemStorage {
     public void removeItems(List<Long> uuids) {
 
     }
+
+    /**
+     * 数据项记录的大小
+     */
+    final static int ITEM_SIZE = 8;
+
+    /**
+     * 数据项记录的起始偏移
+     */
+    final static int ITEM_OFFSET = 20;
+    /**
+     * 记录数据项标志和数据项大小额外占用的空间
+     */
+    final static int DATA_EXTRA_SIZE = 5;
+    /**
+     * 页内空闲空间的页内偏移
+     */
+    final static int LEFT_SPACE_OFFSET = 12;
+    /**
+     * 页的大小
+     */
+    final static int PAGE_SIZE = 4096;
+    /**
+     * 单个数据项的最大值，超过的话使用拉链
+     */
+    final static int MAX_RECORD_SIZE = 512;
+    /**
+     * 每个页保留的大小
+     */
+    final static int MIN_LEFT_SPACE = 409;
 
     /**
      * 表头
@@ -231,15 +398,10 @@ public class ItemStorage implements IItemStorage {
      */
     public static class Item{
         /**
-         * 数据项大小
-         */
-        @Bin
-        public int size;
-        /**
          * 数据项编号
          */
         @Bin
-        public long uuid;
+        public int uuid;
         /**
          * 页内偏移
          */
@@ -260,11 +422,7 @@ public class ItemStorage implements IItemStorage {
          */
         @Bin
         public int pageFlag;
-        /**
-         * 当前页号
-         */
-        @Bin
-        public int pageId;
+
         /**
          * 日志记录编号
          */
@@ -288,9 +446,8 @@ public class ItemStorage implements IItemStorage {
 
         public PageHeader() { }
 
-        public PageHeader(int pageFlag, int pageId, long lsn, int leftSpace, int recordNumber) {
+        public PageHeader(int pageFlag,long lsn, int leftSpace, int recordNumber) {
             this.pageFlag = pageFlag;
-            this.pageId = pageId;
             this.lsn = lsn;
             this.leftSpace = leftSpace;
             this.recordNumber = recordNumber;
@@ -298,6 +455,18 @@ public class ItemStorage implements IItemStorage {
 
         public Object newInstance(Class<?> klazz){
             return klazz == PageHeader.class ? new PageHeader() : null;
+        }
+    }
+
+    public static class ItemContent{
+        @Bin
+        byte type;
+        @Bin
+        int size;
+        @Bin
+        byte[] data;
+        public Object newInstance(Class<?> klazz){
+            return klazz == ItemContent.class ? new ItemContent() : null;
         }
     }
 }

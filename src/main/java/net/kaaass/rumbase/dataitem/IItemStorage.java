@@ -40,7 +40,7 @@ public interface IItemStorage {
      * @return 数据项
      * @throws UUIDException UUID找不到的异常
      */
-    byte[] queryItemByUuid(long uuid) throws UUIDException;
+    byte[] queryItemByUuid(long uuid) throws UUIDException, IOException;
 
 
     /**

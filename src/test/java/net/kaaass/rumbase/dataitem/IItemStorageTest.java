@@ -10,6 +10,7 @@ import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -68,6 +69,10 @@ public class IItemStorageTest extends TestCase {
         byte[] bytes = new byte[]{1, 2, 3, 4};
         TransactionContext txContext = new MockTransactionContext();
         long uuid = iItemStorage.insertItem(txContext,bytes);
+
+        long uuid2 = iItemStorage.insertItem(txContext,bytes);
+
+        long uuid3 = iItemStorage.insertItem(txContext,bytes);
 //        try {
 //            assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
 //        } catch (UUIDException e) {
@@ -106,9 +111,14 @@ public class IItemStorageTest extends TestCase {
         byte[] bytes = new byte[]{1, 2, 3, 4};
         TransactionContext txContext = new MockTransactionContext();
         long uuid = iItemStorage.insertItem(txContext,bytes);
+        long uuid2 = iItemStorage.insertItem(txContext,bytes);
+        long uuid3 = iItemStorage.insertItem(txContext,bytes);
         // 查询可以正常执行
         try {
-            assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
+            var item = iItemStorage.queryItemByUuid(uuid);
+            assertTrue(Arrays.equals(bytes,item));
+            var item3 = iItemStorage.queryItemByUuid(uuid3);
+            assertTrue(Arrays.equals(bytes,item3));
         } catch (UUIDException e) {
             e.printStackTrace();
         }
