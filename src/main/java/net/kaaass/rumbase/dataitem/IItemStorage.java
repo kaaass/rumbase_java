@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.dataitem;
 
+import net.kaaass.rumbase.dataitem.exception.ItemException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -31,7 +32,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @param uuid 编号
      */
-    void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid);
+    void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid) throws IOException, PageException;
 
     /**
      * 通过UUID查询数据项
@@ -58,21 +59,21 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException;
+    void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException, IOException, PageException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
      *
      * @return 元数据
      */
-    byte[] getMetadata();
+    byte[] getMetadata() throws IOException, ItemException, UUIDException;
 
     /**
      * 设置数据项存储的元数据（可以用于头）
      *
      * @param metadata 头信息
      */
-    void setMetadata(TransactionContext txContext,byte[] metadata);
+    void setMetadata(TransactionContext txContext,byte[] metadata) throws IOException, PageException;
 
     /**
      * 清理多余的数据项，空间清理时使用。

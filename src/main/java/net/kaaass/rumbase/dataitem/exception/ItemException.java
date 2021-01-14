@@ -12,8 +12,7 @@ import java.util.Map;
  */
 public class ItemException extends RumbaseException {
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
-        put(1, "要创建的文件已存在");
-        put(2, "查找的文件不存在");
+        put(1, "没有相应表头信息");
     }};
 
     public ItemException(int subID) {

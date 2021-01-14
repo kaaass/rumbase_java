@@ -3,6 +3,7 @@ package net.kaaass.rumbase.dataitem;
 import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
+import net.kaaass.rumbase.dataitem.exception.ItemException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.Page;
 import net.kaaass.rumbase.page.PageManager;
@@ -84,9 +85,11 @@ public class ItemStorage implements IItemStorage {
     public static IItemStorage ofFile(String fileName) throws FileException, IOException, PageException {
         var pageStorage = PageManager.fromFile(fileName);
         var header = pageStorage.get(0);
+        header.pin();
         if (checkTableHeader(header)){
             // 如果表头标志存在，就解析对应表头信息
-            var h = JBBPParser.prepare("int headerFlag;int tempFreePage;byte hasHeaderInfo;long headerUuid;").parse(header.getData()).mapTo(new TableHeader());
+            var h = parseHeader(header);
+            header.unpin();
             return new ItemStorage(fileName,h.tempFreePage,h.headerUuid,pageStorage);
         }else {
             // 若表头标志不存在，就初始化对应的表信息。
@@ -96,6 +99,7 @@ public class ItemStorage implements IItemStorage {
                     Int(1).
                     End().toByteArray();
             header.patchData(0,bytes);
+            header.unpin();
             return new ItemStorage(fileName,1,0,pageStorage);
         }
     }
@@ -110,6 +114,34 @@ public class ItemStorage implements IItemStorage {
         var pageStorage = ItemStorage.ofFile(fileName);
         pageStorage.setMetadata(txContext,metadata);
         return pageStorage;
+    }
+
+    private static int getRndByUuid(long uuid){
+       return  (int)(uuid & 0xFFFFFFFF);
+    }
+
+    /**
+     *  解析表头数据
+     * @return 解析得到的表头对象
+     *
+     */
+    private static TableHeader parseHeader(Page page) throws IOException {
+        return JBBPParser.prepare("int headerFlag;int tempFreePage;byte hasHeaderInfo;long headerUuid;").
+                parse(page.getData()).mapTo(new TableHeader());
+    }
+
+    /**
+     *  通过偏移量解析得到数据
+     * @param page 页
+     * @param item 一个数据项记录
+     * @return 解析得到的数据
+     */
+    private static byte[] parseData(Page page,Item item) throws IOException {
+        int offset = item.offset;
+        var data = page.getData();
+        data.skip(offset);
+        var content = JBBPParser.prepare("byte type;int size;byte[size] data;").parse(data).mapTo(new ItemContent());
+        return content.data;
     }
 
     /**
@@ -164,7 +196,7 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public long insertItem(TransactionContext txContext, byte[] item) throws IOException, PageException {
+    public synchronized long insertItem(TransactionContext txContext, byte[] item) throws IOException, PageException {
         var page = getPage(this.tempFreePage);
         var pageHeaderOp = getPageHeader(page);
         if (pageHeaderOp.isEmpty()){
@@ -196,7 +228,7 @@ public class ItemStorage implements IItemStorage {
     /**
      * 将数据插入到页内对应位置，并修改页头信息
      */
-    private synchronized void insertToPage(Page page,PageHeader pageHeader,TransactionContext txContext,byte[] item,int rnd) throws IOException, PageException {
+    private  void insertToPage(Page page,PageHeader pageHeader,TransactionContext txContext,byte[] item,int rnd) throws IOException, PageException {
         if (item.length < MAX_RECORD_SIZE){
             int offset = 0 ;
             if (pageHeader.recordNumber == 0){
@@ -229,8 +261,20 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid) {
-
+    public synchronized void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid) throws IOException, PageException {
+        if (!checkUuidExist(uuid)){
+            // 若不存在，则要恢复
+            var page = getPage(uuid);
+            var pageHeaderOp = getPageHeader(page);
+            if (pageHeaderOp.isEmpty()){
+                // 如果获取的页没有页头信息，则进行初始化。
+                pageHeaderOp = Optional.of(initPage(page));
+            }
+            int rnd = getRndByUuid(uuid);
+            insertToPage(page,pageHeaderOp.get(),txContext,item,rnd);
+            releasePage(page);
+        }
+        // 若存在则不需要恢复，直接返回
     }
 
     /**
@@ -263,7 +307,7 @@ public class ItemStorage implements IItemStorage {
      */
     private boolean checkUuidExist(long uuid) throws IOException {
         var page = getPage(uuid);
-        int id = (int) (uuid & 0xFFFFFFFF);
+        int id = getRndByUuid(uuid);
         var pageHeader = getPageHeader(page);
         if (pageHeader.isEmpty()){
             return false;
@@ -288,10 +332,12 @@ public class ItemStorage implements IItemStorage {
             }else {
                 // 遍历所有的item读取数据
                 var items = header.get().item;
-                int id = (int) (uuid & 0xFFFFFFFF);
+                int id = getRndByUuid(uuid);
                 for (var item : items){
                     if (item.uuid == id){
-                        return parseData(page,item);
+                        var s =parseData(page,item);
+                        releasePage(page);
+                        return  s;
                     }
                 }
             }
@@ -301,20 +347,7 @@ public class ItemStorage implements IItemStorage {
         }
     }
 
-    /**
-     *  通过偏移量解析得到数据
-     * @param page 页
-     * @param item 一个数据项记录
-     * @return 解析得到的数据
-     */
-    private byte[] parseData(Page page,Item item) throws IOException {
-        int offset = item.offset;
-        var data = page.getData();
-        data.skip(offset);
-        var content = JBBPParser.prepare("byte type;int size;byte[size] data;").parse(data).mapTo(new ItemContent());
-        releasePage(page);
-        return content.data;
-    }
+
 
     @Override
     public List<byte[]> listItemByPageId(int pageId) throws IOException {
@@ -333,18 +366,48 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException {
-
+    public void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException, IOException, PageException {
+        var page = getPage(uuid);
+        if (checkUuidExist(uuid)){
+            var pageHeader = getPageHeader(page);
+            var items = pageHeader.get().item;
+            for(var i : items){
+                if (i.uuid == getRndByUuid(uuid)){
+                    var offset = i.offset;
+                    page.patchData(offset,item);
+                    releasePage(page);
+                    return;
+                }
+            }
+        }else{
+            releasePage(page);
+            throw new UUIDException(2);
+        }
     }
 
     @Override
-    public byte[] getMetadata() {
-        return new byte[0];
+    public byte[] getMetadata() throws IOException, ItemException, UUIDException {
+        var page = getPage(0);
+        var header = parseHeader(page);
+        if (checkTableHeader(page) && header.hasHeaderInfo == hasHeader){
+            // 若表头已经被初始化并且有标志位的话，就说明有表头信息，进行获取.
+            var h = queryItemByUuid(header.headerUuid);
+            releasePage(page);
+            return h;
+        }else {
+            throw new ItemException(1);
+        }
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext,byte[] metadata) {
-
+    public void setMetadata(TransactionContext txContext,byte[] metadata) throws IOException, PageException {
+        var page = getPage(0);
+        var headerUuid = insertItem(txContext,metadata);
+        var bytes = JBBPOut.BeginBin().
+                Byte(hasHeader).
+                Long(headerUuid).End().toByteArray();
+        page.patchData(HeaderOffset,bytes);
+        releasePage(page);
     }
 
     @Override
@@ -352,6 +415,15 @@ public class ItemStorage implements IItemStorage {
 
     }
 
+    /**
+     * 头部标志的偏移
+     */
+    final static int HeaderOffset = 8;
+
+    /**
+     * 表头判断是否有表头数据
+     */
+    final static byte hasHeader = 123;
     /**
      * 数据项记录的大小
      */
