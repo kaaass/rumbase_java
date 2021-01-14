@@ -62,7 +62,21 @@ public class RumPage implements Page {
         File file = new File(this.filepath);
         synchronized (this) {
             try {
+                //先在文件第1页的位置写一遍
                 RandomAccessFile out = new RandomAccessFile(file, "rw");
+                try {
+                    out.seek(PageManager.PAGE_SIZE);
+                } catch (Exception e) {
+                    throw new FileException(4);
+                }
+                try {
+                    out.write(data);
+                } catch (Exception e) {
+                    throw new FileException(2);
+                }
+                out.close();
+                //在写入对应的页
+                out = new RandomAccessFile(file, "rw");
                 try {
                     out.seek((PageManager.FILE_HEAD_SIZE + this.pageId) * PageManager.PAGE_SIZE);
                 } catch (Exception e) {
@@ -70,6 +84,19 @@ public class RumPage implements Page {
                 }
                 try {
                     out.write(data);
+                } catch (Exception e) {
+                    throw new FileException(2);
+                }
+                out.close();
+                //将第一页写入的内容删除
+                out = new RandomAccessFile(file, "rw");
+                try {
+                    out.seek(PageManager.PAGE_SIZE);
+                } catch (Exception e) {
+                    throw new FileException(4);
+                }
+                try {
+                    out.write(new byte[PageManager.PAGE_SIZE]);
                 } catch (Exception e) {
                     throw new FileException(2);
                 }
