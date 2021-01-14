@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.parse;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
  * @author kaaass
  */
 @Data
+@AllArgsConstructor
 public class UpdateStatement {
 
     /**
