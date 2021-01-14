@@ -13,6 +13,7 @@ import java.util.Map;
 public class ItemException extends RumbaseException {
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "没有相应表头信息");
+        put(2,"所查找的数据项信息解析错误");
     }};
 
     public ItemException(int subID) {

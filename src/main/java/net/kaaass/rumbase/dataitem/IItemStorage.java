@@ -41,7 +41,7 @@ public interface IItemStorage {
      * @return 数据项
      * @throws UUIDException UUID找不到的异常
      */
-    byte[] queryItemByUuid(long uuid) throws UUIDException, IOException;
+    byte[] queryItemByUuid(long uuid) throws UUIDException, IOException, ItemException;
 
 
     /**
@@ -50,7 +50,7 @@ public interface IItemStorage {
      * @param pageId 页号
      * @return list的一堆数据项
      */
-    List<byte[]> listItemByPageId(int pageId) throws IOException;
+    List<byte[]> listItemByPageId(int pageId) throws IOException, ItemException;
 
     /**
      * 根据UUID更新数据项

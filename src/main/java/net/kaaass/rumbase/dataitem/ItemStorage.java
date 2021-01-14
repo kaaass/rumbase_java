@@ -13,9 +13,7 @@ import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.IRecoveryStorage;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -23,9 +21,15 @@ import java.util.*;
  *
  * <p>
  *     每个表的头信息都是一致的，为
- *     |头信息标志位：1234(共4字节)|当前可用的第一个空闲页(4字节)|是否写入表头信息(1字节)，写入为123|头信息所对应的UUID(8字节)
+ *     |头信息标志位：1 2 3 4(共4字节)|当前可用的第一个空闲页(4字节)|是否写入表头信息(1字节)，写入为123|头信息所对应的UUID(8字节)
  *
- *     同时
+ *     同时每个页都有相应的页头，页头格式为：
+ *     |页头标志位 2 3 4 5(共4字节)|lsn来记录日志相关内容(8字节)|页剩余空间大小(4字节)|页内数据项个数n(4字节)|每个数据项标志(n*8字节)|
+ *
+ *     数据项标志为 |uuid后面的随机数(4字节)|在页内偏移offset(4字节)|
+ *
+ *     每个数据项的内容为|标志位，表示有没有拉链等特殊情况(1字节)|数据长度m(4字节)|数据内容(m字节)|
+ *     TODO : |(若有拉链的话，则记录下一个uuid位置)8字节|
  * </p>
  * @author  kaito
  */
@@ -116,8 +120,38 @@ public class ItemStorage implements IItemStorage {
         return pageStorage;
     }
 
+    /**
+     * 根据uuid获取后面的随机位置
+     */
     private static int getRndByUuid(long uuid){
        return  (int)(uuid & 0xFFFFFFFF);
+    }
+
+    /**
+     * 根据uuid获取page
+     */
+    private Page getPage(long uuid){
+        var pageId = uuid >> 32;
+        Page page = pageStorage.get(pageId);
+        page.pin();
+        return page;
+    }
+
+    /**
+     * 根据pageId获取Page
+     */
+    private Page getPage(int pageId){
+        Page page = pageStorage.get(pageId);
+        page.pin();
+        return page;
+    }
+
+    /**
+     * 释放page的操作
+     * @param page
+     */
+    private void releasePage(Page page){
+        page.unpin();
     }
 
     /**
@@ -136,11 +170,14 @@ public class ItemStorage implements IItemStorage {
      * @param item 一个数据项记录
      * @return 解析得到的数据
      */
-    private static byte[] parseData(Page page,Item item) throws IOException {
+    private static byte[] parseData(Page page,Item item) throws IOException, ItemException {
         int offset = item.offset;
         var data = page.getData();
         data.skip(offset);
         var content = JBBPParser.prepare("byte type;int size;byte[size] data;").parse(data).mapTo(new ItemContent());
+        if (content.type != NORMAL_DATA){
+            throw new ItemException(2);
+        }
         return content.data;
     }
 
@@ -238,7 +275,6 @@ public class ItemStorage implements IItemStorage {
                 // 如果页内有插入的数据，则读取其offset并推算自己的offset
                 offset = pageHeader.item[pageHeader.recordNumber-1].offset - item.length - DATA_EXTRA_SIZE;
             }
-
             //修改数据项头信息
             var i = JBBPOut.BeginBin().
                     Int(rnd).
@@ -247,13 +283,13 @@ public class ItemStorage implements IItemStorage {
             page.patchData(ITEM_OFFSET + pageHeader.recordNumber * ITEM_SIZE ,i);
             //修改数据信息
             var data = JBBPOut.BeginBin().
-                    Byte(123).
+                    Byte(NORMAL_DATA).
                     Int(item.length).
                     Byte(item).End().toByteArray();
             page.patchData(offset,data);
             //修改页头信息
             var headerInfo = JBBPOut.BeginBin().
-                    Int(pageHeader.leftSpace - item.length - DATA_EXTRA_SIZE).
+                    Int(pageHeader.leftSpace - item.length - DATA_EXTRA_SIZE - ITEM_SIZE).
                     Int(pageHeader.recordNumber + 1).
                     End().toByteArray();
             page.patchData(LEFT_SPACE_OFFSET,headerInfo);
@@ -278,29 +314,6 @@ public class ItemStorage implements IItemStorage {
     }
 
     /**
-     * 根据uuid获取page
-     */
-    private Page getPage(long uuid){
-        var pageId = uuid >> 32;
-        Page page = pageStorage.get(pageId);
-        page.pin();
-        return page;
-    }
-
-    private Page getPage(int pageId){
-        Page page = pageStorage.get(pageId);
-        page.pin();
-        return page;
-    }
-
-    /**
-     * 释放page的操作
-     * @param page
-     */
-    private void releasePage(Page page){
-        page.unpin();
-    }
-    /**
      * 检查uuid是否存在
      * @param uuid
      * @return
@@ -322,7 +335,7 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public byte[] queryItemByUuid(long uuid) throws UUIDException, IOException {
+    public byte[] queryItemByUuid(long uuid) throws UUIDException, IOException, ItemException {
         if (checkUuidExist(uuid)){
             var page = getPage(uuid);
             var header = getPageHeader(page);
@@ -350,7 +363,7 @@ public class ItemStorage implements IItemStorage {
 
 
     @Override
-    public List<byte[]> listItemByPageId(int pageId) throws IOException {
+    public List<byte[]> listItemByPageId(int pageId) throws IOException, ItemException {
         var page = getPage(pageId);
         List<byte[]> bytes = new ArrayList<>();
         var pageHeaderOp = getPageHeader(page);
@@ -374,7 +387,12 @@ public class ItemStorage implements IItemStorage {
             for(var i : items){
                 if (i.uuid == getRndByUuid(uuid)){
                     var offset = i.offset;
-                    page.patchData(offset,item);
+                    var bytes = JBBPOut.BeginBin().
+                            Byte(NORMAL_DATA).
+                            Int(item.length)
+                            .Byte(item)
+                            .End().toByteArray();
+                    page.patchData(offset,bytes);
                     releasePage(page);
                     return;
                 }
@@ -389,7 +407,7 @@ public class ItemStorage implements IItemStorage {
     public byte[] getMetadata() throws IOException, ItemException, UUIDException {
         var page = getPage(0);
         var header = parseHeader(page);
-        if (checkTableHeader(page) && header.hasHeaderInfo == hasHeader){
+        if (checkTableHeader(page) && header.hasHeaderInfo == HAS_HEADER){
             // 若表头已经被初始化并且有标志位的话，就说明有表头信息，进行获取.
             var h = queryItemByUuid(header.headerUuid);
             releasePage(page);
@@ -404,9 +422,9 @@ public class ItemStorage implements IItemStorage {
         var page = getPage(0);
         var headerUuid = insertItem(txContext,metadata);
         var bytes = JBBPOut.BeginBin().
-                Byte(hasHeader).
+                Byte(HAS_HEADER).
                 Long(headerUuid).End().toByteArray();
-        page.patchData(HeaderOffset,bytes);
+        page.patchData(HEADER_OFFSET,bytes);
         releasePage(page);
     }
 
@@ -416,14 +434,18 @@ public class ItemStorage implements IItemStorage {
     }
 
     /**
+     *
+     */
+    final static byte NORMAL_DATA = 121;
+    /**
      * 头部标志的偏移
      */
-    final static int HeaderOffset = 8;
+    final static int HEADER_OFFSET = 8;
 
     /**
      * 表头判断是否有表头数据
      */
-    final static byte hasHeader = 123;
+    final static byte HAS_HEADER = 123;
     /**
      * 数据项记录的大小
      */

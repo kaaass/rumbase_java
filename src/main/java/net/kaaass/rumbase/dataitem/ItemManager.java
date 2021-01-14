@@ -28,11 +28,6 @@ public class ItemManager {
      * @return 数据项管理器，用于管理数据项
      */
     public static IItemStorage fromFile(String fileName) throws FileException, IOException, PageException {
-        String errorFileName = "error.db";
-        if (errorFileName.equals(fileName)) {
-            throw new FileException(2);
-        }
-
         if (maps.containsKey(fileName)) {
             return maps.get(fileName);
         } else {
