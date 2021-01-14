@@ -32,7 +32,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @param uuid 编号
      */
-    void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid) throws IOException, PageException;
+    void insertItemWithUuid(TransactionContext txContext, byte[] item, long uuid) throws IOException, PageException;
 
     /**
      * 通过UUID查询数据项
@@ -59,7 +59,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException, IOException, PageException;
+    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, IOException, PageException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
@@ -73,7 +73,7 @@ public interface IItemStorage {
      *
      * @param metadata 头信息
      */
-    void setMetadata(TransactionContext txContext,byte[] metadata) throws IOException, PageException;
+    void setMetadata(TransactionContext txContext, byte[] metadata) throws IOException, PageException;
 
     /**
      * 清理多余的数据项，空间清理时使用。
