@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.record.exception.NeedRollbackException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.record.exception.StorageCorruptedException;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -90,9 +91,8 @@ public class MvccRecordStorage implements IRecordStorage {
         }
         // 版本跳跃检查
         if (isVersionSkip(txContext, data)) {
-            log.info("记录 {} 发生版本跳跃", recordId);
-            // TODO 回滚
-            return;
+            log.info("事务 {} 操作记录 {} 发生版本跳跃", txContext.getXid(), recordId);
+            throw new NeedRollbackException(1);
         }
         // 更新记录
         writeXmax(data, xid);

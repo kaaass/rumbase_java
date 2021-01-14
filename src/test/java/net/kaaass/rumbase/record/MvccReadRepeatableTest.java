@@ -1,11 +1,14 @@
 package net.kaaass.rumbase.record;
 
 import junit.framework.TestCase;
+import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.record.exception.NeedRollbackException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionManager;
 
+@Slf4j
 public class MvccReadRepeatableTest extends TestCase {
 
     public void testReadSelf() throws RecordNotFoundException {
@@ -78,7 +81,7 @@ public class MvccReadRepeatableTest extends TestCase {
         assertTrue("tx3 see a2 after commit", storage.queryOptional(tx3, a2).isPresent());
     }
 
-    public void testVersionSkip() throws RecordNotFoundException {
+    public void testVersionSkip() throws RecordNotFoundException, NeedRollbackException {
         var storage = RecordManager.fromFile("MvccReadRepeatableTest::testDelete");
         var manager = new FakeTxManager(TransactionIsolation.REPEATABLE_READ);
         // 创建公共版本
@@ -90,7 +93,12 @@ public class MvccReadRepeatableTest extends TestCase {
         assertTrue(storage.queryOptional(tx2, r).isPresent());
         storage.delete(tx1, r);
         tx1.commit();
-        storage.delete(tx2, r);
-        tx2.commit();
+        try {
+            storage.delete(tx2, r);
+            fail("Should rollback tx2 at here");
+            tx2.commit();
+        } catch (NeedRollbackException e) {
+            log.info("Expected runtime exception: ", e);
+        }
     }
 }
