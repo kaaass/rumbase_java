@@ -169,9 +169,11 @@ public class IItemStorageTest extends TestCase {
             bs.add(bytes1);
             bs.sort(comparator);
             // 获取pageID对应的数据项，在这里Mock是获取所有list中的数据
-            var result = iItemStorage.listItemByPageId(0);
+            var result = iItemStorage.listItemByPageId(1);
             result.sort(comparator);
-            assertEquals(bs, result);
+            for (int i= 0 ; i < bs.size() ; i++){
+                assertTrue(Arrays.equals(bs.get(i),result.get(i)));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

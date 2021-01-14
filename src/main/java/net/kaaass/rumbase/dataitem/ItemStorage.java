@@ -14,10 +14,8 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 
 import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * 数据项管理器的具体实现
@@ -198,7 +196,7 @@ public class ItemStorage implements IItemStorage {
     /**
      * 将数据插入到页内对应位置，并修改页头信息
      */
-    private void insertToPage(Page page,PageHeader pageHeader,TransactionContext txContext,byte[] item,int rnd) throws IOException, PageException {
+    private synchronized void insertToPage(Page page,PageHeader pageHeader,TransactionContext txContext,byte[] item,int rnd) throws IOException, PageException {
         if (item.length < MAX_RECORD_SIZE){
             int offset = 0 ;
             if (pageHeader.recordNumber == 0){
@@ -293,12 +291,7 @@ public class ItemStorage implements IItemStorage {
                 int id = (int) (uuid & 0xFFFFFFFF);
                 for (var item : items){
                     if (item.uuid == id){
-                        int offset = item.offset;
-                        var data = page.getData();
-                        data.skip(offset);
-                        var content = JBBPParser.prepare("byte type;int size;byte[size] data;").parse(data).mapTo(new ItemContent());
-                        releasePage(page);
-                        return content.data;
+                        return parseData(page,item);
                     }
                 }
             }
@@ -308,9 +301,35 @@ public class ItemStorage implements IItemStorage {
         }
     }
 
+    /**
+     *  通过偏移量解析得到数据
+     * @param page 页
+     * @param item 一个数据项记录
+     * @return 解析得到的数据
+     */
+    private byte[] parseData(Page page,Item item) throws IOException {
+        int offset = item.offset;
+        var data = page.getData();
+        data.skip(offset);
+        var content = JBBPParser.prepare("byte type;int size;byte[size] data;").parse(data).mapTo(new ItemContent());
+        releasePage(page);
+        return content.data;
+    }
+
     @Override
-    public List<byte[]> listItemByPageId(int pageId) {
-        return null;
+    public List<byte[]> listItemByPageId(int pageId) throws IOException {
+        var page = getPage(pageId);
+        List<byte[]> bytes = new ArrayList<>();
+        var pageHeaderOp = getPageHeader(page);
+        if (pageHeaderOp.isPresent()){
+            var pageHeader = pageHeaderOp.get();
+            for (var item : pageHeader.item){
+                var data = parseData(page,item);
+                bytes.add(data);
+            }
+        }
+        releasePage(page);
+        return bytes;
     }
 
     @Override

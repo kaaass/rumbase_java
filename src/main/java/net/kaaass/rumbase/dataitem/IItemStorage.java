@@ -49,7 +49,7 @@ public interface IItemStorage {
      * @param pageId 页号
      * @return list的一堆数据项
      */
-    List<byte[]> listItemByPageId(int pageId);
+    List<byte[]> listItemByPageId(int pageId) throws IOException;
 
     /**
      * 根据UUID更新数据项
