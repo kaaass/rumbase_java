@@ -1,6 +1,11 @@
 package net.kaaass.rumbase.recovery;
 
+import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.recovery.mock.MockRecoveryStorage;
+
+import java.io.IOException;
 
 /**
  * 日志恢复的管理器，用来对每个数据库文件进行恢复
@@ -9,13 +14,21 @@ import net.kaaass.rumbase.recovery.mock.MockRecoveryStorage;
  */
 public class RecoveryManager {
     /**
-     * 对某个数据库文件进行恢复，并且返回对应的日志管理器
+     * 对某个数据库文件进行恢复
      *
      * @param fileName 文件名
      * @return 数据库日志管理器
      */
-    public static IRecoveryStorage recovery(String fileName) {
+    public static void recovery(String fileName) {
         // TODO:对数据进行恢复
-        return new MockRecoveryStorage();
+
+    }
+
+    public static IRecoveryStorage getRecoveryStorage(String fileName) throws FileException, IOException, LogException {
+        return RecoveryStorage.ofFile(fileName + ".log");
+    }
+
+    public static IRecoveryStorage createRecoveryStorage(String fileName) throws IOException, FileException, PageException {
+        return RecoveryStorage.ofNewFile(fileName + ".log");
     }
 }

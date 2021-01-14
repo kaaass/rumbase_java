@@ -434,7 +434,7 @@ public class ItemStorage implements IItemStorage {
     }
 
     /**
-     *
+     * 判断对应offset的位置是不是一个完整的数据
      */
     final static byte NORMAL_DATA = 121;
     /**
