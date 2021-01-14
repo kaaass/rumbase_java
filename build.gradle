@@ -24,6 +24,8 @@ dependencies {
     // Slf4j
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
+    // JSQLParser
+    compile 'com.github.jsqlparser:jsqlparser:4.0'
     // JUnit
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
