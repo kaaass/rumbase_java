@@ -6,6 +6,7 @@ import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 测试事务上下文
@@ -131,12 +132,14 @@ public class TransactionContextTest extends TestCase {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            log.info("transaction2 commit");
             transaction2.commit();
         }).start();
         try {
             transaction1.exclusiveLock(1, tableName);
             transaction2.exclusiveLock(2, tableName);
             transaction1.exclusiveLock(2, tableName);
+            log.info("transaction1 got exclusiveLock on 2");
         } catch (DeadlockException e) {
             e.printStackTrace();
         }
@@ -158,13 +161,13 @@ public class TransactionContextTest extends TestCase {
     /**
      * 测试死锁
      */
-    public void testDeadlock() throws IOException, FileException {
+    public void testDeadlock() throws IOException, FileException, InterruptedException {
         var manager = new TransactionManagerImpl();
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
 
-
+        AtomicBoolean deadlockDetect = new AtomicBoolean(false);
         new Thread(() -> {
             try {
                 Thread.sleep(3);
@@ -174,6 +177,7 @@ public class TransactionContextTest extends TestCase {
             try {
                 transaction2.exclusiveLock(1, tableName);
             } catch (DeadlockException e) {
+                deadlockDetect.set(true);
                 transaction2.rollback();
                 e.printStackTrace();
             }
@@ -183,7 +187,11 @@ public class TransactionContextTest extends TestCase {
             transaction2.exclusiveLock(2, tableName);
             transaction1.exclusiveLock(2, tableName);
         } catch (DeadlockException e) {
+            deadlockDetect.set(true);
+            transaction2.rollback();
             e.printStackTrace();
         }
+        Thread.sleep(10);
+        assertTrue("Deadlock should be detected", deadlockDetect.get());
     }
 }
