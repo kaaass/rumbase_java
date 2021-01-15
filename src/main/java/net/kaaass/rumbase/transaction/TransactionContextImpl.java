@@ -132,7 +132,7 @@ public class TransactionContextImpl implements TransactionContext {
     public void start() throws StatusException {
         statusLock.lock();
         try {
-            if (!this.status.equals(TransactionStatus.PREPARING)) {
+            if (this.xid != 0 && !this.status.equals(TransactionStatus.PREPARING)) {
                 throw new StatusException(1);
             }
             this.status = TransactionStatus.ACTIVE;
@@ -151,7 +151,7 @@ public class TransactionContextImpl implements TransactionContext {
     public void commit() throws StatusException {
         statusLock.lock();
         try {
-            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+            if (this.xid != 0 && !this.status.equals(TransactionStatus.ACTIVE)) {
                 throw new StatusException(1);
             }
             // 修改状态
@@ -175,7 +175,7 @@ public class TransactionContextImpl implements TransactionContext {
     public void rollback() throws StatusException {
         statusLock.lock();
         try {
-            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+            if (this.xid != 0 && !this.status.equals(TransactionStatus.ACTIVE)) {
                 throw new StatusException(1);
             }
 
@@ -203,7 +203,7 @@ public class TransactionContextImpl implements TransactionContext {
     public void sharedLock(long uuid, String tableName) throws DeadlockException, StatusException {
         statusLock.lock();
         try {
-            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+            if (this.xid != 0 && !this.status.equals(TransactionStatus.ACTIVE)) {
                 throw new StatusException(1);
             }
 
@@ -225,7 +225,7 @@ public class TransactionContextImpl implements TransactionContext {
     public void exclusiveLock(long uuid, String tableName) throws DeadlockException, StatusException {
         statusLock.lock();
         try {
-            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+            if (this.xid != 0 && !this.status.equals(TransactionStatus.ACTIVE)) {
                 throw new StatusException(1);
             }
             LockTable lockTable = LockTableImpl.getInstance();
