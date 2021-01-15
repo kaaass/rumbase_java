@@ -15,9 +15,9 @@ public class CreateTableStatementParserTest extends TestCase {
     public void testParse() throws SqlSyntaxException {
         var sql = "CREATE TABLE Persons\n" +
                 "(\n" +
-                "Id_P int,\n" +
+                "Id_P int not null,\n" +
                 "LastName varchar(255),\n" +
-                "FirstName varchar(255)\n" +
+                "FirstName varchar(255) NOT NULL\n" +
                 ")";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
@@ -27,15 +27,18 @@ public class CreateTableStatementParserTest extends TestCase {
         var columns = new ArrayList<CreateTableStatement.ColumnDefinition>();
         columns.add(new CreateTableStatement.ColumnDefinition(
                 new CreateTableStatement.ColumnType("int", null),
-                "Id_P"
+                "Id_P",
+                true
         ));
         columns.add(new CreateTableStatement.ColumnDefinition(
                 new CreateTableStatement.ColumnType("varchar", List.of("255")),
-                "LastName"
+                "LastName",
+                false
         ));
         columns.add(new CreateTableStatement.ColumnDefinition(
                 new CreateTableStatement.ColumnType("varchar", List.of("255")),
-                "FirstName"
+                "FirstName",
+                true
         ));
         var expected = new CreateTableStatement(
                 "Persons",

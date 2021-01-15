@@ -41,6 +41,11 @@ public class CreateTableStatement implements ISqlStatement {
          * 字段名称
          */
         private String columnName;
+
+        /**
+         * 字段值非空
+         */
+        private boolean notNull;
     }
 
     /**

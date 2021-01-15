@@ -6,6 +6,7 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -23,10 +24,24 @@ public class CreateTableStatementParser implements JsqlpStatementParser {
         var columnDefs = stmt.getColumnDefinitions().stream()
                 .map(def -> new CreateTableStatement.ColumnDefinition(
                         mapColType(def.getColDataType()),
-                        def.getColumnName()
+                        def.getColumnName(),
+                        def.getColumnSpecs() != null
+                                && checkNotNull(def.getColumnSpecs())
                 ))
                 .collect(Collectors.toList());
         return new CreateTableStatement(tableName, columnDefs);
+    }
+
+    private boolean checkNotNull(List<String> specs) {
+        var a = specs.indexOf("not");
+        if (a < 0) {
+            a = specs.indexOf("NOT");
+        }
+        var b = specs.indexOf("null");
+        if (b < 0) {
+            b = specs.indexOf("NULL");
+        }
+        return a >= 0 && b > a;
     }
 
     public static CreateTableStatement.ColumnType mapColType(ColDataType type) {
