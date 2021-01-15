@@ -11,7 +11,6 @@ import net.sf.jsqlparser.statement.insert.Insert;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 将插入语句解释为对应语法树
@@ -27,12 +26,7 @@ public class InsertStatementParser implements JsqlpStatementParser {
         List<ColumnIdentifier> columns = null;
         var parsedColumn = stmt.getColumns();
         if (parsedColumn != null) {
-            columns = parsedColumn.stream()
-                    .map(column -> new ColumnIdentifier(
-                            tableName,
-                            column.getName(false)
-                    ))
-                    .collect(Collectors.toList());
+            columns = ParserUtil.mapColumnList(parsedColumn, tableName);
         }
         // 解析插入的数据
         var values = new ArrayList<String>();
