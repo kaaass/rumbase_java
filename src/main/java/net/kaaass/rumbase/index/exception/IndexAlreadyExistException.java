@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * TODO 文档
+ * 当根据文件名创建一个新的空索引时，如果相应的文件名已经存在了索引，则不能创建新的空索引，并抛出此异常
+ * @author 无索魏
  */
 public class IndexAlreadyExistException extends RumbaseException {
 

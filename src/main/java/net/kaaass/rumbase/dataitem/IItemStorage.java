@@ -1,6 +1,8 @@
 package net.kaaass.rumbase.dataitem;
 
+import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.util.List;
 
@@ -16,7 +18,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @return 返回数据项的UUID
      */
-    long insertItem(byte[] item);
+    long insertItem(TransactionContext txContext, byte[] item);
 
     /**
      * 插入一个有UUID的数据项，唯一使用的地方是日志恢复时使用
@@ -28,7 +30,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @param uuid 编号
      */
-    void insertItemWithUuid(byte[] item, long uuid);
+    void insertItemWithUuid(TransactionContext txContext, byte[] item, long uuid);
 
     /**
      * 通过UUID查询数据项
@@ -55,7 +57,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(long uuid, byte[] item) throws UUIDException;
+    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
@@ -69,7 +71,7 @@ public interface IItemStorage {
      *
      * @param metadata 头信息
      */
-    void setMetadata(byte[] metadata);
+    void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException;
 
     /**
      * 清理多余的数据项，空间清理时使用。

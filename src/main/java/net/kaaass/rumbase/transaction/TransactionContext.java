@@ -1,6 +1,8 @@
 package net.kaaass.rumbase.transaction;
 
-import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
+import net.kaaass.rumbase.transaction.exception.DeadlockException;
+
+import java.util.List;
 
 /**
  * 事务上下文
@@ -18,8 +20,15 @@ public interface TransactionContext {
      * @return 空事务上下文
      */
     static TransactionContext empty() {
-        return new MockTransactionContext();
+        return new TransactionContextImpl();
     }
+
+    /**
+     * 获取当前事务快照信息
+     *
+     * @return 事务快照
+     */
+    List<Integer> getSnapshot();
 
     /**
      * 获取事务隔离度
@@ -34,6 +43,13 @@ public interface TransactionContext {
      * @return 事务状态
      */
     TransactionStatus getStatus();
+
+    /**
+     * 获取事务管理器
+     *
+     * @return 事务管理器
+     */
+    TransactionManager getManager();
 
     /**
      * 获取事务id
@@ -62,14 +78,16 @@ public interface TransactionContext {
      *
      * @param uuid      记录id
      * @param tableName 表字段
+     * @throws DeadlockException 发生死锁异常
      */
-    void sharedLock(long uuid, String tableName);
+    void sharedLock(long uuid, String tableName) throws DeadlockException;
 
     /**
      * 对记录加排他锁
      *
      * @param uuid      记录id
      * @param tableName 表字段
+     * @throws DeadlockException 发生死锁异常
      */
-    void exclusiveLock(long uuid, String tableName);
+    void exclusiveLock(long uuid, String tableName) throws DeadlockException;
 }

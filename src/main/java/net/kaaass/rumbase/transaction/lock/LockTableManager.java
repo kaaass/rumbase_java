@@ -1,4 +1,4 @@
-package net.kaaass.rumbase.transaction;
+package net.kaaass.rumbase.transaction.lock;
 
 import net.kaaass.rumbase.transaction.mock.MockLockTable;
 
