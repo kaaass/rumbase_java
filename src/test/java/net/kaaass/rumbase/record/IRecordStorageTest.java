@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -23,19 +22,15 @@ public class IRecordStorageTest extends TestCase {
         var storage = RecordManager.fromFile("test_query");
         var context = TransactionContext.empty();
 
-        var result = storage.queryOptional(context, UUID.randomUUID().getLeastSignificantBits());
-
-        assertTrue("unknown uuid should get empty", result.isEmpty());
-
         try {
             storage.query(context, UUID.randomUUID().getLeastSignificantBits());
-            fail("unknown uuid should get exception");
+            fail("unknown physical record should get exception");
         } catch (RecordNotFoundException e) {
             log.error("Exception expected: ", e);
         }
     }
 
-    public void testInsert() {
+    public void testInsert() throws RecordNotFoundException {
         var storage = RecordManager.fromFile("test_insert");
         var context = TransactionContext.empty();
 
@@ -46,7 +41,7 @@ public class IRecordStorageTest extends TestCase {
         assertArrayEquals(new byte[]{0x1, 0x2, 0x1f}, result.get());
     }
 
-    public void testDelete() {
+    public void testDelete() throws RecordNotFoundException {
         var storage = RecordManager.fromFile("test_delete");
         var context = TransactionContext.empty();
 
