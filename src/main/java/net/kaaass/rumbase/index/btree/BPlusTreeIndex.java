@@ -764,7 +764,7 @@ public class BPlusTreeIndex implements Index {
                 boolean isInsert = false;
                 for (int k = 0; k < BPlusTreeIndex.MAX_PAGE_ITEM/2; k++) {
                     System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_MID_POSTION + k * 16, bs, 0, 16);
-                    if (keyHash < ByteUtil.bytes2Long(ByteUtil.subByte(bs, 0, 8))) {
+                    if (keyHash < ByteUtil.bytes2Long(ByteUtil.subByte(bs, 0, 8)) && !isInsert) {
                         byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(keyHash), ByteUtil.long2Bytes(uuid));
                         newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,inserted);
                         isInsert = true;
