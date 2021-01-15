@@ -155,9 +155,11 @@ public class TransactionContextTest {
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
-
+        transaction1.start();
+        transaction2.start();
 
         // 互斥锁
+        TransactionContext finalTransaction = transaction2;
         new Thread(() -> {
             try {
                 Thread.sleep(100);
@@ -166,14 +168,14 @@ public class TransactionContextTest {
             }
             log.info("transaction2 commit");
             try {
-                transaction2.commit();
+                finalTransaction.commit();
             } catch (StatusException e) {
                 e.printStackTrace();
             }
         }).start();
         try {
             transaction1.exclusiveLock(1, tableName);
-            transaction2.exclusiveLock(2, tableName);
+            finalTransaction.exclusiveLock(2, tableName);
             transaction1.exclusiveLock(2, tableName);
             log.info("transaction1 got exclusiveLock on 2");
         } catch (DeadlockException e) {
@@ -181,6 +183,12 @@ public class TransactionContextTest {
         }
         transaction1.commit();
 
+
+        transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+        transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+
+        transaction1.start();
+        transaction2.start();
         try {
             transaction1.sharedLock(1, tableName);
             transaction2.sharedLock(1, tableName);
@@ -203,6 +211,9 @@ public class TransactionContextTest {
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
+
+        transaction1.start();
+        transaction2.start();
 
         AtomicBoolean deadlockDetect = new AtomicBoolean(false);
         Thread thread = new Thread(() -> {
