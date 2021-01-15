@@ -3,6 +3,7 @@ package net.kaaass.rumbase.transaction;
 import lombok.Getter;
 import lombok.Setter;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
+import net.kaaass.rumbase.transaction.exception.StatusException;
 import net.kaaass.rumbase.transaction.lock.LockTable;
 import net.kaaass.rumbase.transaction.lock.LockTableImpl;
 
@@ -128,11 +129,11 @@ public class TransactionContextImpl implements TransactionContext {
      * 开始事务
      */
     @Override
-    public void start() {
+    public void start() throws StatusException {
         statusLock.lock();
         try {
             if (!this.status.equals(TransactionStatus.PREPARING)) {
-                return;
+                throw new StatusException(1);
             }
             this.status = TransactionStatus.ACTIVE;
             if (manager != null) {
@@ -147,11 +148,11 @@ public class TransactionContextImpl implements TransactionContext {
      * 提交事务
      */
     @Override
-    public void commit() {
+    public void commit() throws StatusException {
         statusLock.lock();
         try {
             if (!this.status.equals(TransactionStatus.ACTIVE)) {
-                return;
+                throw new StatusException(1);
             }
             // 修改状态
             this.status = TransactionStatus.COMMITTED;
@@ -171,11 +172,11 @@ public class TransactionContextImpl implements TransactionContext {
      * 中止事务
      */
     @Override
-    public void rollback() {
+    public void rollback() throws StatusException {
         statusLock.lock();
         try {
             if (!this.status.equals(TransactionStatus.ACTIVE)) {
-                return;
+                throw new StatusException(1);
             }
 
             // 修改状态
@@ -199,11 +200,11 @@ public class TransactionContextImpl implements TransactionContext {
      * @param tableName 表字段
      */
     @Override
-    public void sharedLock(long uuid, String tableName) throws DeadlockException {
+    public void sharedLock(long uuid, String tableName) throws DeadlockException, StatusException {
         statusLock.lock();
         try {
             if (!this.status.equals(TransactionStatus.ACTIVE)) {
-                return;
+                throw new StatusException(1);
             }
 
             LockTable lockTable = LockTableImpl.getInstance();
@@ -221,11 +222,11 @@ public class TransactionContextImpl implements TransactionContext {
      * @param tableName 表字段
      */
     @Override
-    public void exclusiveLock(long uuid, String tableName) throws DeadlockException {
+    public void exclusiveLock(long uuid, String tableName) throws DeadlockException, StatusException {
         statusLock.lock();
         try {
             if (!this.status.equals(TransactionStatus.ACTIVE)) {
-                return;
+                throw new StatusException(1);
             }
             LockTable lockTable = LockTableImpl.getInstance();
             lockTable.addExclusiveLock(xid, uuid, tableName);
