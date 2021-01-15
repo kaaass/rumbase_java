@@ -75,7 +75,6 @@ public class TransactionContextTest {
      */
     @Test
     public void testChangeStatus() throws IOException, FileException {
-        // TODO 将Mock类改成实现类
         var manager = new TransactionManagerImpl("test_gen_files/test_change.log");
         var committedTransaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         // 事务初始状态
@@ -101,7 +100,6 @@ public class TransactionContextTest {
      */
     @Test
     public void testTransactionPersistence() throws IOException, FileException {
-        // TODO 将Mock类改成实现类
         var manager = new TransactionManagerImpl("test_gen_files/test_persistence.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -156,7 +154,6 @@ public class TransactionContextTest {
      */
     @Test
     public void testAddLock() throws IOException, FileException {
-        // TODO 将Mock类改成实现类
         var manager = new TransactionManagerImpl("test_gen_files/test_add_lock.log");
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);

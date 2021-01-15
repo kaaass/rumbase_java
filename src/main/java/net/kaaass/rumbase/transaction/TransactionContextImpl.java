@@ -8,6 +8,8 @@ import net.kaaass.rumbase.transaction.lock.LockTableImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 事务上下文的实现
@@ -36,6 +38,10 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Getter
     private final List<Integer> snapshot;
+    /**
+     * 状态互斥锁
+     */
+    private final Lock statusLock = new ReentrantLock();
     /**
      * 事务状态
      */
@@ -123,11 +129,18 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void start() {
-        this.status = TransactionStatus.ACTIVE;
-        if (manager != null) {
-            manager.changeTransactionStatus(xid, TransactionStatus.ACTIVE);
+        statusLock.lock();
+        try {
+            if (!this.status.equals(TransactionStatus.PREPARING)) {
+                return;
+            }
+            this.status = TransactionStatus.ACTIVE;
+            if (manager != null) {
+                manager.changeTransactionStatus(xid, TransactionStatus.ACTIVE);
+            }
+        } finally {
+            statusLock.unlock();
         }
-
     }
 
     /**
@@ -135,15 +148,23 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void commit() {
-        // 修改状态
-        this.status = TransactionStatus.COMMITTED;
-        if (manager != null) {
-            manager.changeTransactionStatus(xid, TransactionStatus.COMMITTED);
-        }
+        statusLock.lock();
+        try {
+            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+                return;
+            }
+            // 修改状态
+            this.status = TransactionStatus.COMMITTED;
+            if (manager != null) {
+                manager.changeTransactionStatus(xid, TransactionStatus.COMMITTED);
+            }
 
-        // 释放锁
-        LockTable lockTable = LockTableImpl.getInstance();
-        lockTable.release(xid);
+            // 释放锁
+            LockTable lockTable = LockTableImpl.getInstance();
+            lockTable.release(xid);
+        } finally {
+            statusLock.unlock();
+        }
     }
 
     /**
@@ -151,15 +172,24 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void rollback() {
-        // 修改状态
-        this.status = TransactionStatus.ABORTED;
-        if (manager != null) {
-            manager.changeTransactionStatus(xid, TransactionStatus.ABORTED);
-        }
+        statusLock.lock();
+        try {
+            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+                return;
+            }
 
-        // 释放锁
-        LockTable lockTable = LockTableImpl.getInstance();
-        lockTable.release(xid);
+            // 修改状态
+            this.status = TransactionStatus.ABORTED;
+            if (manager != null) {
+                manager.changeTransactionStatus(xid, TransactionStatus.ABORTED);
+            }
+
+            // 释放锁
+            LockTable lockTable = LockTableImpl.getInstance();
+            lockTable.release(xid);
+        } finally {
+            statusLock.unlock();
+        }
     }
 
     /**
@@ -170,9 +200,18 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void sharedLock(long uuid, String tableName) throws DeadlockException {
-        //TODO 加锁
-        LockTable lockTable = LockTableImpl.getInstance();
-        lockTable.addSharedLock(xid, uuid, tableName);
+        statusLock.lock();
+        try {
+            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+                return;
+            }
+
+            LockTable lockTable = LockTableImpl.getInstance();
+            lockTable.addSharedLock(xid, uuid, tableName);
+        } finally {
+            statusLock.unlock();
+        }
+
     }
 
     /**
@@ -183,9 +222,16 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void exclusiveLock(long uuid, String tableName) throws DeadlockException {
-        //TODO 加锁
-        LockTable lockTable = LockTableImpl.getInstance();
-        lockTable.addExclusiveLock(xid, uuid, tableName);
+        statusLock.lock();
+        try {
+            if (!this.status.equals(TransactionStatus.ACTIVE)) {
+                return;
+            }
+            LockTable lockTable = LockTableImpl.getInstance();
+            lockTable.addExclusiveLock(xid, uuid, tableName);
+        } finally {
+            statusLock.unlock();
+        }
     }
 
 }
