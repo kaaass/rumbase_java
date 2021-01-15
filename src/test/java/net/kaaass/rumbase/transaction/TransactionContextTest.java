@@ -4,7 +4,12 @@ import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -14,112 +19,145 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author criki
  */
 @Slf4j
-public class TransactionContextTest extends TestCase {
+public class TransactionContextTest {
+
+    public static void removeDir(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    removeDir(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+
+        dir.delete();
+    }
+
+    /**
+     * 创建临时文件生成目录
+     */
+    @BeforeClass
+    public static void createTmpDir() {
+        File dir = new File("test_gen_files");
+        if (!dir.exists()) {
+            dir.mkdir();
+        } else {
+            removeDir(dir);
+            dir.mkdir();
+        }
+    }
 
     /**
      * 测试创建事务
      */
+    @Test
     public void testCreateTransaction() throws IOException, FileException {
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("test_gen_files/test_create.log");
 
         // 空事务
         var emptyTransaction = TransactionContext.empty();
-        assertEquals(0, emptyTransaction.getXid());
-        assertEquals(TransactionStatus.COMMITTED, emptyTransaction.getStatus());
-        assertEquals(TransactionIsolation.READ_UNCOMMITTED, emptyTransaction.getIsolation());
+        Assert.assertEquals(0, emptyTransaction.getXid());
+        Assert.assertEquals(TransactionStatus.COMMITTED, emptyTransaction.getStatus());
+        Assert.assertEquals(TransactionIsolation.READ_UNCOMMITTED, emptyTransaction.getIsolation());
 
         // 普通事务
         var transaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
-        assertEquals(1, transaction.getXid());
-        assertEquals(TransactionStatus.PREPARING, transaction.getStatus());
-        assertEquals(TransactionIsolation.READ_COMMITTED, transaction.getIsolation());
-
+        Assert.assertEquals(1, transaction.getXid());
+        Assert.assertEquals(TransactionStatus.PREPARING, transaction.getStatus());
+        Assert.assertEquals(TransactionIsolation.READ_COMMITTED, transaction.getIsolation());
     }
 
     /**
      * 测试事务变化
      */
+    @Test
     public void testChangeStatus() throws IOException, FileException {
         // TODO 将Mock类改成实现类
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("test_gen_files/test_change.log");
         var committedTransaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         // 事务初始状态
-        assertEquals("new transaction's default status should be PREPARING", TransactionStatus.PREPARING, committedTransaction.getStatus());
+        Assert.assertEquals("new transaction's default status should be PREPARING", TransactionStatus.PREPARING, committedTransaction.getStatus());
 
         // 事务开始
         committedTransaction.start();
-        assertEquals("starting transaction's default status should be ACTIVE", TransactionStatus.ACTIVE, committedTransaction.getStatus());
+        Assert.assertEquals("starting transaction's default status should be ACTIVE", TransactionStatus.ACTIVE, committedTransaction.getStatus());
 
         // 事务提交
         committedTransaction.commit();
-        assertEquals("committed transaction's default status should be COMMITTED", TransactionStatus.COMMITTED, committedTransaction.getStatus());
+        Assert.assertEquals("committed transaction's default status should be COMMITTED", TransactionStatus.COMMITTED, committedTransaction.getStatus());
 
         // 事务中止
         var abortedTransaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         abortedTransaction.start();
         abortedTransaction.rollback();
-        assertEquals("aborted transaction's default status should be ABORTED", TransactionStatus.ABORTED, abortedTransaction.getStatus());
+        Assert.assertEquals("aborted transaction's default status should be ABORTED", TransactionStatus.ABORTED, abortedTransaction.getStatus());
     }
 
     /**
      * 测试事务持久化
      */
+    @Test
     public void testTransactionPersistence() throws IOException, FileException {
         // TODO 将Mock类改成实现类
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("test_gen_files/test_persistence.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-        assertEquals(1, manager.getSIZE().get());
+        Assert.assertEquals(1, manager.getSIZE().get());
 
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-        assertEquals(2, manager.getSIZE().get());
+        Assert.assertEquals(2, manager.getSIZE().get());
 
         // 事务状态持久化
         var txFromDisk1 = manager.getContext(1);
         var txFromDisk2 = manager.getContext(2);
-        assertEquals(TransactionStatus.PREPARING, txFromDisk1.getStatus());
-        assertEquals(TransactionStatus.PREPARING, txFromDisk2.getStatus());
+        Assert.assertEquals(TransactionStatus.PREPARING, txFromDisk1.getStatus());
+        Assert.assertEquals(TransactionStatus.PREPARING, txFromDisk2.getStatus());
 
         transaction1.start();
         txFromDisk1 = manager.getContext(1);
-        assertEquals(TransactionStatus.ACTIVE, txFromDisk1.getStatus());
+        Assert.assertEquals(TransactionStatus.ACTIVE, txFromDisk1.getStatus());
 
         transaction1.commit();
         txFromDisk1 = manager.getContext(1);
-        assertEquals(TransactionStatus.COMMITTED, txFromDisk1.getStatus());
+        Assert.assertEquals(TransactionStatus.COMMITTED, txFromDisk1.getStatus());
 
         transaction2.start();
         transaction2.rollback();
         txFromDisk2 = manager.getContext(2);
-        assertEquals(TransactionStatus.ABORTED, txFromDisk2.getStatus());
+        Assert.assertEquals(TransactionStatus.ABORTED, txFromDisk2.getStatus());
     }
 
     /**
      * 测试事务状态复原
      */
+    @Test
     public void testTransactionRecovery() throws IOException, FileException {
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("test_gen_files/test_recovery.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         int xid = transaction1.getXid();
 
         // 复原事务
         var transactionR = manager.getContext(xid);
-        assertEquals(TransactionStatus.PREPARING, transactionR.getStatus());
-        assertEquals(TransactionIsolation.READ_UNCOMMITTED, transactionR.getIsolation());
+        Assert.assertEquals(TransactionStatus.PREPARING, transactionR.getStatus());
+        Assert.assertEquals(TransactionIsolation.READ_UNCOMMITTED, transactionR.getIsolation());
 
         // 改变事务状态
         transaction1.start();
         transactionR = manager.getContext(xid);
-        assertEquals(TransactionStatus.ACTIVE, transactionR.getStatus());
+        Assert.assertEquals(TransactionStatus.ACTIVE, transactionR.getStatus());
     }
 
     /**
      * 测试事务上锁
      */
+    @Test
     public void testAddLock() throws IOException, FileException {
         // TODO 将Mock类改成实现类
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("test_gen_files/test_add_lock.log");
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
@@ -161,8 +199,9 @@ public class TransactionContextTest extends TestCase {
     /**
      * 测试死锁
      */
+    @Test
     public void testDeadlock() throws IOException, FileException, InterruptedException {
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("test_gen_files/test_deadlock.log");
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
@@ -192,6 +231,6 @@ public class TransactionContextTest extends TestCase {
             e.printStackTrace();
         }
         Thread.sleep(10);
-        assertTrue("Deadlock should be detected", deadlockDetect.get());
+        Assert.assertTrue("Deadlock should be detected", deadlockDetect.get());
     }
 }
