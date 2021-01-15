@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static junit.framework.TestCase.assertTrue;
+
 /**
  * 测试事务上下文
  *
@@ -247,7 +249,6 @@ public class TransactionContextTest {
             transaction2.rollback();
             e.printStackTrace();
         }
-        Thread.sleep(10);
-        Assert.assertTrue("Deadlock should be detected", deadlockDetect.get());
+        assertTrue("Deadlock should be detected", deadlockDetect.get());
     }
 }
