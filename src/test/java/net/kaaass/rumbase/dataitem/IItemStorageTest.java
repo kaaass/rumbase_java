@@ -104,11 +104,11 @@ public class IItemStorageTest extends TestCase {
      * 对插入大量数据进行测试
      */
     public void testManyInsert() throws FileException, IOException, PageException, UUIDException, ItemException {
-        String fileName = "testInsert.db";
+        String fileName = "testInsertMany.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         TransactionContext txContext = TransactionContext.empty();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             long uuid = iItemStorage.insertItem(txContext, bytes);
             long uuid2 = iItemStorage.insertItem(txContext, bytes);
             long uuid3 = iItemStorage.insertItem(txContext, bytes);
