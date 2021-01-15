@@ -2,7 +2,6 @@ package net.kaaass.rumbase.dataitem;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
-import net.kaaass.rumbase.dataitem.exception.ItemException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
@@ -10,7 +9,9 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * 对数据项管理部分进行测试
@@ -61,19 +62,17 @@ public class IItemStorageTest extends TestCase {
     /**
      * 进行插入的测试
      */
-    public void testInsert() throws FileException, IOException, PageException, UUIDException, ItemException {
+    public void testInsert() throws FileException, IOException, PageException {
         String fileName = "testInsert.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         TransactionContext txContext = new MockTransactionContext();
         long uuid = iItemStorage.insertItem(txContext,bytes);
-
-        long uuid2 = iItemStorage.insertItem(txContext,bytes);
-
-        long uuid3 = iItemStorage.insertItem(txContext,bytes);
-
-        assertTrue(Arrays.equals(bytes,iItemStorage.queryItemByUuid(uuid)));
-
+        try {
+            assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
+        } catch (UUIDException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -83,15 +82,13 @@ public class IItemStorageTest extends TestCase {
         String fileName = "testInsertWithUUID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
-        long s = 1;
-        int rnd = Math.abs(new Random().nextInt());
-        long uuid = (s << 32) + rnd;
+        long uuid = 50;
         TransactionContext txContext = new MockTransactionContext();
         // 第一次插入，表中没有该UUID，可以正常执行
         iItemStorage.insertItemWithUuid(txContext,bytes, uuid);
         try {
-            assertTrue(Arrays.equals(bytes, iItemStorage.queryItemByUuid(uuid)));
-        } catch (UUIDException | ItemException e) {
+            assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
+        } catch (UUIDException e) {
             e.printStackTrace();
         }
 
@@ -101,26 +98,29 @@ public class IItemStorageTest extends TestCase {
     }
 
     /**
-     * 对插入大量数据进行测试
+     * 对查询进行测试
      */
-    public void testManyInsert() throws FileException, IOException, PageException {
-        String fileName = "testInsert.db";
+    public void testQuery() throws FileException, IOException, PageException {
+        String fileName = "testQuery.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         TransactionContext txContext = new MockTransactionContext();
-        for (int i = 0;i < 100 ; i ++){
-            long uuid = iItemStorage.insertItem(txContext,bytes);
-            long uuid2 = iItemStorage.insertItem(txContext,bytes);
-            long uuid3 = iItemStorage.insertItem(txContext,bytes);
-            // 查询可以正常执行
-            try {
-                var item = iItemStorage.queryItemByUuid(uuid);
-                assertTrue(Arrays.equals(bytes,item));
-                var item3 = iItemStorage.queryItemByUuid(uuid3);
-                assertTrue(Arrays.equals(bytes,item3));
-            } catch (UUIDException | ItemException e) {
-                e.printStackTrace();
-            }
+        long uuid = iItemStorage.insertItem(txContext,bytes);
+        // 查询可以正常执行
+        try {
+            assertEquals(bytes, iItemStorage.queryItemByUuid(uuid));
+        } catch (UUIDException e) {
+            e.printStackTrace();
+        }
+        // 找一个跟UUID不同的，也就是说不在数据库中的UUID进行查询
+        long s = 1;
+        if (s == uuid) {
+            s += 1;
+        }
+        try {
+            var b = iItemStorage.queryItemByUuid(s);
+        } catch (UUIDException e) {
+            log.error("Exception Error :", e);
         }
     }
 
@@ -159,52 +159,13 @@ public class IItemStorageTest extends TestCase {
             bs.add(bytes1);
             bs.sort(comparator);
             // 获取pageID对应的数据项，在这里Mock是获取所有list中的数据
-            var result = iItemStorage.listItemByPageId(1);
+            var result = iItemStorage.listItemByPageId(0);
             result.sort(comparator);
-            for (int i= 0 ; i < bs.size() ; i++){
-                assertTrue(Arrays.equals(bs.get(i),result.get(i)));
-            }
+            assertEquals(bs, result);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-
-    class Insert implements Runnable{
-        IItemStorage iItemStorage;
-        TransactionContext txContext;
-
-        public Insert(IItemStorage iItemStorage, TransactionContext txContext) {
-            this.iItemStorage = iItemStorage;
-            this.txContext = txContext;
-        }
-        @Override
-        public void run() {
-            var bytes = new byte[]{1,2,3,4};
-            try {
-                long uuid = iItemStorage.insertItem(txContext,bytes);
-                assertTrue(Arrays.equals(bytes,iItemStorage.queryItemByUuid(uuid)));
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * 测试并发下插入是否有问题
-     */
-    public void testSynInsert() throws IOException, FileException, PageException {
-        String fileName = "testInsert.db";
-        IItemStorage iItemStorage = ItemManager.fromFile(fileName);
-        byte[] bytes = new byte[]{1, 2, 3, 4};
-        TransactionContext txContext = new MockTransactionContext();
-        new Thread(new Insert(iItemStorage,txContext)).start();
-        new Thread(new Insert(iItemStorage,txContext)).start();
-        new Thread(new Insert(iItemStorage,txContext)).start();
-        new Thread(new Insert(iItemStorage,txContext)).start();
-
-    }
-
 
     /**
      * 对更新进行测试
@@ -220,8 +181,8 @@ public class IItemStorageTest extends TestCase {
         try {
             iItemStorage.updateItemByUuid(txContext,uuid, result);
             byte[] bs = iItemStorage.queryItemByUuid(uuid);
-            assertTrue(Arrays.equals(bs, result));
-        } catch (UUIDException | ItemException e) {
+            assertEquals(bs, result);
+        } catch (UUIDException e) {
             e.printStackTrace();
         }
         // 修改一个不存在的UUID
@@ -239,14 +200,15 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试修改和获取表头信息
      */
-    public void testMeta() throws FileException, IOException, PageException, UUIDException, ItemException {
+    public void testMeta() throws FileException, IOException, PageException {
         String fileName = "testMeta.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] result = new byte[]{1, 2, 3, 4};
         TransactionContext txContext = new MockTransactionContext();
         iItemStorage.setMetadata(txContext,result);
         byte[] bs = iItemStorage.getMetadata();
-        assertTrue(Arrays.equals(result,bs));
+        assertEquals(result, bs);
+
     }
 
 }

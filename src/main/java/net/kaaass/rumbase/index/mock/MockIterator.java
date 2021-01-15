@@ -6,6 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author 无索魏
+ */
 public class MockIterator implements Iterator<Pair> {
     private Iterator<Map.Entry<Long, List<Long>>> indexIterator;
     private Iterator<Long> tempIterator;

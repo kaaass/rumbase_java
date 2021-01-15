@@ -84,6 +84,26 @@ public class TransactionContextTest extends TestCase {
     }
 
     /**
+     * 测试事务状态复原
+     */
+    public void testTransactionRecovery() {
+        var manager = new MockTransactionManager();
+        // 事务创建，事务状态记录数改变
+        var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+        int xid = transaction1.getXid();
+
+        // 复原事务
+        var transactionR = manager.getContext(xid);
+        assertEquals(TransactionStatus.PREPARING, transactionR.getStatus());
+        assertEquals(TransactionIsolation.READ_UNCOMMITTED, transactionR.getIsolation());
+
+        // 改变事务状态
+        transaction1.start();
+        transactionR = manager.getContext(xid);
+        assertEquals(TransactionStatus.ACTIVE, transactionR.getStatus());
+    }
+
+    /**
      * 测试事务上锁
      */
     public void testAddLock() {
