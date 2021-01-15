@@ -1,6 +1,6 @@
 package net.kaaass.rumbase.parse.parser;
 
-import net.kaaass.rumbase.parse.CreateTableStatement;
+import net.kaaass.rumbase.parse.stmt.CreateTableStatement;
 import net.kaaass.rumbase.parse.ISqlStatement;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColDataType;

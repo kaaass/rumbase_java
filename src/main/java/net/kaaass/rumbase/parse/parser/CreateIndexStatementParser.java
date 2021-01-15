@@ -1,7 +1,7 @@
 package net.kaaass.rumbase.parse.parser;
 
 import net.kaaass.rumbase.parse.ColumnIdentifier;
-import net.kaaass.rumbase.parse.CreateIndexStatement;
+import net.kaaass.rumbase.parse.stmt.CreateIndexStatement;
 import net.kaaass.rumbase.parse.ISqlStatement;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.index.CreateIndex;

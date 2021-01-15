@@ -2,7 +2,7 @@ package net.kaaass.rumbase.parse.parser;
 
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ISqlStatement;
-import net.kaaass.rumbase.parse.InsertStatement;
+import net.kaaass.rumbase.parse.stmt.InsertStatement;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsListVisitorAdapter;
 import net.sf.jsqlparser.statement.Statement;

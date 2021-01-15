@@ -1,7 +1,9 @@
-package net.kaaass.rumbase.parse;
+package net.kaaass.rumbase.parse.stmt;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.kaaass.rumbase.parse.ConditionExpression;
+import net.kaaass.rumbase.parse.ISqlStatement;
 
 /**
  * SQL语法树：删除语句
