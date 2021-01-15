@@ -1,9 +1,14 @@
 package net.kaaass.rumbase.page;
 
 import junit.framework.TestCase;
+import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Arrays;
+import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -14,52 +19,7 @@ import static org.junit.Assert.assertArrayEquals;
  * @see net.kaaass.rumbase.page.Page
  */
 public class PageTest extends TestCase {
-
-    public void testGetData() {
-        try {
-            PageStorage pc = PageManager.fromFile("testFile");
-            Page p0 = pc.get(0);
-            Page p3 = pc.get(3);
-            byte[] data0 = new byte[1024 * 4];
-            byte[] data3 = new byte[1024 * 4];
-            p0.getData().read(data0);
-            p3.getData().read(data3);
-            byte[] testData0 = new byte[1024 * 4];
-            for (int j = 0; j < 1024 * 4; j++) {
-                testData0[j] = (byte)5;
-            }
-            byte[] testData3 = new byte[1024 * 4];
-            for (int j = 0; j < 1024 * 4; j++) {
-                testData3[j] = (byte)8;
-            }
-            assertArrayEquals(testData0,data0);
-            assertArrayEquals(testData3,data3);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void testWriteData() {
-        byte[] data = new byte[PageManager.PAGE_SIZE];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (i % 120);
-        }
-
-        try {
-            PageStorage pc = PageManager.fromFile("testFile");
-            Page p0 = pc.get(0);
-            //write之前需要先pin
-            p0.pin();
-            p0.writeData(data);
-            //pin和unpin成对出现
-            p0.unpin();
-            assertArrayEquals(data, pc.get(0).getDataBytes());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+    public static String filePath = "build/pageTest.db";
     public void testPatchData() {
         int offset = 99;
         byte[] data = new byte[PageManager.PAGE_SIZE - offset];
@@ -68,7 +28,7 @@ public class PageTest extends TestCase {
         }
 
         try {
-            PageStorage pc = PageManager.fromFile("testFile");
+            PageStorage pc = PageManager.fromFile(filePath);
             Page p0 = pc.get(0);
             byte[] originalData = p0.getDataBytes();
             p0.patchData(offset, data);
@@ -78,6 +38,35 @@ public class PageTest extends TestCase {
             assertArrayEquals(newData, p0.getDataBytes());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void testPatchOffset() throws FileException, PageException {
+        var storage = PageManager.fromFile(filePath);
+        var rand = new Random();
+        var page = storage.get(2);
+        page.pin();
+        try {
+            for (int i = 0; i < 50; i++) {
+                // 随机决定开始、结束
+                var st = rand.nextInt(4000);
+                var ed = st + rand.nextInt(2000);
+                if (ed > 4096) {
+                    ed = 4096;
+                }
+                // 生成相关数据
+                byte[] data = new byte[ed - st];
+                Arrays.fill(data, (byte) st);
+                // 写入
+                page.patchData(st, data);
+                // 检查写入效果
+                var pageData = page.getDataBytes();
+                for (int j = st; j < ed; j++) {
+                    assertEquals((byte) st, pageData[j]);
+                }
+            }
+        } finally {
+            page.unpin();
         }
     }
 }

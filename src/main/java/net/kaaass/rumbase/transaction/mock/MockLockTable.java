@@ -1,6 +1,6 @@
 package net.kaaass.rumbase.transaction.mock;
 
-import net.kaaass.rumbase.transaction.LockTable;
+import net.kaaass.rumbase.transaction.lock.LockTable;
 
 /**
  * Mock锁表
