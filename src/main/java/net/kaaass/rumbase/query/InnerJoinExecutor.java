@@ -4,6 +4,7 @@ import lombok.NonNull;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.SelectStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -26,7 +27,7 @@ public class InnerJoinExecutor extends AbstractJoinExecutor{
     }
 
     @Override
-    public void execute() throws TableExistenceException, TableConflictException, ArgumentException {
+    public void execute() throws TableExistenceException, TableConflictException, ArgumentException, RecordNotFoundException {
         var table = manager.getTable(fromTable);
         var rows = table.readAll(context);
 

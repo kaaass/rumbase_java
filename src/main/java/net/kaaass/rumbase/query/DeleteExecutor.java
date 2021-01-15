@@ -6,6 +6,7 @@ import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.DeleteStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -32,7 +33,7 @@ public class DeleteExecutor implements Executable{
     private final TransactionContext context;
 
     @Override
-    public void execute() throws TableExistenceException, ArgumentException, IndexAlreadyExistException, TableConflictException {
+    public void execute() throws TableExistenceException, ArgumentException, IndexAlreadyExistException, TableConflictException, RecordNotFoundException {
         var table = manager.getTable(statement.getTableName());
         var idrs = new ArrayList<ColumnIdentifier>();
         table.getFields().forEach(f -> idrs.add(new ColumnIdentifier(table.getTableName(), f.getName())));

@@ -1,15 +1,19 @@
 package net.kaaass.rumbase.table;
 
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.RecordManager;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.*;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,55 +30,31 @@ import static org.junit.Assert.assertArrayEquals;
 public class TableTest extends TestCase {
 
     public void testLoad() {
-        var bytes = new byte[]{
-                13,
-                116, 101, 115, 116,
-                76, 111, 97, 100,
-                84, 97, 98, 108,
-                101,
 
-                6,
-                78, 79, 82, 77,
-                65, 76,
-
-                -1, -1, -1, -1,
-                -1, -1, -1, -1,
-
-                0, 0, 0, 3,
-
-                11,
-                116, 101, 115, 116,
-                76, 111, 97, 100,
-                73, 110, 116,
-
-                3,
-                73, 78, 84,
-
-                13,
-                116, 101, 115, 116,
-                76, 111, 97, 100,
-                70, 108, 111, 97,
-                116,
-
-                5,
-                70, 76, 79, 65,
-                84,
-
-                15,
-                116, 101, 115, 116,
-                76, 111, 97, 100,
-                86, 97, 114, 99,
-                104, 97, 114,
-
-                7,
-                86, 65, 82, 67,
-                72, 65, 82,
-
-                0, 0, 0, 12
-        };
+        var byteOS = new ByteArrayOutputStream();
+        var out = new JBBPBitOutputStream(byteOS);
+        try {
+            out.writeString("testLoadTable", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("NORMAL", JBBPByteOrder.BIG_ENDIAN);
+            out.writeLong(-1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeInt(3, JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("testLoadInt", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("INT", JBBPByteOrder.BIG_ENDIAN);
+            out.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("testLoadFloat", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("FLOAT", JBBPByteOrder.BIG_ENDIAN);
+            out.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("testLoadVarchar", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("VARCHAR", JBBPByteOrder.BIG_ENDIAN);
+            out.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeInt(12, JBBPByteOrder.BIG_ENDIAN);
+        } catch (IOException e) {
+            log.error("Exception expected: ", e);
+            fail();
+        }
 
         var storage = RecordManager.fromFile("testLoadTable");
-        storage.setMetadata(TransactionContext.empty(), bytes);
+        storage.setMetadata(TransactionContext.empty(), byteOS.toByteArray());
 
         var table = Table.load(RecordManager.fromFile("testLoadTable"));
 
@@ -102,69 +82,31 @@ public class TableTest extends TestCase {
         fieldList.add(new FloatField("testPersistFloat", false, table));
         fieldList.add(new VarcharField("testPersistVarchar", 12, false, table));
 
-        var expected = new byte[]{
-                // testPersistTable
-                16,
-                116, 101, 115, 116,
-                80, 101, 114, 115,
-                105, 115, 116, 84,
-                97, 98, 108, 101,
-
-                // NORMAL
-                6,
-                78, 79, 82, 77,
-                65, 76,
-
-                // -1
-                -1, -1, -1, -1,
-                -1, -1, -1, -1,
-
-                // 3
-                0, 0, 0, 3,
-
-                // testPersistInt
-                14,
-                116, 101, 115, 116,
-                80, 101, 114, 115,
-                105, 115, 116, 73,
-                110, 116,
-
-                // INT
-                3,
-                73, 78, 84,
-
-                // testPersistFloat
-                16,
-                116, 101, 115, 116,
-                80, 101, 114, 115,
-                105, 115, 116, 70,
-                108, 111, 97, 116,
-
-                // FLOAT
-                5,
-                70, 76, 79, 65,
-                84,
-
-                // testPersistVarchar
-                18,
-                116, 101, 115, 116,
-                80, 101, 114, 115,
-                105, 115, 116, 86,
-                97, 114, 99, 104,
-                97, 114,
-
-                // VARCHAR
-                7,
-                86, 65, 82, 67,
-                72, 65, 82,
-
-                // 12
-                0, 0, 0, 12
-        };
+        var byteOS = new ByteArrayOutputStream();
+        var out = new JBBPBitOutputStream(byteOS);
+        try {
+            out.writeString("testPersistTable", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("NORMAL", JBBPByteOrder.BIG_ENDIAN);
+            out.writeLong(-1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeInt(3, JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("testPersistInt", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("INT", JBBPByteOrder.BIG_ENDIAN);
+            out.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("testPersistFloat", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("FLOAT", JBBPByteOrder.BIG_ENDIAN);
+            out.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("testPersistVarchar", JBBPByteOrder.BIG_ENDIAN);
+            out.writeString("VARCHAR", JBBPByteOrder.BIG_ENDIAN);
+            out.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
+            out.writeInt(12, JBBPByteOrder.BIG_ENDIAN);
+        } catch (IOException e) {
+            log.error("Exception expected: ", e);
+            fail();
+        }
 
         assertArrayEquals(new byte[0], table.getRecordStorage().getMetadata(context));
         table.persist(TransactionContext.empty());
-        assertArrayEquals(expected, table.getRecordStorage().getMetadata(context));
+        assertArrayEquals(byteOS.toByteArray(), table.getRecordStorage().getMetadata(context));
 
     }
 
@@ -265,23 +207,23 @@ public class TableTest extends TestCase {
             assertTrue(iter3.hasNext());
             var pair5 = iter3.next();
 
-            // 第一条是死记录
+            // 有效的被更新记录
             assertEquals(33L, pair4.getKey());
             var res4 = table.read(context, pair4.getUuid());
-            assertTrue(res4.isEmpty());
+            assertTrue(res4.isPresent());
 
-            // 第二条是有效的被更新记录
+            // 四记录
             assertEquals(33L, pair5.getKey());
             var res5 = table.read(context, pair5.getUuid());
-            assertTrue(res5.isPresent());
+            assertTrue(res5.isEmpty());
 
             // 测试记录是否被更新
-            assertEquals(33, (int) res5.get().get(0));
-            assertEquals(1.2f, res5.get().get(1));
-            assertEquals("test varchar", (String) res5.get().get(2));
+            assertEquals(33, (int) res4.get().get(0));
+            assertEquals(1.2f, res4.get().get(1));
+            assertEquals("test varchar", (String) res4.get().get(2));
 
 
-        } catch (TableExistenceException | TableConflictException e) {
+        } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -374,7 +316,7 @@ public class TableTest extends TestCase {
             assertEquals(1.2f, resList.get(1).get(1));
             assertEquals("test varchar", (String) resList.get(1).get(2));
 
-        } catch (TableExistenceException | TableConflictException e) {
+        } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -448,7 +390,7 @@ public class TableTest extends TestCase {
             assertEquals("test varchar", (String) resList.get(9).get(2));
 
 
-        } catch (TableExistenceException | TableConflictException e) {
+        } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -489,7 +431,7 @@ public class TableTest extends TestCase {
             assertEquals(1.2f, resList.get(2).get(1));
             assertEquals("test varchar", (String) resList.get(2).get(2));
 
-        } catch (TableExistenceException | TableConflictException e) {
+        } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -523,7 +465,7 @@ public class TableTest extends TestCase {
             assertEquals(1.2f, resList.get(0).get(1));
             assertEquals("test varchar", (String) resList.get(0).get(2));
 
-        } catch (TableExistenceException | TableConflictException e) {
+        } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -577,8 +519,11 @@ public class TableTest extends TestCase {
         try {
             var bytes = table.stringEntryToBytes(passEntry);
             var expected = new byte[]{
+                    0,
                     0, 0, 0, 33, // int 33
+                    0,
                     63, -103, -103, -102, // float 1.2
+                    0,
                     12,
                     116, 101, 115, 116,
                     32, 118, 97, 114,
@@ -600,8 +545,11 @@ public class TableTest extends TestCase {
 
     public void testParseEntry() {
         var passEntry = new byte[]{
+                0,
                 0, 0, 0, 33, // int 33
+                0,
                 63, -103, -103, -102, // float 1.2
+                0,
                 12,
                 116, 101, 115, 116,
                 32, 118, 97, 114,
@@ -609,11 +557,14 @@ public class TableTest extends TestCase {
         };
 
         var failEntry = new byte[]{
+                0,
                 0, 0, 0, 33, // int 33
+                0,
                 12,
                 116, 101, 115, 116,
                 32, 118, 97, 114,
                 99, 104, 97, 114, // varchar test varchar
+                0,
                 63, -103, -103, -102, // float 1.2
         };
 

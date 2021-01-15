@@ -1,7 +1,6 @@
 package net.kaaass.rumbase.table.field;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPBitNumber;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.Getter;
@@ -32,7 +31,7 @@ public class VarcharField extends BaseField {
     @Getter
     private final int limit;
 
-    public VarcharField(@NonNull String name, int limit, @NonNull boolean nullable, @NonNull Table parentTable) {
+    public VarcharField(@NonNull String name, int limit, boolean nullable, @NonNull Table parentTable) {
         super(name, FieldType.VARCHAR, nullable, parentTable);
         this.limit = limit;
     }
@@ -44,12 +43,14 @@ public class VarcharField extends BaseField {
         try {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
             out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
-            out.writeBits(isNullable() ? 1 : 0, JBBPBitNumber.BITS_1);
+            var flags = new byte[]{0};
+            flags[0] |= indexed() ? 1 : 0;
             if (indexed()) {
-                out.writeBits(1, JBBPBitNumber.BITS_1);
+                flags[0] |= 2;
+                out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
                 out.writeString(indexName, JBBPByteOrder.BIG_ENDIAN);
             } else {
-                out.writeBits(0, JBBPBitNumber.BITS_1);
+                out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
             }
             out.writeInt(limit, JBBPByteOrder.BIG_ENDIAN);
             // todo （字段约束）
@@ -99,7 +100,8 @@ public class VarcharField extends BaseField {
         var stream = new JBBPBitInputStream(inputStream);
 
         try {
-            var isNull = (stream.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
+            var flag = stream.readByte();
+            var isNull = (flag & 1) == 1;
             if (isNull) {
                 if (isNullable()) {
                     return null;
@@ -125,7 +127,8 @@ public class VarcharField extends BaseField {
         var stream = new JBBPBitInputStream(inputStream);
 
         try {
-            var isNull = (stream.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
+            var flag = stream.readByte();
+            var isNull = (flag & 1) == 1;
             if (isNull) {
                 return isNullable();
             }
@@ -148,9 +151,9 @@ public class VarcharField extends BaseField {
 
         try {
             if (strVal == null || strVal.isBlank()) {
-                stream.writeBits(1, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{1}, 1, JBBPByteOrder.BIG_ENDIAN);
             } else {
-                stream.writeBits(0, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
                 stream.writeString(strVal, JBBPByteOrder.BIG_ENDIAN);
             }
 
@@ -171,9 +174,9 @@ public class VarcharField extends BaseField {
 
         try {
             if (val == null) {
-                stream.writeBits(1, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{1}, 1, JBBPByteOrder.BIG_ENDIAN);
             } else {
-                stream.writeBits(0, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
                 stream.writeString((String) val, JBBPByteOrder.BIG_ENDIAN);
             }
 

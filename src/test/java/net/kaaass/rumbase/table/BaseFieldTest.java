@@ -51,8 +51,11 @@ public class BaseFieldTest extends TestCase {
 
         // 测试数据
         var bytes = new byte[]{
+                0,
                 0, 0, 0, 33, // int 33
+                0,
                 63, -103, -103, -102, // float 1.2
+                0,
                 12,
                 116, 101, 115, 116,
                 32, 118, 97, 114,
@@ -96,8 +99,11 @@ public class BaseFieldTest extends TestCase {
 
         // 测试数据
         var bytes = new byte[]{
+                0,
                 0, 0, 0, 33, // int 33
+                0,
                 63, -103, -103, -102, // float 1.2
+                0,
                 12,
                 116, 101, 115, 116,
                 32, 118, 97, 114,
@@ -128,6 +134,7 @@ public class BaseFieldTest extends TestCase {
         try {
             intField.serialize(intBos1, "33");
             var expected = new byte[]{
+                    0,
                     0, 0, 0, 33, // int 33
             };
             assertArrayEquals(expected, intBos1.toByteArray());
@@ -150,6 +157,7 @@ public class BaseFieldTest extends TestCase {
         try {
             floatField.serialize(floatBos1, "1.2");
             var expected = new byte[]{
+                    0,
                     63, -103, -103, -102, // float 1.2
             };
             assertArrayEquals(expected, floatBos1.toByteArray());
@@ -172,6 +180,7 @@ public class BaseFieldTest extends TestCase {
         try {
             varcharField.serialize(varcharBos1, "test varchar");
             var expected = new byte[]{
+                    0,
                     12,
                     116, 101, 115, 116,
                     32, 118, 97, 114,
@@ -421,6 +430,9 @@ public class BaseFieldTest extends TestCase {
                 3,
                 73, 78, 84,
 
+                // 00 not nullable and no index
+                0,
+
                 // testLoadFloat
                 13,
                 116, 101, 115, 116,
@@ -430,6 +442,8 @@ public class BaseFieldTest extends TestCase {
                 // FLOAT
                 5,
                 70, 76, 79, 65, 84,
+
+                0,
 
                 // testLoadVarchar
                 15,
@@ -442,6 +456,8 @@ public class BaseFieldTest extends TestCase {
                 7,
                 86, 65, 82, 67,
                 72, 65, 82,
+
+                0,
 
                 // 12
                 0, 0, 0, 12
@@ -491,6 +507,8 @@ public class BaseFieldTest extends TestCase {
                 3,
                 73, 78, 84,
 
+                0,
+
                 // testPersistFloat
                 16,
                 116, 101, 115, 116,
@@ -501,6 +519,8 @@ public class BaseFieldTest extends TestCase {
                 // FLOAT
                 5,
                 70, 76, 79, 65, 84,
+
+                0,
 
                 // testPersistVarchar
                 18,
@@ -513,6 +533,8 @@ public class BaseFieldTest extends TestCase {
                 7,
                 86, 65, 82, 67,
                 72, 65, 82,
+
+                0,
 
                 // 12
                 0, 0, 0, 12

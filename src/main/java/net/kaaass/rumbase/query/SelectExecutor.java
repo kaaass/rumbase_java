@@ -7,6 +7,7 @@ import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.SelectStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -39,7 +40,7 @@ public class SelectExecutor implements Executable{
     private List<List<Object>> resultData;
 
     @Override
-    public void execute() throws TableConflictException, ArgumentException, TableExistenceException, IndexAlreadyExistException {
+    public void execute() throws TableConflictException, ArgumentException, TableExistenceException, IndexAlreadyExistException, RecordNotFoundException {
 
         // 连接
         var joinExe = new InnerJoinExecutor(statement.getFromTable(), statement.getJoins(), manager, context);

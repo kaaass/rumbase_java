@@ -9,6 +9,7 @@ import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -147,7 +148,7 @@ public class Table {
      * @param context 事务context
      * @param uuid    元组的uuid
      */
-    public void delete(TransactionContext context, long uuid) {
+    public void delete(TransactionContext context, long uuid) throws RecordNotFoundException {
         recordStorage.delete(context, uuid);
     }
 
@@ -158,7 +159,7 @@ public class Table {
      * @param uuid     元组的uuid
      * @param entry    新的行的字符串值列表
      */
-    public void update(TransactionContext context, long uuid, List<String> entry) throws TableConflictException, TableExistenceException {
+    public void update(TransactionContext context, long uuid, List<String> entry) throws TableConflictException, TableExistenceException, RecordNotFoundException {
 
         if(!checkStringEntry(entry)) {
             throw new TableConflictException(3);
@@ -186,7 +187,7 @@ public class Table {
      * @param uuid     元组的uuid
      * @param entry    新的行的值列表
      */
-    public void updateObjs(TransactionContext context, long uuid, List<Object> entry) throws TableConflictException, TableExistenceException {
+    public void updateObjs(TransactionContext context, long uuid, List<Object> entry) throws TableConflictException, TableExistenceException, RecordNotFoundException {
 
         var raw = entryToBytes(entry);
 
@@ -259,7 +260,7 @@ public class Table {
      * @throws TableExistenceException         要查询的表不存在
      * @throws TableConflictException 查询到的entry和当前表冲突
      */
-    public Optional<List<Object>> read(TransactionContext context, long uuid) throws TableExistenceException, TableConflictException {
+    public Optional<List<Object>> read(TransactionContext context, long uuid) throws TableExistenceException, TableConflictException, RecordNotFoundException {
 
         var bytes = recordStorage
                 .queryOptional(context, uuid);
@@ -283,7 +284,7 @@ public class Table {
      * @param context 事务context
      * @return 所有记录
      */
-    public List<List<Object>> readAll(TransactionContext context) throws TableExistenceException, TableConflictException, ArgumentException {
+    public List<List<Object>> readAll(TransactionContext context) throws TableExistenceException, TableConflictException, ArgumentException, RecordNotFoundException {
         var field = getFirstIndexedField();
         if (field == null) {
             throw new ArgumentException(2);

@@ -1,7 +1,6 @@
 package net.kaaass.rumbase.table.field;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPBitNumber;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.NonNull;
@@ -24,7 +23,7 @@ import java.util.Locale;
  */
 public class IntField extends BaseField {
 
-    public IntField(@NonNull String name, @NonNull boolean nullable, @NonNull Table parentTable) {
+    public IntField(@NonNull String name, boolean nullable, @NonNull Table parentTable) {
         super(name, FieldType.INT, nullable, parentTable);
     }
 
@@ -35,12 +34,14 @@ public class IntField extends BaseField {
         try {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
             out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
-            out.writeBits(isNullable() ? 1 : 0, JBBPBitNumber.BITS_1);
+            var flags = new byte[]{0};
+            flags[0] |= indexed() ? 1 : 0;
             if (indexed()) {
-                out.writeBits(1, JBBPBitNumber.BITS_1);
+                flags[0] |= 2;
+                out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
                 out.writeString(indexName, JBBPByteOrder.BIG_ENDIAN);
             } else {
-                out.writeBits(0, JBBPBitNumber.BITS_1);
+                out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
             }
             // todo （字段约束）
         } catch (IOException e) {
@@ -123,7 +124,8 @@ public class IntField extends BaseField {
         var stream = new JBBPBitInputStream(inputStream);
 
         try {
-            var isNull = (stream.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
+            var flag = stream.readByte();
+            var isNull = (flag & 1) == 1;
             if (isNull) {
                 if (isNullable()) {
                     return null;
@@ -149,7 +151,8 @@ public class IntField extends BaseField {
         var stream = new JBBPBitInputStream(inputStream);
 
         try {
-            var isNull = (stream.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
+            var flag = stream.readByte();
+            var isNull = (flag & 1) == 1;
             if (isNull) {
                 return isNullable();
             }
@@ -167,9 +170,9 @@ public class IntField extends BaseField {
 
         try {
             if (strVal == null || strVal.isBlank()) {
-                stream.writeBits(1, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{1}, 1, JBBPByteOrder.BIG_ENDIAN);
             } else {
-                stream.writeBits(0, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
                 var val = Integer.parseInt(strVal);
                 if (checkVal(val)) {
                     stream.writeInt(val, JBBPByteOrder.BIG_ENDIAN);
@@ -193,9 +196,9 @@ public class IntField extends BaseField {
 
         try {
             if (objVal == null) {
-                stream.writeBits(1, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{1}, 1, JBBPByteOrder.BIG_ENDIAN);
             } else {
-                stream.writeBits(0, JBBPBitNumber.BITS_1);
+                stream.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
                 var val = (int) objVal;
                 if (checkVal(val)) {
                     stream.writeInt(val, JBBPByteOrder.BIG_ENDIAN);

@@ -48,7 +48,6 @@ public abstract class BaseField{
      * 字段是否可空
      */
     @Getter
-    @NonNull
     private final boolean nullable;
 
     /**
@@ -107,8 +106,9 @@ public abstract class BaseField{
         try {
             var name = in.readString(JBBPByteOrder.BIG_ENDIAN);
             var type = FieldType.valueOf(in.readString(JBBPByteOrder.BIG_ENDIAN));
-            var nullable = (in.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
-            var indexed = (in.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
+            var flag = in.readByte();
+            var nullable = (flag & 1) == 1;
+            var indexed = (flag & 2) == 2;
             String indexName = null;
             if (indexed) {
                 indexName = in.readString(JBBPByteOrder.BIG_ENDIAN);
@@ -309,5 +309,12 @@ public abstract class BaseField{
      */
     public abstract boolean checkObject(Object val);
 
+    /**
+     * 比较两个字段大小
+     * @param a 第一个字段
+     * @param b 第二个字段
+     * @return 比较结果
+     * @throws TableConflictException 字段类型不匹配
+     */
     public abstract int compare(Object a, Object b) throws TableConflictException;
 }
