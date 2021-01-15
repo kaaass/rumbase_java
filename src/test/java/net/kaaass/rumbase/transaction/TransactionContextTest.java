@@ -166,7 +166,7 @@ public class TransactionContextTest {
         // 互斥锁
         new Thread(() -> {
             try {
-                Thread.sleep(30);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
