@@ -39,7 +39,10 @@ public class RumPageStorage implements PageStorage {
                 //当文件存储容量不够时追加
                 while (in.available() < (pageId + 1 + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
                     FileWriter fw = new FileWriter(file, true);
-                    fw.append(Arrays.toString(new byte[PageManager.PAGE_SIZE * (int) (in.available() / PageManager.PAGE_SIZE)]));
+                    char[] blank = new char[PageManager.PAGE_SIZE * (in.available() / PageManager.PAGE_SIZE)];
+                    Arrays.fill(blank, (char)0);
+                    fw.write(blank);
+                    fw.close();
                 }
                 in.skip((pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
                 int readNumber = in.read(data);
@@ -56,7 +59,7 @@ public class RumPageStorage implements PageStorage {
             }
             int offset = -1;
             while (offset < 0) {
-                synchronized (this) {//并非区间锁，而是将整个内存全部锁住
+                synchronized (RumBuffer.getInstance()) {//并非区间锁，而是将整个内存全部锁住
                     try {
                         offset = RumBuffer.getInstance().getFreeOffset();
                         RumBuffer.getInstance().put(offset, data);

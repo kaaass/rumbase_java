@@ -92,16 +92,19 @@ public class RumBuffer {
      * @param offset 这里的偏移指的是按照页的大小进行偏移
      */
     public void free(int offset) {
-        lock.lock();
-        try {
-            System.arraycopy(this.byteBuffer, offset*PageManager.PAGE_SIZE, new byte[PageManager.PAGE_SIZE], 0, PageManager.PAGE_SIZE);
-            this.freePage.add(offset);
-            this.size++;
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            lock.unlock();
+        synchronized(RumBuffer.getInstance()){
+            lock.lock();
+            try {
+                System.arraycopy(this.byteBuffer, offset*PageManager.PAGE_SIZE, new byte[PageManager.PAGE_SIZE], 0, PageManager.PAGE_SIZE);
+                this.freePage.add(offset);
+                this.size++;
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }
         }
+
     }
 
     /**

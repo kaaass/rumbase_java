@@ -66,7 +66,7 @@ public class PageStorageTest extends TestCase {
         for (var pageId: testPage) {
             // 准备标志数据
             byte[] data = new byte[PageManager.PAGE_SIZE];
-            Arrays.fill(data, (byte) (0xf0 | pageId));
+            Arrays.fill(data, (byte) (0xF0 | pageId));
             // 获取页
             var page = storage.get(pageId);
             page.pin();

@@ -64,11 +64,13 @@ public class RumPage implements Page {
             try {
                 RandomAccessFile out = new RandomAccessFile(file, "rw");
                 try {
-                    out.seek((PageManager.FILE_HEAD_SIZE + this.pageId) * PageManager.PAGE_SIZE);
+                    out.seek((PageManager.FILE_HEAD_SIZE + this.pageId) * (long)PageManager.PAGE_SIZE);
                 } catch (Exception e) {
                     throw new FileException(4);
                 }
                 try {
+                    byte[] data = new byte[PageManager.PAGE_SIZE];
+                    System.arraycopy(this.data,this.offset*PageManager.PAGE_SIZE,data,0,data.length);
                     out.write(data);
                 } catch (Exception e) {
                     throw new FileException(2);
