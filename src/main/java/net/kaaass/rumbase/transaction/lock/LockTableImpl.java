@@ -133,21 +133,26 @@ public class LockTableImpl implements LockTable {
      */
     @Override
     public void release(int xid) {
-        Set<DataItemId> dataItemSet = new HashSet<>();
-        List<DataItemId> sharedLocks = TxList.sharedLocks.get(xid);
-        List<DataItemId> exclusiveLocks = TxList.exclusiveLocks.get(xid);
-        log.info("{}'s sharedLocks: {}", xid, sharedLocks);
-        log.info("{}'s exclusiveLocks: {}", xid, exclusiveLocks);
-        if (sharedLocks != null) {
-            dataItemSet.addAll(sharedLocks);
-        }
-        if (exclusiveLocks != null) {
+        lock.lock();
+        try {
+            Set<DataItemId> dataItemSet = new HashSet<>();
+            List<DataItemId> sharedLocks = TxList.sharedLocks.get(xid);
+            List<DataItemId> exclusiveLocks = TxList.exclusiveLocks.get(xid);
+            log.info("{}'s sharedLocks: {}", xid, sharedLocks);
+            log.info("{}'s exclusiveLocks: {}", xid, exclusiveLocks);
+            if (sharedLocks != null) {
+                dataItemSet.addAll(sharedLocks);
+            }
+            if (exclusiveLocks != null) {
 
-            dataItemSet.addAll(exclusiveLocks);
-        }
+                dataItemSet.addAll(exclusiveLocks);
+            }
 
-        for (DataItemId id : dataItemSet) {
-            release(xid, id);
+            for (DataItemId id : dataItemSet) {
+                release(xid, id);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
