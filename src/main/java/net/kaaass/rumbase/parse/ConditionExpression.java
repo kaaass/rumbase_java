@@ -75,6 +75,14 @@ public class ConditionExpression {
         }
     }
 
+    @Override
+    public String toString() {
+        return "ConditionExpression{" +
+                "expression=" + expression +
+                ", defaultTableName='" + defaultTableName + '\'' +
+                '}';
+    }
+
     /**
      * 实现表达式执行的具体访问者
      */
