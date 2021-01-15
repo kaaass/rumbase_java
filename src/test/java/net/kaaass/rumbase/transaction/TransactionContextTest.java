@@ -217,10 +217,13 @@ public class TransactionContextTest {
         transaction1.start();
         transaction2.start();
 
+        AtomicBoolean syncPoint = new AtomicBoolean(false);
         AtomicBoolean deadlockDetect = new AtomicBoolean(false);
         Thread thread = new Thread(() -> {
             try {
-                Thread.sleep(3);
+                while (!syncPoint.get()) {
+                    Thread.sleep(3);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -228,12 +231,12 @@ public class TransactionContextTest {
                 transaction2.exclusiveLock(1, tableName);
             } catch (DeadlockException e) {
                 deadlockDetect.set(true);
+                e.printStackTrace();
                 try {
                     transaction2.rollback();
                 } catch (StatusException statusException) {
                     statusException.printStackTrace();
                 }
-                e.printStackTrace();
             } catch (StatusException e) {
                 e.printStackTrace();
             }
@@ -242,11 +245,12 @@ public class TransactionContextTest {
         try {
             transaction1.exclusiveLock(1, tableName);
             transaction2.exclusiveLock(2, tableName);
+            syncPoint.set(true);
             transaction1.exclusiveLock(2, tableName);
         } catch (DeadlockException e) {
             deadlockDetect.set(true);
-            transaction2.rollback();
             e.printStackTrace();
+            transaction2.rollback();
         }
         thread.join();
         assertTrue("Deadlock should be detected", deadlockDetect.get());
