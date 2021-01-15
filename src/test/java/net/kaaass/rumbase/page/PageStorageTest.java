@@ -19,6 +19,9 @@ public class PageStorageTest extends TestCase {
             PageStorage pc = PageManager.fromFile("testFile");
             Page p0 = pc.get(0);
             Page p3 = pc.get(3);
+            for (int i = 0; i < 34; i++) {
+                pc.get(i);
+            }
             byte[] data0 = new byte[1024 * 4];
             byte[] data3 = new byte[1024 * 4];
             p0.getData().read(data0);

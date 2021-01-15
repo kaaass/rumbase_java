@@ -1,9 +1,13 @@
 package net.kaaass.rumbase.index;
 
+import net.kaaass.rumbase.index.btree.BPlusTreeIndex;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.index.mock.MockBtreeIndex;
 
+import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +27,18 @@ public interface Index extends Iterable<Pair> {
      * @throws IndexNotFoundException
      */
     static Index getIndex(String indexFileName) throws IndexNotFoundException {
-        if (MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName) == null) {
+        File file = new File(indexFileName);
+        if (!file.exists()) {
             throw new IndexNotFoundException(1);
+        } else {
+            if (BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName) != null) {
+                return BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName);
+            } else {
+                BPlusTreeIndex bPlusTreeIndex = new BPlusTreeIndex(indexFileName);
+                BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.put(indexFileName, bPlusTreeIndex);
+                return bPlusTreeIndex;
+            }
         }
-        return MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName);
     }
 
     /**
@@ -36,7 +48,7 @@ public interface Index extends Iterable<Pair> {
      * @return
      */
     static boolean exists(String indexFileName) {
-        return MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName) != null;
+        return new File(indexFileName).exists();
     }
 
     /**
@@ -47,12 +59,20 @@ public interface Index extends Iterable<Pair> {
      * @throws IndexAlreadyExistException
      */
     static Index createEmptyIndex(String indexFileName) throws IndexAlreadyExistException {
-        if (MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName) == null) {
-            MockBtreeIndex.MOCK_BTREE_INDEX_MAP.put(indexFileName, new MockBtreeIndex());
+        File file = new File(indexFileName);
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
             throw new IndexAlreadyExistException(1);
         }
-        return MockBtreeIndex.MOCK_BTREE_INDEX_MAP.get(indexFileName);
+        BPlusTreeIndex bPlusTreeIndex = new BPlusTreeIndex(indexFileName);
+        bPlusTreeIndex.initPage();
+        BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.put(indexFileName, bPlusTreeIndex);
+        return bPlusTreeIndex;
     }
 
     /**

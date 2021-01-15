@@ -17,8 +17,8 @@ public class MockPageStorage implements PageStorage {
     public MockPageStorage(String filepath) throws FileException {
         this.filepath = filepath;
         pageMap = new HashMap<>();
-        this.fakeFile = new byte[1024 * 4 * 20];
-        for (int i = 0; i < 20; i++) {
+        this.fakeFile = new byte[1024 * 4 * 10000];
+        for (int i = 0; i < 10000; i++) {
             for (int j = 0; j < 1024 * 4; j++) {
                 this.fakeFile[1024 * 4 * i + j] = (byte) i;
             }
