@@ -60,14 +60,26 @@ public class BPlusTreeIndex implements Index {
         metaPage.pin();
         setPageType(metaPage,PageType.META);
         byte[] bs = ByteUtil.long2Bytes(5);
+        byte[] indexFlag = ByteUtil.long2Bytes(Long.MAX_VALUE);//作为索引文件的标志
         try {
             metaPage.patchData(4,bs);
+            metaPage.patchData(12,indexFlag);
         } catch (PageException e) {
             e.printStackTrace();
         }finally {
+            //flush
+            try {
+                metaPage.flush();
+            } catch (FileException e) {
+                e.printStackTrace();
+            }
             //unpin
             metaPage.unpin();
         }
+    }
+
+    public boolean isIndexedFile() {
+        return Long.MAX_VALUE == ByteUtil.bytes2Long(ByteUtil.subByte(this.pageStorage.get(0).getDataBytes(),12,8));
     }
 
     @Override
@@ -108,6 +120,12 @@ public class BPlusTreeIndex implements Index {
             try {
                 insertLeafItem(currentPage, dataHash, uuid);
                 isInsert = true;
+                //flush
+                try {
+                    currentPage.flush();
+                } catch (FileException e) {
+                    e.printStackTrace();
+                }
                 //unpin
                 currentPage.unpin();
             } catch (ItemInNextPageException e) {
@@ -126,6 +144,14 @@ public class BPlusTreeIndex implements Index {
                 //pin
                 rawPage.pin();
                 long newKey = insertFullLeaf(currentPage, rawPage, rawPageNum, dataHash, uuid);
+                //flush
+                try {
+                    currentPage.flush();
+                } catch (FileException eee) {
+                    eee.printStackTrace();
+                }
+                //unpin
+                currentPage.unpin();
                 boolean isInsertInternal = false, stackNeed = true;
                 Page parent = null;
                 long parentNum = 0;
@@ -149,6 +175,13 @@ public class BPlusTreeIndex implements Index {
                                 try {
                                     rawPage0.writeData(root.getDataBytes());
                                 } catch (PageException pageException) {
+                                    //flush
+                                    try {
+                                        rawPage.flush();
+                                        rawPage0.flush();
+                                    } catch (FileException fileException) {
+                                        fileException.printStackTrace();
+                                    }
                                     //unpin
                                     rawPage.unpin();
                                     rawPage0.unpin();
@@ -165,6 +198,13 @@ public class BPlusTreeIndex implements Index {
 
                                 try {
                                     insertInternalItem(root, getMaxKey(rawPage), splitPageNum, rawPageNum, newKey);
+                                    //flesh
+                                    try {
+                                        rawPage.flush();
+                                        root.flush();
+                                    } catch (FileException fileException) {
+                                        fileException.printStackTrace();
+                                    }
                                     //unpin
                                     rawPage.unpin();
                                     root.unpin();
@@ -177,6 +217,7 @@ public class BPlusTreeIndex implements Index {
                                         rawPage0.writeData(root.getDataBytes());
                                     } catch (PageException pageException) {
                                         //unpin
+                                        root.unpin();
                                         rawPage0.unpin();
                                         rawPage1.unpin();
                                         rawPage.unpin();
@@ -184,6 +225,14 @@ public class BPlusTreeIndex implements Index {
                                     }
 
                                     newKey = insertFullInternal(rawPage0, rawPage1, rawPageNum1, getMaxKey(rawPage), splitPageNum, rawPageNum, newKey);
+                                    //flush
+                                    try {
+                                        rawPage0.flush();
+                                        rawPage1.flush();
+                                        rawPage.flush();
+                                    } catch (FileException fileException) {
+                                        fileException.printStackTrace();
+                                    }
                                     //unpin
                                     rawPage0.unpin();
                                     rawPage1.unpin();
@@ -212,6 +261,7 @@ public class BPlusTreeIndex implements Index {
                         isInsert = true;
                         //unpin
                         parent.unpin();
+                        rawPage.unpin();
                     } catch (PageFullException ee) {
                         long rawPageNum0 = this.getRawPageNum();
                         Page rawPage0 = this.pageStorage.get(rawPageNum0);
@@ -219,6 +269,14 @@ public class BPlusTreeIndex implements Index {
                         rawPage0.pin();
                         newKey = insertFullInternal(parent, rawPage0, rawPageNum0, getMaxKey(rawPage), splitPageNum, rawPageNum, newKey);
                         rawPageNum = rawPageNum0;
+                        //flush
+                        try {
+                            rawPage.flush();
+                            parent.flush();
+                            rawPage0.flush();
+                        } catch (FileException fileException) {
+                            fileException.printStackTrace();
+                        }
                         //unpin
                         rawPage.unpin();
                         parent.unpin();
@@ -525,6 +583,12 @@ public class BPlusTreeIndex implements Index {
         } catch (PageException e) {
             e.printStackTrace();
         } finally {
+            //flush
+            try {
+                page.flush();
+            } catch (FileException e) {
+                e.printStackTrace();
+            }
             //unpin
             page.unpin();
         }
@@ -541,6 +605,12 @@ public class BPlusTreeIndex implements Index {
         setPageItemNum(page, 0);
         setMaxKey(page, Long.MAX_VALUE);
         setPageNextPage(page, 0);
+        //flush
+        try {
+            page.flush();
+        } catch (FileException e) {
+            e.printStackTrace();
+        }
         //unpin
         page.unpin();
     }

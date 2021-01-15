@@ -4,6 +4,10 @@ import net.kaaass.rumbase.index.btree.BPlusTreeIndex;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.index.mock.MockBtreeIndex;
+import net.kaaass.rumbase.page.Page;
+import net.kaaass.rumbase.page.PageManager;
+import net.kaaass.rumbase.page.PageStorage;
+import net.kaaass.rumbase.page.exception.FileException;
 
 import javax.swing.*;
 import java.io.File;
@@ -27,18 +31,16 @@ public interface Index extends Iterable<Pair> {
      * @throws IndexNotFoundException
      */
     static Index getIndex(String indexFileName) throws IndexNotFoundException {
-        File file = new File(indexFileName);
-        if (!file.exists()) {
-            throw new IndexNotFoundException(1);
-        } else {
             if (BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName) != null) {
                 return BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName);
             } else {
                 BPlusTreeIndex bPlusTreeIndex = new BPlusTreeIndex(indexFileName);
+                if (!bPlusTreeIndex.isIndexedFile()) {
+                    throw new IndexNotFoundException(1);
+                }
                 BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.put(indexFileName, bPlusTreeIndex);
                 return bPlusTreeIndex;
             }
-        }
     }
 
     /**
@@ -59,17 +61,10 @@ public interface Index extends Iterable<Pair> {
      * @throws IndexAlreadyExistException
      */
     static Index createEmptyIndex(String indexFileName) throws IndexAlreadyExistException {
-        File file = new File(indexFileName);
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
+        BPlusTreeIndex bPlusTreeIndex = new BPlusTreeIndex(indexFileName);
+        if (bPlusTreeIndex.isIndexedFile()) {
             throw new IndexAlreadyExistException(1);
         }
-        BPlusTreeIndex bPlusTreeIndex = new BPlusTreeIndex(indexFileName);
         bPlusTreeIndex.initPage();
         BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.put(indexFileName, bPlusTreeIndex);
         return bPlusTreeIndex;
