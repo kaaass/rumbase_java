@@ -6,6 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.*;
 import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.index.Pair;
+import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.mock.MockRecordStorage;
@@ -179,6 +180,55 @@ public class Table {
 
 
     /**
+     * 更新元组
+     *
+     * @param context  事务context
+     * @param uuid     元组的uuid
+     * @param entry    新的行的值列表
+     */
+    public void updateObjs(TransactionContext context, long uuid, List<Object> entry) throws TableConflictException, TableExistenceException {
+
+        var raw = entryToBytes(entry);
+
+        recordStorage.delete(context, uuid);
+        var newUuid = recordStorage.insert(context, raw);
+
+        var l = entry.size();
+        for (int i = 0; i < l; i++) {
+            var field = fields.get(i);
+            if (field.indexed()) {
+                field.insertIndex(entry.get(i), newUuid);
+            }
+        }
+    }
+
+
+
+
+    /**
+     * 检查一个entry是否满足当前表的约束
+     *
+     * @param entry 待检查entry
+     * @return 满足情况
+     */
+    public boolean checkEntry(List<Object> entry) {
+        if (fields.size() != entry.size()) {
+            return false;
+        }
+
+        var len = fields.size();
+
+        for (int i = 0; i < len; i++) {
+            if (!fields.get(i).checkObject(entry.get(i))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
      * 检查一个entry是否满足当前表的约束
      *
      * @param entry 待检查entry
@@ -228,24 +278,51 @@ public class Table {
     }
 
     /**
+     * 读取表所有记录
+     *
+     * @param context 事务context
+     * @return 所有记录
+     */
+    public List<List<Object>> readAll(TransactionContext context) throws TableExistenceException, TableConflictException, ArgumentException {
+        var field = getFirstIndexedField();
+        if (field == null) {
+            throw new ArgumentException(2);
+        }
+
+        var rows = new ArrayList<List<Object>>();
+        var iter = searchAll(field.getName());
+        while(iter.hasNext()) {
+            var uuid = iter.next().getUuid();
+            read(context, uuid).ifPresent(rows::add);
+        }
+        return rows;
+    }
+
+    /**
      * 向表插入元组
      *
      * @param context  事务context
      * @param entry 新的元组
      * @throws TableConflictException 插入的元组不满足表约束
      */
-    public void insert(TransactionContext context, List<String> entry) throws TableConflictException, TableExistenceException {
+    public void insert(TransactionContext context, List<String> entry) throws TableConflictException, TableExistenceException, ArgumentException {
 
         var bytes = stringEntryToBytes(entry);
 
         var uuid = recordStorage.insert(context, bytes);
 
         var l = entry.size();
+        boolean ok = false;
         for (int i = 0; i < l; i++) {
             var field = fields.get(i);
             if (field.indexed()) {
                 field.insertIndex(entry.get(i), uuid);
+                ok = true;
             }
+        }
+
+        if (!ok) {
+            throw new ArgumentException(2);
         }
     }
 
@@ -270,6 +347,30 @@ public class Table {
 
         return field.queryIndex(fieldValue);
     }
+
+    /**
+     * @param fieldName 字段名
+     * @param fieldValue 字段值
+     * @return 查询到的uuid列表
+     * @throws TableExistenceException 要查询的表不存在
+     */
+    public List<Long> search(String fieldName, Object fieldValue) throws TableExistenceException, TableConflictException {
+        BaseField field = null;
+
+        for (var f: fields) {
+            if (f.getName().equals(fieldName)) {
+                field = f;
+            }
+        }
+
+        if (field == null) {
+            throw new TableExistenceException(2);
+        }
+
+        return field.queryIndex(fieldValue);
+    }
+
+
 
     /**
      * 以指定的索引查询全部记录
@@ -377,6 +478,31 @@ public class Table {
         return stream.toByteArray();
     }
 
+
+    /**
+     * 将entry转换成字节数组
+     *
+     * @param entry 元组
+     * @return 字节数组
+     */
+    public byte[] entryToBytes(List<Object> entry) throws TableConflictException {
+        var stream = new ByteArrayOutputStream();
+
+        if (!checkEntry(entry)) {
+            throw new TableConflictException(3);
+        }
+
+        var len = fields.size();
+
+        for (int i = 0; i < len; i++) {
+            fields.get(i).serialize(stream, entry.get(i));
+        }
+
+        return stream.toByteArray();
+    }
+
+
+
     /**
      * 将字节数组转换成entry
      *
@@ -398,4 +524,29 @@ public class Table {
         }
     }
 
+    /**
+     * 返回第一个建立了索引的列
+     *
+     * @return 列
+     */
+    public BaseField getFirstIndexedField() {
+        BaseField field = null;
+        for (var f: fields) {
+            if (f.indexed()) {
+                return f;
+            }
+        }
+        return null;
+    }
+
+
+    public Optional<BaseField> getField(String fieldName) {
+        for (var f : fields) {
+            if (f.getName().equals(fieldName)) {
+                return Optional.of(f);
+            }
+        }
+
+        return Optional.empty();
+    }
 }

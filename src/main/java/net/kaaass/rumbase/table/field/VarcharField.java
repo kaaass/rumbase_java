@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.table.field;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitNumber;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.Getter;
@@ -31,8 +32,8 @@ public class VarcharField extends BaseField {
     @Getter
     private final int limit;
 
-    public VarcharField(@NonNull String name, int limit, @NonNull Table parentTable) {
-        super(name, FieldType.VARCHAR, parentTable);
+    public VarcharField(@NonNull String name, int limit, @NonNull boolean nullable, @NonNull Table parentTable) {
+        super(name, FieldType.VARCHAR, nullable, parentTable);
         this.limit = limit;
     }
 
@@ -43,6 +44,13 @@ public class VarcharField extends BaseField {
         try {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
             out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
+            out.writeBits(isNullable() ? 1 : 0, JBBPBitNumber.BITS_1);
+            if (indexed()) {
+                out.writeBits(1, JBBPBitNumber.BITS_1);
+                out.writeString(indexName, JBBPByteOrder.BIG_ENDIAN);
+            } else {
+                out.writeBits(0, JBBPBitNumber.BITS_1);
+            }
             out.writeInt(limit, JBBPByteOrder.BIG_ENDIAN);
             // todo （字段约束）
         } catch (IOException e) {
@@ -52,12 +60,37 @@ public class VarcharField extends BaseField {
 
     @Override
     public boolean checkStr(String valStr) {
+        if (valStr == null || valStr.isBlank()) {
+            return isNullable();
+        }
         return valStr.length() <= this.limit;
     }
 
     @Override
     public long strToHash(String str) {
+
+        // 空值的哈希固定为0
+        if (str == null || str.isBlank()) {
+            return 0;
+        }
+
         return str.hashCode();
+    }
+
+    @Override
+    public long toHash(Object val) throws TableConflictException {
+
+        // 空值的哈希固定为0
+        if (val == null) {
+            return 0;
+        }
+
+        try {
+            var str = (String) val;
+            return strToHash(str);
+        } catch (ClassCastException e) {
+            throw new TableConflictException(1);
+        }
     }
 
     @Override
@@ -66,6 +99,15 @@ public class VarcharField extends BaseField {
         var stream = new JBBPBitInputStream(inputStream);
 
         try {
+            var isNull = (stream.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
+            if (isNull) {
+                if (isNullable()) {
+                    return null;
+                } else {
+                    throw new TableConflictException(3);
+                }
+            }
+
             var str = stream.readString(JBBPByteOrder.BIG_ENDIAN);
             if (checkStr(str)) {
                 return str;
@@ -83,6 +125,11 @@ public class VarcharField extends BaseField {
         var stream = new JBBPBitInputStream(inputStream);
 
         try {
+            var isNull = (stream.readBitField(JBBPBitNumber.BITS_1) & 1) == 1;
+            if (isNull) {
+                return isNullable();
+            }
+
             var str = stream.readString(JBBPByteOrder.BIG_ENDIAN);
             return checkStr(str);
         } catch (IOException e) {
@@ -100,10 +147,41 @@ public class VarcharField extends BaseField {
         }
 
         try {
-            stream.writeString(strVal, JBBPByteOrder.BIG_ENDIAN);
+            if (strVal == null || strVal.isBlank()) {
+                stream.writeBits(1, JBBPBitNumber.BITS_1);
+            } else {
+                stream.writeBits(0, JBBPBitNumber.BITS_1);
+                stream.writeString(strVal, JBBPByteOrder.BIG_ENDIAN);
+            }
+
         } catch (IOException e) {
             // fixme 这个给外面可能也不知道如何处理
             throw new RuntimeException();
+        }
+    }
+
+    @Override
+    public void serialize(OutputStream outputStream, Object val) throws TableConflictException {
+
+        var stream = new JBBPBitOutputStream(outputStream);
+
+        if (!checkObject(val)) {
+            throw new TableConflictException(3);
+        }
+
+        try {
+            if (val == null) {
+                stream.writeBits(1, JBBPBitNumber.BITS_1);
+            } else {
+                stream.writeBits(0, JBBPBitNumber.BITS_1);
+                stream.writeString((String) val, JBBPByteOrder.BIG_ENDIAN);
+            }
+
+        } catch (IOException e) {
+            // fixme 这个给外面可能也不知道如何处理
+            throw new RuntimeException();
+        } catch (ClassCastException e){
+            throw new TableConflictException(1);
         }
     }
 
@@ -116,12 +194,33 @@ public class VarcharField extends BaseField {
     }
 
     @Override
+    public void insertIndex(Object value, long uuid) throws TableConflictException, TableExistenceException {
+        if (index == null) {
+            throw new TableExistenceException(6);
+        }
+        index.insert(toHash(value), uuid);
+    }
+
+    @Override
     public List<Long> queryIndex(String value) throws TableExistenceException {
         if (index == null) {
             throw new TableExistenceException(6);
         }
 
         return index.query(strToHash(value));
+    }
+
+    @Override
+    public List<Long> queryIndex(Object key) throws TableExistenceException, TableConflictException {
+        if (index == null) {
+            throw new TableExistenceException(6);
+        }
+
+        try {
+            return index.query(toHash(key));
+        } catch (ClassCastException e) {
+            throw new TableConflictException(1);
+        }
     }
 
     @Override
@@ -149,6 +248,30 @@ public class VarcharField extends BaseField {
         }
 
         return index.findUpperbound(strToHash(key));
+    }
+
+    @Override
+    public Object strToValue(String str) {
+        return str;
+    }
+
+    @Override
+    public boolean checkObject(Object val) {
+        try {
+            var res = (String) val;
+            return true;
+        } catch (ClassCastException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public int compare(Object a, Object b) throws TableConflictException {
+        try {
+            return ((String) a).compareTo((String) b);
+        } catch (ClassCastException e) {
+            throw new TableConflictException(1);
+        }
     }
 
 }

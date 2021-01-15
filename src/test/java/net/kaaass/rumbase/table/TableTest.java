@@ -3,6 +3,7 @@ package net.kaaass.rumbase.table;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -97,9 +98,9 @@ public class TableTest extends TestCase {
         var table = new Table("testPersistTable", fieldList);
         var context = TransactionContext.empty();
 
-        fieldList.add(new IntField("testPersistInt", table));
-        fieldList.add(new FloatField("testPersistFloat", table));
-        fieldList.add(new VarcharField("testPersistVarchar", 12, table));
+        fieldList.add(new IntField("testPersistInt", false, table));
+        fieldList.add(new FloatField("testPersistFloat", false, table));
+        fieldList.add(new VarcharField("testPersistVarchar", 12, false, table));
 
         var expected = new byte[]{
                 // testPersistTable
@@ -172,9 +173,9 @@ public class TableTest extends TestCase {
         var table = new Table(prefix + "Table", fieldList);
 
         // 增加测试表字段
-        var intField = new IntField(prefix + "age", table);
-        var floatField = new FloatField(prefix + "balance", table);
-        var varcharField = new VarcharField(prefix + "name", 20, table);
+        var intField = new IntField(prefix + "age", false, table);
+        var floatField = new FloatField(prefix + "balance", false, table);
+        var varcharField = new VarcharField(prefix + "name", 20, false, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
@@ -214,7 +215,7 @@ public class TableTest extends TestCase {
         try {
             table.insert(context, data);
             table.insert(context, data2);
-        } catch (TableConflictException | TableExistenceException e) {
+        } catch (TableConflictException | TableExistenceException | ArgumentException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -287,7 +288,7 @@ public class TableTest extends TestCase {
 
     }
 
-    void addTestData(TransactionContext context, Table table) throws TableConflictException, TableExistenceException {
+    void addTestData(TransactionContext context, Table table) throws TableConflictException, TableExistenceException, ArgumentException {
         table.insert(context, new ArrayList<>() {{
             add("1");
             add("1.2");
@@ -351,7 +352,7 @@ public class TableTest extends TestCase {
         // 添加记录
         try {
             addTestData(context, table);
-        } catch (TableConflictException | TableExistenceException e) {
+        } catch (TableConflictException | TableExistenceException | ArgumentException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -361,7 +362,7 @@ public class TableTest extends TestCase {
         try {
             var uuids = table.search(prefix + "age", "7");
             var resList = new ArrayList<List<Object>>();
-            for (var uuid: uuids) {
+            for (var uuid : uuids) {
                 var res = table.read(context, uuid);
                 res.ifPresent(resList::add);
             }
@@ -391,7 +392,7 @@ public class TableTest extends TestCase {
         // 添加记录
         try {
             addTestData(context, table);
-        } catch (TableConflictException | TableExistenceException e) {
+        } catch (TableConflictException | TableExistenceException | ArgumentException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -401,7 +402,7 @@ public class TableTest extends TestCase {
         try {
             var uuids = table.searchAll(prefix + "age");
             var resList = new ArrayList<List<Object>>();
-            while(uuids.hasNext()) {
+            while (uuids.hasNext()) {
                 var uuid = uuids.next();
                 table.read(context, uuid.getUuid()).ifPresent(resList::add);
             }
@@ -463,7 +464,7 @@ public class TableTest extends TestCase {
         // 添加记录
         try {
             addTestData(context, table);
-        } catch (TableConflictException | TableExistenceException e) {
+        } catch (TableConflictException | TableExistenceException | ArgumentException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -471,7 +472,7 @@ public class TableTest extends TestCase {
         try {
             var uuids = table.searchFirst(prefix + "age", "3");
             var resList = new ArrayList<List<Object>>();
-            while(uuids.hasNext()) {
+            while (uuids.hasNext()) {
                 var uuid = uuids.next();
                 table.read(context, uuid.getUuid()).ifPresent(resList::add);
             }
@@ -504,7 +505,7 @@ public class TableTest extends TestCase {
         // 添加记录
         try {
             addTestData(context, table);
-        } catch (TableConflictException | TableExistenceException e) {
+        } catch (TableConflictException | TableExistenceException | ArgumentException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -513,7 +514,7 @@ public class TableTest extends TestCase {
         try {
             var uuids = table.searchFirstNotEqual(prefix + "age", "3");
             var resList = new ArrayList<List<Object>>();
-            while(uuids.hasNext()) {
+            while (uuids.hasNext()) {
                 var uuid = uuids.next();
                 table.read(context, uuid.getUuid()).ifPresent(resList::add);
             }
@@ -541,9 +542,9 @@ public class TableTest extends TestCase {
 
         var fieldList = new ArrayList<BaseField>();
         var table = new Table("testCheckStringEntryTable", fieldList);
-        var intField = new IntField("testCheckStringEntryInt", table);
-        var floatField = new FloatField("testCheckStringEntryFloat", table);
-        var varcharField = new VarcharField("testCheckStringEntryVarchar", 20, table);
+        var intField = new IntField("testCheckStringEntryInt", false, table);
+        var floatField = new FloatField("testCheckStringEntryFloat", false, table);
+        var varcharField = new VarcharField("testCheckStringEntryVarchar", 20, false, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
@@ -566,9 +567,9 @@ public class TableTest extends TestCase {
 
         var fieldList = new ArrayList<BaseField>();
         var table = new Table("testStringEntryToBytesTable", fieldList);
-        var intField = new IntField("testStringEntryToBytesInt", table);
-        var floatField = new FloatField("testStringEntryToBytesFloat", table);
-        var varcharField = new VarcharField("testStringEntryToBytesVarchar", 20, table);
+        var intField = new IntField("testStringEntryToBytesInt", false, table);
+        var floatField = new FloatField("testStringEntryToBytesFloat", false, table);
+        var varcharField = new VarcharField("testStringEntryToBytesVarchar", 20, false, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
@@ -618,9 +619,9 @@ public class TableTest extends TestCase {
 
         var fieldList = new ArrayList<BaseField>();
         var table = new Table("testParseEntryTable", fieldList);
-        var intField = new IntField("testParseEntryInt", table);
-        var floatField = new FloatField("testParseEntryFloat", table);
-        var varcharField = new VarcharField("testParseEntryVarchar", 20, table);
+        var intField = new IntField("testParseEntryInt", false, table);
+        var floatField = new FloatField("testParseEntryFloat", false, table);
+        var varcharField = new VarcharField("testParseEntryVarchar", 20, false, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);

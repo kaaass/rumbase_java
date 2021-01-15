@@ -27,19 +27,19 @@ public class BaseFieldTest extends TestCase {
         var dummy = new Table("testCheckStrTable", new ArrayList<>());
 
         // test int
-        var intField = new IntField("testCheckStrInt", dummy);
+        var intField = new IntField("testCheckStrInt", false, dummy);
         assertTrue(intField.checkStr("1"));
         assertFalse(intField.checkStr("1.2"));
         assertFalse(intField.checkStr("1aa"));
 
         // test float
-        var floatField = new FloatField("testCheckStrFloat", dummy);
+        var floatField = new FloatField("testCheckStrFloat", false, dummy);
         assertTrue(floatField.checkStr("1"));
         assertTrue(floatField.checkStr("1.2"));
         assertFalse(floatField.checkStr("1aa"));
 
         // test varchar
-        var varcharField = new VarcharField("testCheckStrVarchar", 20, dummy);
+        var varcharField = new VarcharField("testCheckStrVarchar", 20, false, dummy);
         assertTrue(varcharField.checkStr("aaaa"));
         assertFalse(varcharField.checkStr("aaaa aaaa aaaa aaaa aaaa"));
 
@@ -60,7 +60,7 @@ public class BaseFieldTest extends TestCase {
         };
         var inputStream = new ByteArrayInputStream(bytes);
 
-        var intField = new IntField("testDeserializeInt", dummy);
+        var intField = new IntField("testDeserializeInt", false, dummy);
         try {
             var intRes = (int) intField.deserialize(inputStream);
             assertEquals(33, intRes);
@@ -69,7 +69,7 @@ public class BaseFieldTest extends TestCase {
             fail("proper format should not fail to parse");
         }
 
-        var floatField = new FloatField("testDeserializeFloat", dummy);
+        var floatField = new FloatField("testDeserializeFloat", false, dummy);
         try {
             var floatRes = (float) floatField.deserialize(inputStream);
             assertEquals(1.2f, floatRes);
@@ -78,7 +78,7 @@ public class BaseFieldTest extends TestCase {
             fail("proper format should not fail to parse");
         }
 
-        var varcharField = new VarcharField("testDeserializeVarchar", 20, dummy);
+        var varcharField = new VarcharField("testDeserializeVarchar", 20, false, dummy);
         try {
             var varcharRes = (String) varcharField.deserialize(inputStream);
             assertEquals("test varchar", varcharRes);
@@ -105,13 +105,13 @@ public class BaseFieldTest extends TestCase {
         };
         var inputStream = new ByteArrayInputStream(bytes);
 
-        var intField = new IntField("testCheckInputStreamInt", dummy);
+        var intField = new IntField("testCheckInputStreamInt", false, dummy);
         assertTrue(intField.checkInputStream(inputStream));
 
-        var floatField = new FloatField("testCheckInputStreamFloat", dummy);
+        var floatField = new FloatField("testCheckInputStreamFloat", false, dummy);
         assertTrue(floatField.checkInputStream(inputStream));
 
-        var varcharField = new VarcharField("testCheckInputStreamVarchar", 20, dummy);
+        var varcharField = new VarcharField("testCheckInputStreamVarchar", 20, false, dummy);
         assertTrue(varcharField.checkInputStream(inputStream));
 
         assertEquals(0, inputStream.available());
@@ -121,7 +121,7 @@ public class BaseFieldTest extends TestCase {
         var dummy = new Table("testSerialize", new ArrayList<>());
 
 
-        var intField = new IntField("testSerializeInt", dummy);
+        var intField = new IntField("testSerializeInt", false, dummy);
         var intBos1 = new ByteArrayOutputStream();
         var intBos2 = new ByteArrayOutputStream();
 
@@ -143,7 +143,7 @@ public class BaseFieldTest extends TestCase {
             log.error("Exception expected: ", e);
         }
 
-        var floatField = new FloatField("testSerializeFloat", dummy);
+        var floatField = new FloatField("testSerializeFloat", false, dummy);
         var floatBos1 = new ByteArrayOutputStream();
         var floatBos2 = new ByteArrayOutputStream();
 
@@ -165,7 +165,7 @@ public class BaseFieldTest extends TestCase {
             log.error("Exception expected: ", e);
         }
 
-        var varcharField = new VarcharField("testSerializeVarchar", 20, dummy);
+        var varcharField = new VarcharField("testSerializeVarchar", 20, false, dummy);
         var varcharBos1 = new ByteArrayOutputStream();
         var varcharBos2 = new ByteArrayOutputStream();
 
@@ -195,7 +195,7 @@ public class BaseFieldTest extends TestCase {
     public void testDoubleCreateIndex() {
         var dummy = new Table("testCreateIndexTable", new ArrayList<>());
 
-        BaseField field = new IntField("testCreateIndexField", dummy);
+        BaseField field = new IntField("testCreateIndexField", false, dummy);
         try {
             field.createIndex();
         } catch (IndexAlreadyExistException e) {
@@ -214,7 +214,7 @@ public class BaseFieldTest extends TestCase {
     public void testInsertIndex() {
         var dummy = new Table("testInsertIndexTable", new ArrayList<>());
 
-        var intField = new IntField("testInsertIndexInt", dummy);
+        var intField = new IntField("testInsertIndexInt", false, dummy);
 
         try {
             intField.insertIndex("1", 1);
@@ -245,7 +245,7 @@ public class BaseFieldTest extends TestCase {
             log.error("Exception expected: ", e);
         }
 
-        var floatField = new FloatField("testInsertIndexFloat", dummy);
+        var floatField = new FloatField("testInsertIndexFloat", false, dummy);
 
         try {
             floatField.insertIndex("1.2", 1);
@@ -277,7 +277,7 @@ public class BaseFieldTest extends TestCase {
         }
 
 
-        var varcharField = new VarcharField("testInsertIndexVarchar", 20, dummy);
+        var varcharField = new VarcharField("testInsertIndexVarchar", 20, false, dummy);
 
         try {
             varcharField.insertIndex("xxx", 1);
@@ -306,7 +306,7 @@ public class BaseFieldTest extends TestCase {
     public void testQueryIndex() {
         var dummy = new Table("testQueryIndexTable", new ArrayList<>());
 
-        var intField = new IntField("testQueryIndexInt", dummy);
+        var intField = new IntField("testQueryIndexInt", false, dummy);
 
         try {
             intField.createIndex();
@@ -337,9 +337,10 @@ public class BaseFieldTest extends TestCase {
             assertTrue(uuid.isEmpty());
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();        }
+            fail();
+        }
 
-        var floatField = new FloatField("testQueryIndexFloat", dummy);
+        var floatField = new FloatField("testQueryIndexFloat", false, dummy);
 
         try {
             floatField.createIndex();
@@ -373,7 +374,7 @@ public class BaseFieldTest extends TestCase {
             fail();
         }
 
-        var varcharField = new VarcharField("testQueryIndexVarchar", 20, dummy);
+        var varcharField = new VarcharField("testQueryIndexVarchar", 20, false, dummy);
 
         try {
             varcharField.createIndex();
@@ -404,7 +405,8 @@ public class BaseFieldTest extends TestCase {
             assertTrue(uuid.isEmpty());
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
-            fail();        }
+            fail();
+        }
     }
 
     public void testLoad() {
@@ -462,7 +464,7 @@ public class BaseFieldTest extends TestCase {
         assertNotNull(varcharField);
         assertEquals("testLoadVarchar", varcharField.getName());
         assertEquals(FieldType.VARCHAR, varcharField.getType());
-        assertEquals(12, ((VarcharField)varcharField).getLimit());
+        assertEquals(12, ((VarcharField) varcharField).getLimit());
 
     }
 
@@ -470,9 +472,9 @@ public class BaseFieldTest extends TestCase {
         var dummy = new Table("testLoadTable", new ArrayList<>());
         var out = new ByteArrayOutputStream();
 
-        var intField = new IntField("testPersistInt", dummy);
-        var floatField = new FloatField("testPersistFloat", dummy);
-        var varcharField = new VarcharField("testPersistVarchar", 12, dummy);
+        var intField = new IntField("testPersistInt", false, dummy);
+        var floatField = new FloatField("testPersistFloat", false, dummy);
+        var varcharField = new VarcharField("testPersistVarchar", 12, false, dummy);
 
         intField.persist(out);
         floatField.persist(out);

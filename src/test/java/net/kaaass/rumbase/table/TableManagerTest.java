@@ -14,13 +14,13 @@ import java.util.ArrayList;
 /**
  * 表管理器的测试
  *
- * @see net.kaaass.rumbase.table.TableManager
  * @author @KveinAxel
+ * @see net.kaaass.rumbase.table.TableManager
  */
 @Slf4j
 public class TableManagerTest extends TestCase {
 
-    public  void testShowTables() {
+    public void testShowTables() {
         var prefix = "testShowTables";
 
         var tbm = new TableManager();
@@ -29,9 +29,9 @@ public class TableManagerTest extends TestCase {
         var table = new Table(prefix + "Table", fieldList);
 
         // 增加测试表字段
-        var intField = new IntField(prefix + "age", table);
-        var floatField = new FloatField(prefix + "balance", table);
-        var varcharField = new VarcharField(prefix + "name", 20, table);
+        var intField = new IntField(prefix + "age", false, table);
+        var floatField = new FloatField(prefix + "balance", false, table);
+        var varcharField = new VarcharField(prefix + "name", 20, false, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
@@ -57,9 +57,9 @@ public class TableManagerTest extends TestCase {
         var table = new Table(prefix + "Table", fieldList);
 
         // 增加测试表字段
-        var intField = new IntField(prefix + "age", table);
-        var floatField = new FloatField(prefix + "balance", table);
-        var varcharField = new VarcharField(prefix + "name", 20, table);
+        var intField = new IntField(prefix + "age", false, table);
+        var floatField = new FloatField(prefix + "balance", false, table);
+        var varcharField = new VarcharField(prefix + "name", 20, false, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
@@ -82,9 +82,9 @@ public class TableManagerTest extends TestCase {
         var table = new Table(prefix + "Table", fieldList);
 
         // 增加测试表字段
-        var intField = new IntField(prefix + "age", table);
-        var floatField = new FloatField(prefix + "balance", table);
-        var varcharField = new VarcharField(prefix + "name", 20, table);
+        var intField = new IntField(prefix + "age", false, table);
+        var floatField = new FloatField(prefix + "balance", false, table);
+        var varcharField = new VarcharField(prefix + "name", 20, false, table);
         fieldList.add(intField);
         fieldList.add(floatField);
         fieldList.add(varcharField);
