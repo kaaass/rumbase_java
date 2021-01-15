@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -13,30 +12,28 @@ import static org.junit.Assert.assertArrayEquals;
 /**
  * 测试记录存储接口
  *
- * @see net.kaaass.rumbase.record.IRecordStorage
  * @author kaaass
+ * @see net.kaaass.rumbase.record.IRecordStorage
  */
 @Slf4j
 public class IRecordStorageTest extends TestCase {
 
+    public final static String PATH = "build/";
+
     public void testQuery() {
-        var storage = RecordManager.fromFile("test_query");
+        var storage = RecordManager.fromFile(PATH + "test_query");
         var context = TransactionContext.empty();
-
-        var result = storage.queryOptional(context, UUID.randomUUID().getLeastSignificantBits());
-
-        assertTrue("unknown uuid should get empty", result.isEmpty());
 
         try {
             storage.query(context, UUID.randomUUID().getLeastSignificantBits());
-            fail("unknown uuid should get exception");
+            fail("unknown physical record should get exception");
         } catch (RecordNotFoundException e) {
             log.error("Exception expected: ", e);
         }
     }
 
-    public void testInsert() {
-        var storage = RecordManager.fromFile("test_insert");
+    public void testInsert() throws RecordNotFoundException {
+        var storage = RecordManager.fromFile(PATH + "test_insert");
         var context = TransactionContext.empty();
 
         var id = storage.insert(context, new byte[]{0x1, 0x2, 0x1f});
@@ -46,8 +43,8 @@ public class IRecordStorageTest extends TestCase {
         assertArrayEquals(new byte[]{0x1, 0x2, 0x1f}, result.get());
     }
 
-    public void testDelete() {
-        var storage = RecordManager.fromFile("test_delete");
+    public void testDelete() throws RecordNotFoundException {
+        var storage = RecordManager.fromFile(PATH + "test_delete");
         var context = TransactionContext.empty();
 
         storage.insert(context, new byte[]{0x1, 0x2});
@@ -63,7 +60,7 @@ public class IRecordStorageTest extends TestCase {
     }
 
     public void testMetadata() {
-        var storage = RecordManager.fromFile("test_metadata");
+        var storage = RecordManager.fromFile(PATH + "test_metadata");
         var context = TransactionContext.empty();
 
         var result = storage.getMetadata(context);
