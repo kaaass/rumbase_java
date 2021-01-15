@@ -7,12 +7,15 @@ import net.kaaass.rumbase.index.Pair;
 
 import java.util.*;
 
+/**
+ * @author 无索魏
+ */
 @RequiredArgsConstructor
 public class MockBtreeIndex implements Index {
     /**
      * 内存中创建的MockBtreeIndex
      */
-    public static final Map<String, MockBtreeIndex> MOCK_BTREE_INDEX_MAP = new HashMap<>();
+    public static Map<String, MockBtreeIndex> MOCK_BTREE_INDEX_MAP = new HashMap<>();
 
     @Getter
     private HashMap<Long, List<Long>> hashMap = new HashMap<>();
