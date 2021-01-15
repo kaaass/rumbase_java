@@ -12,6 +12,8 @@ import net.kaaass.rumbase.page.PageStorage;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.IRecoveryStorage;
+import net.kaaass.rumbase.recovery.RecoveryManager;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.IOException;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.logging.LogManager;
 
 /**
  * 数据项管理器的具体实现
@@ -60,6 +63,14 @@ public class ItemStorage implements IItemStorage {
     private IRecoveryStorage recoveryStorage;
 
 
+    public ItemStorage(String fileName, int tempFreePage, long headerUuid, PageStorage pageStorage,IRecoveryStorage iRecoveryStorage) {
+        this.fileName = fileName;
+        this.tempFreePage = tempFreePage;
+        this.headerUuid = headerUuid;
+        this.pageStorage = pageStorage;
+        this.recoveryStorage = iRecoveryStorage;
+    }
+
     public ItemStorage(String fileName, int tempFreePage, long headerUuid, PageStorage pageStorage) {
         this.fileName = fileName;
         this.tempFreePage = tempFreePage;
@@ -94,7 +105,40 @@ public class ItemStorage implements IItemStorage {
      * @param fileName 文件名
      * @return 解析或新建得到的数据项管理器对象
      */
-    public static IItemStorage ofFile(String fileName) throws FileException, PageException {
+    public static IItemStorage ofFile(String fileName) throws FileException, PageException, IOException, LogException {
+        var pageStorage = PageManager.fromFile(fileName);
+        var header = pageStorage.get(0);
+        header.pin();
+        if (checkTableHeader(header)) {
+            // 如果表头标志存在，就解析对应表头信息
+            var h = parseHeader(header);
+            header.unpin();
+            var logStorage = RecoveryManager.getRecoveryStorage(fileName);
+            return new ItemStorage(fileName, h.tempFreePage, h.headerUuid, pageStorage,logStorage);
+        } else {
+            // 若表头标志不存在，就初始化对应的表信息。
+            // 只初始化headerFlag和tempFreePage，表头信息位置统一由setMetadata来实现
+            byte[] bytes;
+            try {
+                bytes = JBBPOut.BeginBin().
+                        Byte(1, 2, 3, 4).
+                        Int(1).
+                        End().toByteArray();
+            } catch (IOException e) {
+                header.unpin();
+                throw new PageCorruptedException(1, e);
+            }
+            header.patchData(0, bytes);
+            header.unpin();
+            var logStorage = RecoveryManager.createRecoveryStorage(fileName);
+            return new ItemStorage(fileName, 1, 0, pageStorage,logStorage);
+        }
+    }
+
+    /**
+     *  不使用日志打开文件
+     */
+    public static IItemStorage ofFileWithoutLog(String fileName) throws FileException, PageException, IOException, LogException {
         var pageStorage = PageManager.fromFile(fileName);
         var header = pageStorage.get(0);
         header.pin();
@@ -129,9 +173,18 @@ public class ItemStorage implements IItemStorage {
      * @param metadata 表头信息
      * @return 数据项管理器
      */
-    public static IItemStorage ofNewFile(TransactionContext txContext, String fileName, byte[] metadata) throws IOException, FileException, PageException {
+    public static IItemStorage ofNewFile(TransactionContext txContext, String fileName, byte[] metadata) throws IOException, FileException, PageException, LogException {
         var pageStorage = ItemStorage.ofFile(fileName);
         pageStorage.setMetadata(txContext, metadata);
+        return pageStorage;
+    }
+
+    /**
+     * 不使用日志的创建文件
+     */
+    public static IItemStorage ofNewFileWithoutLog(String fileName, byte[] metadata) throws IOException, LogException, FileException, PageException {
+        var pageStorage = ItemStorage.ofFileWithoutLog(fileName);
+        pageStorage.setMetadataWithoutLog(metadata);
         return pageStorage;
     }
 
@@ -276,7 +329,18 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
+    public void flush(long uuid) throws FileException {
+        var page = getPage(uuid);
+        page.flush();
+    }
+
+    @Override
     public synchronized long insertItem(TransactionContext txContext, byte[] item) {
+        long uuid = insertItemWithoutLog(item);
+        return uuid;
+    }
+    @Override
+    public  synchronized long insertItemWithoutLog(byte[] item) {
         var page = getPage(this.tempFreePage);
         try {
             var pageHeaderOp = getPageHeader(page);
@@ -288,7 +352,7 @@ public class ItemStorage implements IItemStorage {
             if (pageHeader.leftSpace - Math.min(item.length, MAX_RECORD_SIZE) <= MIN_LEFT_SPACE) {
                 // 如果剩余空间过小的话，就切换到下一个页进行，同时修改表头信息.并且，若数据过大则使用拉链，所以取512和数据大小较小的
                 addTempFreePage();
-                return insertItem(txContext, item);
+                return insertItemWithoutLog( item);
             } else {
                 // 剩余空间足够，则插入
                 int rnd = Math.abs(new Random().nextInt());
@@ -299,7 +363,7 @@ public class ItemStorage implements IItemStorage {
                     rnd = Math.abs(new Random().nextInt());
                     uuid = ((s << 32) + (long) (rnd));
                 }
-                insertToPage(page, pageHeader, txContext, item, rnd);
+                insertToPage(page, pageHeader,item, rnd);
                 return uuid;
             }
         } catch (PageCorruptedException e) {
@@ -314,7 +378,7 @@ public class ItemStorage implements IItemStorage {
     /**
      * 将数据插入到页内对应位置，并修改页头信息
      */
-    private void insertToPage(Page page, PageHeader pageHeader, TransactionContext txContext, byte[] item, int rnd) {
+    private void insertToPage(Page page, PageHeader pageHeader,byte[] item, int rnd) {
         if (item.length < MAX_RECORD_SIZE) {
             int offset = 0;
             if (pageHeader.recordNumber == 0) {
@@ -354,7 +418,7 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public synchronized void insertItemWithUuid(TransactionContext txContext, byte[] item, long uuid) {
+    public synchronized void insertItemWithUuid(byte[] item, long uuid) {
         if (!checkUuidExist(uuid)) {
             // 若不存在，则要恢复
             var page = getPage(uuid);
@@ -365,7 +429,7 @@ public class ItemStorage implements IItemStorage {
                     pageHeaderOp = Optional.of(initPage(page));
                 }
                 int rnd = getRndByUuid(uuid);
-                insertToPage(page, pageHeaderOp.get(), txContext, item, rnd);
+                insertToPage(page, pageHeaderOp.get(), item, rnd);
             } catch (Exception e) {
                 throw new PageCorruptedException(3);
             } finally {
@@ -515,9 +579,15 @@ public class ItemStorage implements IItemStorage {
 
     @Override
     public void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException {
+        setMetadataWithoutLog(metadata);
+
+    }
+
+    @Override
+    public void setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException {
         var page = getPage(0);
         try {
-            var headerUuid = insertItem(txContext, metadata);
+            var headerUuid = insertItemWithoutLog(metadata);
             var bytes = JBBPOut.BeginBin().
                     Byte(HAS_HEADER).
                     Long(headerUuid).End().toByteArray();

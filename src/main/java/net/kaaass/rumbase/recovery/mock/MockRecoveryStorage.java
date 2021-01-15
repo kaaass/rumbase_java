@@ -49,7 +49,7 @@ public class MockRecoveryStorage implements IRecoveryStorage {
     }
 
     @Override
-    public void update(int xid, long uuid, byte[] item) {
+    public void update(int xid, long uuid, byte[] item,byte[] item_after) {
         String updateStr = "update " + xid + " " + uuid + " ";
         // 对控制语句、数据两部分进行合并得到最终日志记录
         byte[] first = updateStr.getBytes();

@@ -6,6 +6,7 @@ import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试能否从已有文件中解析得到数据项管理器
      */
-    public void testGetFromFile() throws FileException, IOException, PageException {
+    public void testGetFromFile() throws FileException, IOException, PageException, LogException {
         String fileName = "testGetFromFile.db";
         var itemStorage = ItemManager.fromFile(fileName);
         // 如果表中没有对应的文件，那么就抛出错误
@@ -44,7 +45,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试能否新建文件并得到数据项管理器
      */
-    public void testCreateFile() throws IOException, FileException, PageException {
+    public void testCreateFile() throws IOException, FileException, PageException, LogException {
         TransactionContext txContext = TransactionContext.empty();
         String fileName = "testCreateFile.db";
         byte[] metadata = new byte[1024];
@@ -62,7 +63,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 进行插入的测试
      */
-    public void testInsert() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
+    public void testInsert() throws FileException, IOException, PageException, UUIDException, PageCorruptedException, LogException {
         String fileName = "testInsert.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -79,7 +80,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 对插入一个已分配UUID的测试
      */
-    public void testInsertWithUUID() throws FileException, IOException, PageException {
+    public void testInsertWithUUID() throws FileException, IOException, PageException, LogException {
         String fileName = "testInsertWithUUID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -88,7 +89,7 @@ public class IItemStorageTest extends TestCase {
         long uuid = (s << 32) + rnd;
         TransactionContext txContext = TransactionContext.empty();
         // 第一次插入，表中没有该UUID，可以正常执行
-        iItemStorage.insertItemWithUuid(txContext, bytes, uuid);
+        iItemStorage.insertItemWithUuid(bytes, uuid);
         try {
             assertArrayEquals(bytes, iItemStorage.queryItemByUuid(uuid));
         } catch (UUIDException | PageCorruptedException e) {
@@ -96,14 +97,14 @@ public class IItemStorageTest extends TestCase {
         }
 
         // 第二次插入
-        iItemStorage.insertItemWithUuid(txContext, bytes, uuid);
+        iItemStorage.insertItemWithUuid(bytes, uuid);
 
     }
 
     /**
      * 对插入大量数据进行测试
      */
-    public void testManyInsert() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
+    public void testManyInsert() throws FileException, IOException, PageException, UUIDException, PageCorruptedException, LogException {
         String fileName = "testInsertMany.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -123,7 +124,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 获取整个页的数据项进行测试
      */
-    public void testQueryByPageID() throws FileException, IOException, PageException, PageCorruptedException {
+    public void testQueryByPageID() throws FileException, IOException, PageException, PageCorruptedException, LogException {
         String fileName = "testQueryByPageID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -186,7 +187,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试并发下插入是否有问题
      */
-    public void testSynInsert() throws IOException, FileException, PageException {
+    public void testSynInsert() throws IOException, FileException, PageException, LogException {
         String fileName = "testInsert.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -201,7 +202,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 对更新进行测试
      */
-    public void testUpdate() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
+    public void testUpdate() throws FileException, IOException, PageException, UUIDException, PageCorruptedException, LogException {
         String fileName = "testUpdate.db";
         TransactionContext txContext = TransactionContext.empty();
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
@@ -228,7 +229,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试修改和获取表头信息
      */
-    public void testMeta() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
+    public void testMeta() throws FileException, IOException, PageException, UUIDException, PageCorruptedException, LogException {
         String fileName = "testMeta.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] result = new byte[]{1, 2, 3, 4};

@@ -2,6 +2,7 @@ package net.kaaass.rumbase.dataitem.mock;
 
 import lombok.Data;
 import net.kaaass.rumbase.dataitem.IItemStorage;
+import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
@@ -80,6 +81,11 @@ public class MockItemStorage implements IItemStorage {
 
 
     @Override
+    public void flush(long uuid) {
+
+    }
+
+    @Override
     public long insertItem(TransactionContext txContext, byte[] item) {
         Random ran = new Random();
         long r = ran.nextLong();
@@ -88,7 +94,12 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void insertItemWithUuid(TransactionContext txContext, byte[] item, long uuid) {
+    public long insertItemWithoutLog( byte[] item) {
+        return 0;
+    }
+
+    @Override
+    public void insertItemWithUuid(byte[] item, long uuid) {
         maps.put(uuid, item);
     }
 
@@ -123,6 +134,11 @@ public class MockItemStorage implements IItemStorage {
     @Override
     public void setMetadata(TransactionContext txContext, byte[] metadata) {
         this.meta = metadata;
+    }
+
+    @Override
+    public void setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException {
+
     }
 
 
