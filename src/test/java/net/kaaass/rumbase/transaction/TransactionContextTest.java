@@ -239,7 +239,6 @@ public class TransactionContextTest {
             }
         });
         thread.start();
-        thread.join();
         try {
             transaction1.exclusiveLock(1, tableName);
             transaction2.exclusiveLock(2, tableName);
@@ -249,6 +248,7 @@ public class TransactionContextTest {
             transaction2.rollback();
             e.printStackTrace();
         }
+        thread.join();
         assertTrue("Deadlock should be detected", deadlockDetect.get());
     }
 }
