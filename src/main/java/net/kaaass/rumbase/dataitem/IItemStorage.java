@@ -1,6 +1,8 @@
 package net.kaaass.rumbase.dataitem;
 
+import net.kaaass.rumbase.dataitem.exception.ItemException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.IOException;
@@ -18,7 +20,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @return 返回数据项的UUID
      */
-    long insertItem(TransactionContext txContext, byte[] item) throws IOException;
+    long insertItem(TransactionContext txContext, byte[] item) throws IOException, PageException;
 
     /**
      * 插入一个有UUID的数据项，唯一使用的地方是日志恢复时使用
@@ -30,7 +32,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @param uuid 编号
      */
-    void insertItemWithUuid(TransactionContext txContext,byte[] item, long uuid);
+    void insertItemWithUuid(TransactionContext txContext, byte[] item, long uuid) throws IOException, PageException;
 
     /**
      * 通过UUID查询数据项
@@ -39,7 +41,7 @@ public interface IItemStorage {
      * @return 数据项
      * @throws UUIDException UUID找不到的异常
      */
-    byte[] queryItemByUuid(long uuid) throws UUIDException;
+    byte[] queryItemByUuid(long uuid) throws UUIDException, IOException, ItemException;
 
 
     /**
@@ -48,7 +50,7 @@ public interface IItemStorage {
      * @param pageId 页号
      * @return list的一堆数据项
      */
-    List<byte[]> listItemByPageId(int pageId);
+    List<byte[]> listItemByPageId(int pageId) throws IOException, ItemException;
 
     /**
      * 根据UUID更新数据项
@@ -57,21 +59,21 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(TransactionContext txContext,long uuid, byte[] item) throws UUIDException;
+    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, IOException, PageException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
      *
      * @return 元数据
      */
-    byte[] getMetadata();
+    byte[] getMetadata() throws IOException, ItemException, UUIDException;
 
     /**
      * 设置数据项存储的元数据（可以用于头）
      *
      * @param metadata 头信息
      */
-    void setMetadata(TransactionContext txContext,byte[] metadata);
+    void setMetadata(TransactionContext txContext, byte[] metadata) throws IOException, PageException;
 
     /**
      * 清理多余的数据项，空间清理时使用。
