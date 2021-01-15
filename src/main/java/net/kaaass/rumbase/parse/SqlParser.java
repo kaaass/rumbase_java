@@ -18,9 +18,10 @@ public class SqlParser {
 
     private static List<JsqlpStatementParser> jsqlpStatementParsers = new ArrayList<>() {{
         add(new InsertStatementParser());
+        add(new UpdateStatementParser());
+        add(new DeleteStatementParser());
         add(new CreateTableStatementParser());
         add(new CreateIndexStatementParser());
-        add(new DeleteStatementParser());
     }};
 
     /**
