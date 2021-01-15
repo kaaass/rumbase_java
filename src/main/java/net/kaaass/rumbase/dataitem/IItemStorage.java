@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.dataitem;
 
+import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
@@ -56,7 +57,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException;
+    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
@@ -70,7 +71,7 @@ public interface IItemStorage {
      *
      * @param metadata 头信息
      */
-    void setMetadata(TransactionContext txContext, byte[] metadata);
+    void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException;
 
     /**
      * 清理多余的数据项，空间清理时使用。

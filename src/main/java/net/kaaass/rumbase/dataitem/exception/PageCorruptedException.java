@@ -14,6 +14,7 @@ public class PageCorruptedException extends RumbaseRuntimeException {
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "没有相应表头信息或表头信息损坏");
         put(2, "数据项信息损坏");
+        put(3, "数据插入异常");
     }};
 
     public PageCorruptedException(int subID) {

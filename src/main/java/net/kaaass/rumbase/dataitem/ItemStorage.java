@@ -175,7 +175,7 @@ public class ItemStorage implements IItemStorage {
      *
      * @return 解析得到的表头对象
      */
-    private static TableHeader parseHeader(Page page) {
+    private static TableHeader parseHeader(Page page) throws PageCorruptedException {
         try {
             return JBBPParser.prepare("int headerFlag;int tempFreePage;byte hasHeaderInfo;long headerUuid;").
                     parse(page.getData()).mapTo(new TableHeader());
@@ -277,32 +277,37 @@ public class ItemStorage implements IItemStorage {
 
     @Override
     public synchronized long insertItem(TransactionContext txContext, byte[] item) {
-        // FIXME 发生错误就不会releasePage
         var page = getPage(this.tempFreePage);
-        var pageHeaderOp = getPageHeader(page);
-        if (pageHeaderOp.isEmpty()) {
-            // 如果获取的页没有页头信息，则进行初始化。
-            pageHeaderOp = Optional.of(initPage(page));
-        }
-        var pageHeader = pageHeaderOp.get();
-        if (pageHeader.leftSpace - Math.min(item.length, MAX_RECORD_SIZE) <= MIN_LEFT_SPACE) {
-            // 如果剩余空间过小的话，就切换到下一个页进行，同时修改表头信息.并且，若数据过大则使用拉链，所以取512和数据大小较小的
-            addTempFreePage();
-            releasePage(page);
-            return insertItem(txContext, item);
-        } else {
-            // 剩余空间足够，则插入
-            int rnd = Math.abs(new Random().nextInt());
-            long s = this.tempFreePage;
-            long uuid = ((s << 32) + (long) (rnd));
-            // 保证uuid不重复
-            while (checkUuidExist(uuid)) {
-                rnd = Math.abs(new Random().nextInt());
-                uuid = ((s << 32) + (long) (rnd));
+        try {
+            var pageHeaderOp = getPageHeader(page);
+            if (pageHeaderOp.isEmpty()) {
+                // 如果获取的页没有页头信息，则进行初始化。
+                pageHeaderOp = Optional.of(initPage(page));
             }
-            insertToPage(page, pageHeader, txContext, item, rnd);
+            var pageHeader = pageHeaderOp.get();
+            if (pageHeader.leftSpace - Math.min(item.length, MAX_RECORD_SIZE) <= MIN_LEFT_SPACE) {
+                // 如果剩余空间过小的话，就切换到下一个页进行，同时修改表头信息.并且，若数据过大则使用拉链，所以取512和数据大小较小的
+                addTempFreePage();
+                return insertItem(txContext, item);
+            } else {
+                // 剩余空间足够，则插入
+                int rnd = Math.abs(new Random().nextInt());
+                long s = this.tempFreePage;
+                long uuid = ((s << 32) + (long) (rnd));
+                // 保证uuid不重复
+                while (checkUuidExist(uuid)) {
+                    rnd = Math.abs(new Random().nextInt());
+                    uuid = ((s << 32) + (long) (rnd));
+                }
+                insertToPage(page, pageHeader, txContext, item, rnd);
+                return uuid;
+            }
+        }catch (PageCorruptedException e){
+            throw e ;
+        }catch (Exception e){
+            throw new PageCorruptedException(3);
+        }finally {
             releasePage(page);
-            return uuid;
         }
     }
 
@@ -352,66 +357,81 @@ public class ItemStorage implements IItemStorage {
     public synchronized void insertItemWithUuid(TransactionContext txContext, byte[] item, long uuid) {
         if (!checkUuidExist(uuid)) {
             // 若不存在，则要恢复
-            // FIXME 发生错误就不会releasePage
             var page = getPage(uuid);
-            var pageHeaderOp = getPageHeader(page);
-            if (pageHeaderOp.isEmpty()) {
-                // 如果获取的页没有页头信息，则进行初始化。
-                pageHeaderOp = Optional.of(initPage(page));
+            try{
+                var pageHeaderOp = getPageHeader(page);
+                if (pageHeaderOp.isEmpty()) {
+                    // 如果获取的页没有页头信息，则进行初始化。
+                    pageHeaderOp = Optional.of(initPage(page));
+                }
+                int rnd = getRndByUuid(uuid);
+                insertToPage(page, pageHeaderOp.get(), txContext, item, rnd);
+            }catch (Exception e){
+                throw new PageCorruptedException(3);
+            }finally {
+                releasePage(page);
             }
-            int rnd = getRndByUuid(uuid);
-            insertToPage(page, pageHeaderOp.get(), txContext, item, rnd);
-            releasePage(page);
         }
         // 若存在则不需要恢复，直接返回
     }
 
     /**
-     * 检查uuid是否存在
+     * 检查uuid是否存在,若Uuid的页号超过当前可用页，则直接返回False
      *
      * @param uuid
      * @return
      */
     private boolean checkUuidExist(long uuid) {
-        // FIXME 发生错误就不会releasePage
-        // FIXME 这个页面不一定存在，并且可能会很大，不应该在这里创建页
         var page = getPage(uuid);
         int id = getRndByUuid(uuid);
-        var pageHeader = getPageHeader(page);
-        if (pageHeader.isEmpty()) {
-            return false;
-        } else {
-            for (var item : pageHeader.get().item) {
-                if (id == item.uuid) {
-                    return true;
+        try {
+            var pageId = uuid >> 32 ;
+            if (pageId > this.tempFreePage){
+                return false;
+            }
+            var pageHeader = getPageHeader(page);
+            if (pageHeader.isEmpty()) {
+                return false;
+            } else {
+                for (var item : pageHeader.get().item) {
+                    if (id == item.uuid) {
+                        return true;
+                    }
                 }
             }
+            return false;
+        }catch (Exception e){
+            throw new PageCorruptedException(2);
+        }finally {
+            releasePage(page);
         }
-        return false;
     }
 
     @Override
     public byte[] queryItemByUuid(long uuid) throws UUIDException {
         if (checkUuidExist(uuid)) {
-            // FIXME 发生错误就不会releasePage
             var page = getPage(uuid);
-            var header = getPageHeader(page);
-            if (header.isEmpty()) {
-                releasePage(page);
-                throw new UUIDException(2);
-            } else {
-                // 遍历所有的item读取数据
-                var items = header.get().item;
-                int id = getRndByUuid(uuid);
-                for (var item : items) {
-                    if (item.uuid == id) {
-                        var s = parseData(page, item);
-                        releasePage(page);
-                        return s;
+            try {
+                var header = getPageHeader(page);
+                if (header.isEmpty()) {
+                    throw new UUIDException(2);
+                } else {
+                    // 遍历所有的item读取数据
+                    var items = header.get().item;
+                    int id = getRndByUuid(uuid);
+                    for (var item : items) {
+                        if (item.uuid == id) {
+                            var s = parseData(page, item);
+                            return s;
+                        }
                     }
                 }
+                return new byte[0];
+            }catch (Exception e){
+                throw new UUIDException(2);
+            }finally {
+                releasePage(page);
             }
-            return new byte[0];
         } else {
             throw new UUIDException(2);
         }
@@ -420,23 +440,27 @@ public class ItemStorage implements IItemStorage {
 
     @Override
     public List<byte[]> listItemByPageId(int pageId) {
-        // FIXME 发生错误就不会releasePage
         var page = getPage(pageId);
-        List<byte[]> bytes = new ArrayList<>();
-        var pageHeaderOp = getPageHeader(page);
-        if (pageHeaderOp.isPresent()) {
-            var pageHeader = pageHeaderOp.get();
-            for (var item : pageHeader.item) {
-                var data = parseData(page, item);
-                bytes.add(data);
+        try {
+            List<byte[]> bytes = new ArrayList<>();
+            var pageHeaderOp = getPageHeader(page);
+            if (pageHeaderOp.isPresent()) {
+                var pageHeader = pageHeaderOp.get();
+                for (var item : pageHeader.item) {
+                    var data = parseData(page, item);
+                    bytes.add(data);
+                }
             }
+            return bytes;
+        }catch (Exception e){
+            throw new PageCorruptedException(2);
+        }finally {
+            releasePage(page);
         }
-        releasePage(page);
-        return bytes;
     }
 
     @Override
-    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException {
+    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException {
         // FIXME 发生错误就不会releasePage
         var page = getPage(uuid);
         if (checkUuidExist(uuid)) {
@@ -452,12 +476,13 @@ public class ItemStorage implements IItemStorage {
                                 .Byte(item)
                                 .End().toByteArray();
                         page.patchData(offset, bytes);
-                        releasePage(page);
                         return;
                     }
                 }
             } catch (PageException | IOException e) {
                 throw new PageCorruptedException(2, e);
+            }finally {
+                releasePage(page);
             }
         } else {
             releasePage(page);
@@ -467,7 +492,6 @@ public class ItemStorage implements IItemStorage {
 
     @Override
     public byte[] getMetadata() {
-        // FIXME 发生错误就不会releasePage
         var page = getPage(0);
         var header = parseHeader(page);
         if (checkTableHeader(page) && header.hasHeaderInfo == HAS_HEADER) {
@@ -478,17 +502,19 @@ public class ItemStorage implements IItemStorage {
             } catch (UUIDException e) {
                 // 若UUID不存在，肯定是页头的问题，因为控制过程都是ItemStorage操作的
                 throw new PageCorruptedException(1, e);
+            }finally {
+                releasePage(page);
             }
-            releasePage(page);
             return h;
         } else {
             // 默认Metadata为空
+            releasePage(page);
             return new byte[0];
         }
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext, byte[] metadata) {
+    public void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException {
         var page = getPage(0);
         try {
             var headerUuid = insertItem(txContext, metadata);
