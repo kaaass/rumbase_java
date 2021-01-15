@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.parse;
 
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
+import net.kaaass.rumbase.parse.parser.CreateIndexStatementParser;
 import net.kaaass.rumbase.parse.parser.CreateTableStatementParser;
 import net.kaaass.rumbase.parse.parser.InsertStatementParser;
 import net.kaaass.rumbase.parse.parser.JsqlpStatementParser;
@@ -21,6 +22,7 @@ public class SqlParser {
     private static List<JsqlpStatementParser> jsqlpStatementParsers = new ArrayList<>() {{
         add(new InsertStatementParser());
         add(new CreateTableStatementParser());
+        add(new CreateIndexStatementParser());
     }};
 
     /**
