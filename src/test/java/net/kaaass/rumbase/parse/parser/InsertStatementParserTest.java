@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class InsertStatementParserTest extends TestCase {
 
     public void testParseColumnValue() throws SqlSyntaxException {
-        var sql = "INSERT INTO Persons (LastName, Address) VALUES ('Wilson', 'Champs-Elysees')";
+        var sql = "INSERT INTO Persons (Persons.LastName, Address) VALUES ('Wilson', 'Champs-Elysees')";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
         assertTrue(stmt instanceof InsertStatement);

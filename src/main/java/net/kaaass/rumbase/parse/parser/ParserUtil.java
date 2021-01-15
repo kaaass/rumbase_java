@@ -23,7 +23,7 @@ public class ParserUtil {
     public static ColumnIdentifier mapColumn(Column column, String defaultTableName) {
         return new ColumnIdentifier(
                 column.getTable() == null ? defaultTableName : column.getTable().getName(),
-                column.getName(false)
+                column.getColumnName()
         );
     }
 
@@ -38,7 +38,7 @@ public class ParserUtil {
         return columnList.stream()
                 .map(column -> new ColumnIdentifier(
                         column.getTable() == null ? defaultTableName : column.getTable().getName(),
-                        column.getName(false)
+                        column.getColumnName()
                 ))
                 .collect(Collectors.toList());
     }
