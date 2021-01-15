@@ -302,11 +302,11 @@ public class ItemStorage implements IItemStorage {
                 insertToPage(page, pageHeader, txContext, item, rnd);
                 return uuid;
             }
-        }catch (PageCorruptedException e){
-            throw e ;
-        }catch (Exception e){
+        } catch (PageCorruptedException e) {
+            throw e;
+        } catch (Exception e) {
             throw new PageCorruptedException(3);
-        }finally {
+        } finally {
             releasePage(page);
         }
     }
@@ -358,7 +358,7 @@ public class ItemStorage implements IItemStorage {
         if (!checkUuidExist(uuid)) {
             // 若不存在，则要恢复
             var page = getPage(uuid);
-            try{
+            try {
                 var pageHeaderOp = getPageHeader(page);
                 if (pageHeaderOp.isEmpty()) {
                     // 如果获取的页没有页头信息，则进行初始化。
@@ -366,9 +366,9 @@ public class ItemStorage implements IItemStorage {
                 }
                 int rnd = getRndByUuid(uuid);
                 insertToPage(page, pageHeaderOp.get(), txContext, item, rnd);
-            }catch (Exception e){
+            } catch (Exception e) {
                 throw new PageCorruptedException(3);
-            }finally {
+            } finally {
                 releasePage(page);
             }
         }
@@ -382,13 +382,13 @@ public class ItemStorage implements IItemStorage {
      * @return
      */
     private boolean checkUuidExist(long uuid) {
+        var pageId = uuid >> 32;
+        if (pageId > this.tempFreePage || pageId < 0) {
+            return false;
+        }
         var page = getPage(uuid);
         int id = getRndByUuid(uuid);
         try {
-            var pageId = uuid >> 32 ;
-            if (pageId > this.tempFreePage){
-                return false;
-            }
             var pageHeader = getPageHeader(page);
             if (pageHeader.isEmpty()) {
                 return false;
@@ -400,9 +400,9 @@ public class ItemStorage implements IItemStorage {
                 }
             }
             return false;
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new PageCorruptedException(2);
-        }finally {
+        } finally {
             releasePage(page);
         }
     }
@@ -427,9 +427,9 @@ public class ItemStorage implements IItemStorage {
                     }
                 }
                 return new byte[0];
-            }catch (Exception e){
+            } catch (Exception e) {
                 throw new UUIDException(2);
-            }finally {
+            } finally {
                 releasePage(page);
             }
         } else {
@@ -452,41 +452,41 @@ public class ItemStorage implements IItemStorage {
                 }
             }
             return bytes;
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new PageCorruptedException(2);
-        }finally {
+        } finally {
             releasePage(page);
         }
     }
 
     @Override
     public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException {
-        // FIXME 发生错误就不会releasePage
         var page = getPage(uuid);
-        if (checkUuidExist(uuid)) {
-            var pageHeader = getPageHeader(page);
-            var items = pageHeader.get().item;
-            try {
-                for (var i : items) {
-                    if (i.uuid == getRndByUuid(uuid)) {
-                        var offset = i.offset;
-                        var bytes = JBBPOut.BeginBin().
-                                Byte(NORMAL_DATA).
-                                Int(item.length)
-                                .Byte(item)
-                                .End().toByteArray();
-                        page.patchData(offset, bytes);
-                        return;
+        try {
+            if (checkUuidExist(uuid)) {
+                var pageHeader = getPageHeader(page);
+                var items = pageHeader.get().item;
+                try {
+                    for (var i : items) {
+                        if (i.uuid == getRndByUuid(uuid)) {
+                            var offset = i.offset;
+                            var bytes = JBBPOut.BeginBin().
+                                    Byte(NORMAL_DATA).
+                                    Int(item.length)
+                                    .Byte(item)
+                                    .End().toByteArray();
+                            page.patchData(offset, bytes);
+                            return;
+                        }
                     }
+                } catch (PageException | IOException e) {
+                    throw new PageCorruptedException(2, e);
                 }
-            } catch (PageException | IOException e) {
-                throw new PageCorruptedException(2, e);
-            }finally {
-                releasePage(page);
+            } else {
+                throw new UUIDException(2);
             }
-        } else {
+        } finally {
             releasePage(page);
-            throw new UUIDException(2);
         }
     }
 
@@ -502,7 +502,7 @@ public class ItemStorage implements IItemStorage {
             } catch (UUIDException e) {
                 // 若UUID不存在，肯定是页头的问题，因为控制过程都是ItemStorage操作的
                 throw new PageCorruptedException(1, e);
-            }finally {
+            } finally {
                 releasePage(page);
             }
             return h;

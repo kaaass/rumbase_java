@@ -186,10 +186,6 @@ public class MvccRecordStorage implements IRecordStorage {
             var uuids = storage.getMetadata();
             for (int st = 0; st < uuids.length; st += 8) {
                 var uuid = MvccUtil.readLong(uuids, st);
-                // 用0作终止符 FIXME 下层默认应该返回空字节数组
-                if (uuid == 0) {
-                    break;
-                }
                 Optional<byte[]> result;
                 try {
                     result = queryOptional(txContext, uuid);
