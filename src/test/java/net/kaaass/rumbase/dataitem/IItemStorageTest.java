@@ -2,7 +2,7 @@ package net.kaaass.rumbase.dataitem;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
-import net.kaaass.rumbase.dataitem.exception.ItemException;
+import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
@@ -62,7 +62,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 进行插入的测试
      */
-    public void testInsert() throws FileException, IOException, PageException, UUIDException, ItemException {
+    public void testInsert() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
         String fileName = "testInsert.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -91,7 +91,7 @@ public class IItemStorageTest extends TestCase {
         iItemStorage.insertItemWithUuid(txContext, bytes, uuid);
         try {
             assertArrayEquals(bytes, iItemStorage.queryItemByUuid(uuid));
-        } catch (UUIDException | ItemException e) {
+        } catch (UUIDException | PageCorruptedException e) {
             e.printStackTrace();
         }
 
@@ -103,7 +103,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 对插入大量数据进行测试
      */
-    public void testManyInsert() throws FileException, IOException, PageException, UUIDException, ItemException {
+    public void testManyInsert() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
         String fileName = "testInsertMany.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -123,7 +123,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 获取整个页的数据项进行测试
      */
-    public void testQueryByPageID() throws FileException, IOException, PageException, ItemException {
+    public void testQueryByPageID() throws FileException, IOException, PageException, PageCorruptedException {
         String fileName = "testQueryByPageID.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
@@ -201,7 +201,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 对更新进行测试
      */
-    public void testUpdate() throws FileException, IOException, PageException, UUIDException, ItemException {
+    public void testUpdate() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
         String fileName = "testUpdate.db";
         TransactionContext txContext = TransactionContext.empty();
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
@@ -228,7 +228,7 @@ public class IItemStorageTest extends TestCase {
     /**
      * 测试修改和获取表头信息
      */
-    public void testMeta() throws FileException, IOException, PageException, UUIDException, ItemException {
+    public void testMeta() throws FileException, IOException, PageException, UUIDException, PageCorruptedException {
         String fileName = "testMeta.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] result = new byte[]{1, 2, 3, 4};

@@ -2,12 +2,9 @@ package net.kaaass.rumbase.record;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
-import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
