@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +28,7 @@ public class IndexTest extends TestCase {
         Index testIndex = null;
         var standardRand = new ArrayList<Long>();
         try {
+            new File(fileDir + "testInsert$id").deleteOnExit();
             testIndex = Index.createEmptyIndex(fileDir + "testInsert$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
@@ -57,6 +59,7 @@ public class IndexTest extends TestCase {
         var standardRand = new ArrayList<Long>();
 
         try {
+            new File(fileDir + "testQuery$id").deleteOnExit();
             testIndex = Index.createEmptyIndex(fileDir + "testQuery$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);

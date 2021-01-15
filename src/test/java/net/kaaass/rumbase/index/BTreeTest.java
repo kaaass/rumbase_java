@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -24,12 +25,13 @@ public class BTreeTest extends TestCase {
     public void testInsert() {
         Index testIndex = null;
         try {
-            testIndex = Index.createEmptyIndex(fileDir + "testInsert$id");
+            new File(fileDir + "BtreetestInsert$id").deleteOnExit();
+            testIndex = Index.createEmptyIndex(fileDir + "BtreetestInsert$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
 
-        for (int i = 40000; i >= 0; i--) {
+        for (int i = 4000; i >= 0; i--) {
 
             assert testIndex != null;
             testIndex.insert(i, new Random().nextLong());
@@ -53,17 +55,18 @@ public class BTreeTest extends TestCase {
     public void testInsertRandomKey() {
         Index testIndex = null;
         try {
+            new File(fileDir + "testInsertRandomKey$id").deleteOnExit();
             testIndex = Index.createEmptyIndex(fileDir + "testInsertRandomKey$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
 
-        for (int i = 40000; i >= 0; i--) {
+        for (int i = 4000; i >= 0; i--) {
 
             assert testIndex != null;
             testIndex.insert(i, new Random().nextLong());
 
-            testIndex.insert(40000 - i, new Random().nextLong());
+            testIndex.insert(4000 - i, new Random().nextLong());
         }
 
         // 测试数据是否符合预期
@@ -83,7 +86,8 @@ public class BTreeTest extends TestCase {
         Index testIndex = null;
 
         try {
-            testIndex = Index.createEmptyIndex(fileDir + "testQuery$id");
+            new File(fileDir + "BtreetestQuery$id").deleteOnExit();
+            testIndex = Index.createEmptyIndex(fileDir + "BtreetestQuery$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
@@ -133,6 +137,7 @@ public class BTreeTest extends TestCase {
         Index testIndex = null;
 
         try {
+            new File(fileDir + "testMultiKeyQuery$id").deleteOnExit();
             testIndex = Index.createEmptyIndex(fileDir + "testMultiKeyQuery$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);

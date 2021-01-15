@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 
+import java.io.File;
 import java.util.Random;
 
 @Slf4j
@@ -16,6 +17,7 @@ public class ConcurrentIndexTest extends TestCase {
     public void test() {
         Index testIndex = null;
         try {
+            new File(fileDir + "test$id").deleteOnExit();
             testIndex = Index.createEmptyIndex(fileDir + "test$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
@@ -23,7 +25,7 @@ public class ConcurrentIndexTest extends TestCase {
 
         Index finalTestIndex = testIndex;
         Thread thread = new Thread(() -> {
-            for (int i = 40000; i >= 0; i--) {
+            for (int i = 4000; i >= 0; i--) {
 
                 assert finalTestIndex != null;
 
@@ -33,7 +35,7 @@ public class ConcurrentIndexTest extends TestCase {
 
         thread.start();
 
-        for (int i = 40000; i >= 0; i--) {
+        for (int i = 4000; i >= 0; i--) {
 
             assert testIndex != null;
             testIndex.insert(i, new Random().nextLong());
@@ -61,14 +63,15 @@ public class ConcurrentIndexTest extends TestCase {
     public void testComplex() {
         Index testIndex = null;
         try {
-            testIndex = Index.createEmptyIndex(fileDir + "test$id");
+            new File(fileDir + "ConcurrenttestComplex$id").deleteOnExit();
+            testIndex = Index.createEmptyIndex(fileDir + "ConcurrenttestComplex$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
 
         Index finalTestIndex = testIndex;
         Thread thread1 = new Thread(() -> {
-            for (int i = 40000; i >= 0; i--) {
+            for (int i = 4000; i >= 0; i--) {
 
                 assert finalTestIndex != null;
 
@@ -79,7 +82,7 @@ public class ConcurrentIndexTest extends TestCase {
         thread1.start();
 
         Thread thread2 = new Thread(() -> {
-            for (int i = 0; i <= 40000; i++) {
+            for (int i = 0; i <= 4000; i++) {
 
                 assert finalTestIndex != null;
 
@@ -89,7 +92,7 @@ public class ConcurrentIndexTest extends TestCase {
 
         thread2.start();
 
-        for (int i = 40000; i >= 0; i--) {
+        for (int i = 4000; i >= 0; i--) {
 
             assert testIndex != null;
             testIndex.insert(i, new Random().nextLong());
