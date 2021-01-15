@@ -1,10 +1,8 @@
 package net.kaaass.rumbase.transaction;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -204,7 +202,7 @@ public class TransactionContextTest {
         String tableName = "test";
 
         AtomicBoolean deadlockDetect = new AtomicBoolean(false);
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 Thread.sleep(3);
             } catch (InterruptedException e) {
@@ -217,7 +215,9 @@ public class TransactionContextTest {
                 transaction2.rollback();
                 e.printStackTrace();
             }
-        }).start();
+        });
+        thread.start();
+        thread.join();
         try {
             transaction1.exclusiveLock(1, tableName);
             transaction2.exclusiveLock(2, tableName);
