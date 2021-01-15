@@ -29,13 +29,13 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TransactionManagerImpl implements TransactionManager {
 
     /**
-     * 事务状态持久化文件名
-     */
-    private static final String LOG_FILE_NAME = "xid.log";
-    /**
      * 每页最大事务状态数
      */
     private static final int TX_NUM_PER_PAGE = 2048;
+    /**
+     * 事务状态持久化文件名
+     */
+    private final String LOG_FILE_NAME;
     /**
      * 事务ID计数器
      */
@@ -58,9 +58,20 @@ public class TransactionManagerImpl implements TransactionManager {
     private final Map<Integer, TransactionContext> txCache = new HashMap<>();
 
     /**
-     * Mock事务管理器
+     * 事务管理器
      */
-    public TransactionManagerImpl() throws FileException, IOException {
+    public TransactionManagerImpl() throws IOException, FileException {
+        this("xid.log");
+    }
+
+    /**
+     * 事务管理器
+     *
+     * @param logFile 事务日志文件
+     */
+    public TransactionManagerImpl(String logFile) throws FileException, IOException {
+        this.LOG_FILE_NAME = logFile;
+
         if (new File(LOG_FILE_NAME).exists()) {
             // 初始化storage
             this.storage = PageManager.fromFile(LOG_FILE_NAME);
