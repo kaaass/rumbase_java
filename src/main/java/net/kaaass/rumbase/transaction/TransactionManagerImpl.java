@@ -3,6 +3,7 @@ package net.kaaass.rumbase.transaction;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.page.Page;
 import net.kaaass.rumbase.page.PageManager;
@@ -12,6 +13,7 @@ import net.kaaass.rumbase.page.exception.FileException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,6 +39,7 @@ public class TransactionManagerImpl implements TransactionManager {
     /**
      * 事务ID计数器
      */
+    @Getter
     private final AtomicInteger SIZE;
     /**
      * 事务数量日志写入锁
@@ -52,7 +55,7 @@ public class TransactionManagerImpl implements TransactionManager {
      * <p>
      * TODO 实现事务缓存调度
      */
-    private Map<Integer, TransactionContext> txCache;
+    private final Map<Integer, TransactionContext> txCache = new HashMap<>();
 
     /**
      * Mock事务管理器
@@ -87,6 +90,21 @@ public class TransactionManagerImpl implements TransactionManager {
         // 获取最新事务id
         int xid = SIZE.incrementAndGet();
 
+        // 生成快照
+        List<Integer> snapshot = new ArrayList<>();
+
+        synchronized (txCache) {
+            for (TransactionContext context : txCache.values()) {
+                snapshot.add(context.getXid());
+            }
+        }
+
+        // 创建对象
+        TransactionContext context = new TransactionContextImpl(xid, isolation, this, snapshot);
+        // 加入缓存
+        txCache.put(xid, context);
+
+        // 进行持久化
         Page page = storage.get(0);
         page.pin();
         sizeWriteLock.lock();
@@ -111,16 +129,7 @@ public class TransactionManagerImpl implements TransactionManager {
             page.unpin();
         }
 
-        List<Integer> snapshot = new ArrayList<>();
 
-        synchronized (txCache) {
-            for (TransactionContext context : txCache.values()) {
-                snapshot.add(context.getXid());
-            }
-        }
-
-        TransactionContext context = new TransactionContextImpl(xid, isolation, this, snapshot);
-        txCache.put(xid, context);
         return context;
     }
 

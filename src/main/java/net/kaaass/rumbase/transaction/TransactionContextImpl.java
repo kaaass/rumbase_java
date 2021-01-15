@@ -1,6 +1,9 @@
 package net.kaaass.rumbase.transaction;
 
 import lombok.Getter;
+import net.kaaass.rumbase.transaction.exception.DeadlockException;
+import net.kaaass.rumbase.transaction.lock.LockTable;
+import net.kaaass.rumbase.transaction.lock.LockTableImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -130,10 +133,15 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void commit() {
+        // 修改状态
         this.status = TransactionStatus.COMMITTED;
         if (manager != null) {
             manager.changeTransactionStatus(xid, TransactionStatus.COMMITTED);
         }
+
+        // 释放锁
+        LockTable lockTable = LockTableImpl.getInstance();
+        lockTable.release(xid);
     }
 
     /**
@@ -141,10 +149,15 @@ public class TransactionContextImpl implements TransactionContext {
      */
     @Override
     public void rollback() {
+        // 修改状态
         this.status = TransactionStatus.ABORTED;
         if (manager != null) {
             manager.changeTransactionStatus(xid, TransactionStatus.ABORTED);
         }
+
+        // 释放锁
+        LockTable lockTable = LockTableImpl.getInstance();
+        lockTable.release(xid);
     }
 
     /**
@@ -154,8 +167,10 @@ public class TransactionContextImpl implements TransactionContext {
      * @param tableName 表字段
      */
     @Override
-    public void sharedLock(long uuid, String tableName) {
+    public void sharedLock(long uuid, String tableName) throws DeadlockException {
         //TODO 加锁
+        LockTable lockTable = LockTableImpl.getInstance();
+        lockTable.addSharedLock(xid, uuid, tableName);
     }
 
     /**
@@ -165,8 +180,10 @@ public class TransactionContextImpl implements TransactionContext {
      * @param tableName 表字段
      */
     @Override
-    public void exclusiveLock(long uuid, String tableName) {
+    public void exclusiveLock(long uuid, String tableName) throws DeadlockException {
         //TODO 加锁
+        LockTable lockTable = LockTableImpl.getInstance();
+        lockTable.addExclusiveLock(xid, uuid, tableName);
     }
 
 }

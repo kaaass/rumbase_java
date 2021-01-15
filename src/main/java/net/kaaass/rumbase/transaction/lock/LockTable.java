@@ -1,4 +1,6 @@
-package net.kaaass.rumbase.transaction;
+package net.kaaass.rumbase.transaction.lock;
+
+import net.kaaass.rumbase.transaction.exception.DeadlockException;
 
 /**
  * 锁表
@@ -14,8 +16,9 @@ public interface LockTable {
      * @param xid       事务id
      * @param uuid      记录id
      * @param tableName 表名
+     * @throws DeadlockException 发生死锁异常
      */
-    void addSharedLock(int xid, long uuid, String tableName);
+    void addSharedLock(int xid, long uuid, String tableName) throws DeadlockException;
 
     /**
      * 添加排他锁
@@ -23,8 +26,9 @@ public interface LockTable {
      * @param xid       事务id
      * @param uuid      记录id
      * @param tableName 表名
+     * @throws DeadlockException 发生死锁异常
      */
-    void addExclusiveLock(int xid, long uuid, String tableName);
+    void addExclusiveLock(int xid, long uuid, String tableName) throws DeadlockException;
 
     /**
      * 释放事务的锁
