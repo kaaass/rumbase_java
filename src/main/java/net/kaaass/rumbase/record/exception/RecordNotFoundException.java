@@ -17,7 +17,7 @@ public class RecordNotFoundException extends RumbaseException {
 
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "物理记录不存在");
-        put(2, "由于事务性，记录不可见");
+        put(2, "由于事务隔离或已经被删除，记录不可见");
     }};
 
     /**

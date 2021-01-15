@@ -9,6 +9,7 @@ import java.util.Map;
  * E5003 需要自动回滚异常
  * <p>
  * E5003-1 发生版本跳跃，需要自动回滚事务
+ * E5003-2 发生死锁，需要回滚当前事务
  *
  * @author kaaass
  */
@@ -16,6 +17,7 @@ public class NeedRollbackException extends RumbaseRuntimeException {
 
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "发生版本跳跃，需要自动回滚事务");
+        put(2, "发生死锁，需要回滚当前事务");
     }};
 
     /**
