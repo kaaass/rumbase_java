@@ -35,3 +35,10 @@ if (hasProperty('buildScan')) {
         termsOfServiceAgree = 'yes'
     }
 }
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
