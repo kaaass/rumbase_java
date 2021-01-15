@@ -6,7 +6,6 @@ import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.ExpressionVisitorAdapter;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.StatementVisitorAdapter;
 import net.sf.jsqlparser.statement.create.index.CreateIndex;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.delete.Delete;
@@ -60,7 +59,7 @@ public class SqlTest extends TestCase {
         log.info("Columns: {}", stmt.getColumns());
         log.info("Expressions: {}", stmt.getExpressions());
         log.info("Where: {}", stmt.getWhere());
-        stmt.getWhere().accept(new ExpressionVisitorAdapter(){
+        stmt.getWhere().accept(new ExpressionVisitorAdapter() {
 
             @Override
             public void visit(Column column) {

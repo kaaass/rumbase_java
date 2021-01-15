@@ -14,6 +14,7 @@ import java.util.Objects;
 
 /**
  * 将插入语句解释为对应语法树
+ *
  * @author kaaass
  */
 public class InsertStatementParser implements JsqlpStatementParser {
@@ -30,7 +31,7 @@ public class InsertStatementParser implements JsqlpStatementParser {
         }
         // 解析插入的数据
         var values = new ArrayList<String>();
-        stmt.getItemsList().accept(new ItemsListVisitorAdapter(){
+        stmt.getItemsList().accept(new ItemsListVisitorAdapter() {
 
             @Override
             public void visit(ExpressionList expressionList) {

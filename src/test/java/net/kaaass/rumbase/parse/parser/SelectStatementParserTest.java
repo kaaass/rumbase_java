@@ -7,7 +7,6 @@ import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.stmt.SelectStatement;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 @Slf4j

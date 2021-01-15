@@ -3,9 +3,9 @@ package net.kaaass.rumbase.parse.parser;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
-import net.kaaass.rumbase.parse.stmt.CreateIndexStatement;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
+import net.kaaass.rumbase.parse.stmt.CreateIndexStatement;
 
 import java.util.ArrayList;
 

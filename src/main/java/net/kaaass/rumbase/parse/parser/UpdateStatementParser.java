@@ -3,7 +3,6 @@ package net.kaaass.rumbase.parse.parser;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ConditionExpression;
 import net.kaaass.rumbase.parse.ISqlStatement;
-import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.stmt.UpdateStatement;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.update.Update;
