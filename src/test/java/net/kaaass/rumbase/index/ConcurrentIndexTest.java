@@ -50,7 +50,7 @@ public class ConcurrentIndexTest extends TestCase {
         for (var pair : testIndex) {
             assertEquals(cnt / 2,
                     pair.getKey());
-            log.debug("{}", pair);
+            //log.debug("{}", pair);
             cnt++;
         }
     }
@@ -107,7 +107,7 @@ public class ConcurrentIndexTest extends TestCase {
         for (var pair : testIndex) {
             assertEquals(cnt / 3,
                     pair.getKey());
-            log.debug("{}", pair);
+            //log.debug("{}", pair);
             cnt++;
         }
     }

@@ -19,34 +19,6 @@ public class BTreeTest extends TestCase {
     public static final String fileDir = "build/";
 
     /**
-     * 测试索引对象管理与拿取
-     */
-    public void testIndexManagement() throws IndexAlreadyExistException, IndexNotFoundException {
-        // 测试索引是否存在，表示student表的id字段索引，table_name$field_name
-        assertFalse("don't exists such a index", Index.exists(fileDir + "student$id"));
-
-        // 创建一个空索引，如果已经存在，则抛出异常
-        Index.createEmptyIndex(fileDir + "student$id");
-        try {
-//            Index.createEmptyIndex("student$name");
-            Index.createEmptyIndex(fileDir + "student$score");
-            Index.createEmptyIndex(fileDir + "student$score");
-            fail("should get exception");
-        } catch (IndexAlreadyExistException e) {
-            log.error("Exception Error :", e);
-        }
-
-        // 拿到这个索引,若没有则抛出异常
-        Index.getIndex(fileDir + "student$id");
-        try{
-            Index.getIndex(fileDir + "employee$id");
-            fail("should get exception");
-        } catch (IndexNotFoundException e) {
-            log.error("Exception Error :", e);
-        }
-    }
-
-    /**
      * 测试索引的插入与第一个迭代器功能
      */
     public void testInsert() {
@@ -70,7 +42,7 @@ public class BTreeTest extends TestCase {
         for (var pair : testIndex) {
             assertEquals(cnt / 2,
                     pair.getKey());
-            log.debug("{}", pair);
+            // log.debug("{}", pair);
             cnt++;
         }
     }
@@ -99,7 +71,7 @@ public class BTreeTest extends TestCase {
         for (var pair : testIndex) {
             assertEquals(cnt / 2,
                     pair.getKey());
-            log.debug("{}", pair);
+            // log.debug("{}", pair);
             cnt++;
         }
     }
