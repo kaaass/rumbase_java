@@ -1,9 +1,13 @@
 package net.kaaass.rumbase.page;
 
 import junit.framework.TestCase;
+import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -14,9 +18,9 @@ import static org.junit.Assert.assertArrayEquals;
  * @see net.kaaass.rumbase.page.PageStorage
  */
 public class PageStorageTest extends TestCase {
-    public static String filePath = "src/test/test";
+    public static String filePath = "build/pageTest.db";
 
-    public void testGet() {
+    public void testGet() throws IOException {
         PageStorage rps = null;
         try {
             rps = PageManager.fromFile(filePath);
@@ -48,14 +52,40 @@ public class PageStorageTest extends TestCase {
             assertEquals(readNumber, PageManager.PAGE_SIZE);
             assertArrayEquals(dataFromPage, dataFromFile);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw e;
         } finally {
             p10.unpin();
             p11.unpin();
         }
     }
 
-    public void testFlush() {
+    public void testWriteToFile() throws FileException, PageException {
+        PageStorage storage = PageManager.fromFile(filePath);
+        int[] testPage = new int[]{1, 3, 5, 7, 10, 11};
+        // 测试每一页是否能正常读写
+        for (var pageId: testPage) {
+            // 准备标志数据
+            byte[] data = new byte[PageManager.PAGE_SIZE];
+            Arrays.fill(data, (byte) (0xf0 | pageId));
+            // 获取页
+            var page = storage.get(pageId);
+            page.pin();
+            // 写入页
+            try {
+                // 写数据
+                page.patchData(0, data);
+                page.flush();
+            } finally {
+                page.unpin();
+            }
+            // 检查页数据
+            var tempStorage = PageManager.fromFile(filePath);
+            var pageData = tempStorage.get(pageId).getDataBytes();
+            assertArrayEquals(data, pageData);
+        }
+    }
+
+    public void testFlush() throws PageException {
         PageStorage rps = null;
         try {
             rps = PageManager.fromFile(filePath);
@@ -66,6 +96,9 @@ public class PageStorageTest extends TestCase {
         Page p0 = rps.get(0);
         Page p3 = rps.get(3);
         Page p4 = rps.get(4);
+        p0.pin();
+        p3.pin();
+        p4.pin();
         byte[] data0 = new byte[PageManager.PAGE_SIZE];
         byte[] data3 = new byte[PageManager.PAGE_SIZE];
         byte[] data4 = new byte[PageManager.PAGE_SIZE];
@@ -73,24 +106,18 @@ public class PageStorageTest extends TestCase {
         byte[] dataFromFile3 = new byte[PageManager.PAGE_SIZE];
         byte[] dataFromFile4 = new byte[PageManager.PAGE_SIZE];
         for (int i = 0; i < PageManager.PAGE_SIZE; i++) {
-            data0[i] = (byte) (i);
-            data3[i] = (byte) (i);
-            data4[i] = (byte) (i);
+            data0[i] = (byte) 0xf0;
+            data3[i] = (byte) 0xf3;
+            data4[i] = (byte) 0xf4;
         }
-
-        p0.pin();
-        p3.pin();
-        p4.pin();
+        // 打印下之前的数据，检查之前写入是否正确
         try {
             p0.writeData(data0);
             p3.writeData(data3);
             p4.writeData(data4);
-//            p0.flush();
-//            p3.flush();
-//            p4.flush();
             rps.flush();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw e;
         } finally {
             p0.unpin();
             p3.unpin();
@@ -113,11 +140,11 @@ public class PageStorageTest extends TestCase {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try{
+        try {
             p0.getData().read(data0);
             p3.getData().read(data3);
             p4.getData().read(data4);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertArrayEquals(data0, dataFromFile0);

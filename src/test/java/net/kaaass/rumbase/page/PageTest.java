@@ -1,9 +1,14 @@
 package net.kaaass.rumbase.page;
 
 import junit.framework.TestCase;
+import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Arrays;
+import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -14,7 +19,7 @@ import static org.junit.Assert.assertArrayEquals;
  * @see net.kaaass.rumbase.page.Page
  */
 public class PageTest extends TestCase {
-    public static String filePath = "src/test/test";
+    public static String filePath = "build/pageTest.db";
     public void testPatchData() {
         int offset = 99;
         byte[] data = new byte[PageManager.PAGE_SIZE - offset];
@@ -33,6 +38,35 @@ public class PageTest extends TestCase {
             assertArrayEquals(newData, p0.getDataBytes());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void testPatchOffset() throws FileException, PageException {
+        var storage = PageManager.fromFile(filePath);
+        var rand = new Random();
+        var page = storage.get(2);
+        page.pin();
+        try {
+            for (int i = 0; i < 50; i++) {
+                // 随机决定开始、结束
+                var st = rand.nextInt(4000);
+                var ed = st + rand.nextInt(2000);
+                if (ed > 4096) {
+                    ed = 4096;
+                }
+                // 生成相关数据
+                byte[] data = new byte[ed - st];
+                Arrays.fill(data, (byte) st);
+                // 写入
+                page.patchData(st, data);
+                // 检查写入效果
+                var pageData = page.getDataBytes();
+                for (int j = st; j < ed; j++) {
+                    assertEquals((byte) st, pageData[j]);
+                }
+            }
+        } finally {
+            page.unpin();
         }
     }
 }
