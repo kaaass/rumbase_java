@@ -14,7 +14,7 @@ public class MockBuffer {
 
     private MockBuffer() {
         this.lock = new ReentrantLock();
-        size = PageManager.PAGE_NUM;
+        size = PageManager.BUFFER_SIZE;
     }
 
     public static MockBuffer getInstance() {

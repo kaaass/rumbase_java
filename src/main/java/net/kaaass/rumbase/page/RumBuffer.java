@@ -24,7 +24,6 @@ public class RumBuffer {
 
     private RumBuffer(){
         this.lock = new ReentrantLock();
-        size = PageManager.PAGE_NUM;
         this.size = PageManager.BUFFER_SIZE;
         this.freePage = new ArrayList<>();
         for(int i=0;i<this.size;i++){
@@ -51,6 +50,9 @@ public class RumBuffer {
      */
     public void put(int offset, byte[] bytes) throws BufferException {
         if (this.size <= 0) {
+            throw new BufferException(1);
+        }
+        if(offset<0){
             throw new BufferException(1);
         }
         lock.lock();
@@ -121,6 +123,9 @@ public class RumBuffer {
      */
     public int getFreeOffset() {
         synchronized (this){
+            if(this.size<=0){
+                return -1;
+            }
             return this.freePage.get(0);
         }
     }
