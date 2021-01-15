@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -17,30 +16,29 @@ import java.util.Random;
  */
 @Slf4j
 public class BTreeTest extends TestCase {
+    public static final String fileDir = "build/";
+
     /**
      * 测试索引对象管理与拿取
      */
-    public void testIndexManagement() {
+    public void testIndexManagement() throws IndexAlreadyExistException, IndexNotFoundException {
         // 测试索引是否存在，表示student表的id字段索引，table_name$field_name
-        assertFalse("don't exists such a index", Index.exists("student$id"));
+        assertFalse("don't exists such a index", Index.exists(fileDir + "student$id"));
 
         // 创建一个空索引，如果已经存在，则抛出异常
+        Index.createEmptyIndex(fileDir + "student$id");
         try {
-            Index.createEmptyIndex("student$id");
 //            Index.createEmptyIndex("student$name");
-            Index.createEmptyIndex("student$score");
-            Index.createEmptyIndex("student$score");
+            Index.createEmptyIndex(fileDir + "student$score");
+            Index.createEmptyIndex(fileDir + "student$score");
+            fail("should get exception");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
 
         // 拿到这个索引,若没有则抛出异常
-        try {
-            Index.getIndex("student$id");
-            Index.getIndex("employee$id");
-        } catch (IndexNotFoundException e) {
-            log.error("Exception Error :", e);
-        }
+        Index.getIndex(fileDir + "student$id");
+        Index.getIndex(fileDir + "employee$id");
     }
 
     /**
@@ -49,7 +47,7 @@ public class BTreeTest extends TestCase {
     public void testInsert() {
         Index testIndex = null;
         try {
-            testIndex = Index.createEmptyIndex("testInsert$id");
+            testIndex = Index.createEmptyIndex(fileDir + "testInsert$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
@@ -65,7 +63,7 @@ public class BTreeTest extends TestCase {
         // 测试数据是否符合预期
         int cnt = 0;
         for (var pair : testIndex) {
-            assertEquals(cnt/2,
+            assertEquals(cnt / 2,
                     pair.getKey());
             log.debug("{}", pair);
             cnt++;
@@ -79,7 +77,7 @@ public class BTreeTest extends TestCase {
         Index testIndex = null;
 
         try {
-            testIndex = Index.createEmptyIndex("testQuery$id");
+            testIndex = Index.createEmptyIndex(fileDir + "testQuery$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
@@ -129,7 +127,7 @@ public class BTreeTest extends TestCase {
         Index testIndex = null;
 
         try {
-            testIndex = Index.createEmptyIndex("testMultiKeyQuery$id");
+            testIndex = Index.createEmptyIndex(fileDir + "testMultiKeyQuery$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
@@ -146,7 +144,7 @@ public class BTreeTest extends TestCase {
         int y = 0;
         // 打印当前索引情况
         for (var pair : testIndex) {
-            log.debug("{}{}",y % 100, pair);
+            log.debug("{}{}", y % 100, pair);
             y++;
         }
 
@@ -170,7 +168,7 @@ public class BTreeTest extends TestCase {
         assertEquals(4, it2.next().getKey());
         assertEquals(4, it2.next().getKey());
         for (int i = 0; i < 3; i++) {
-            log.debug("{}",it2.next().getUuid());
+            log.debug("{}", it2.next().getUuid());
         }
 
 //        assertTrue(results.contains(standardRand.get(2)));

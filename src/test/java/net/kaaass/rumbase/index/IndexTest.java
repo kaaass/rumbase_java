@@ -17,27 +17,29 @@ import java.util.Random;
  */
 @Slf4j
 public class IndexTest extends TestCase {
+    public static final String fileDir = "build/";
+
     /**
      * 测试索引对象管理与拿取
      */
     public void testIndexManagement() {
         // 测试索引是否存在，表示student表的id字段索引，table_name$field_name
-        assertFalse("don't exists such a index", Index.exists("student$id"));
+        assertFalse("don't exists such a index", Index.exists(fileDir + "student$id"));
 
         // 创建一个空索引，如果已经存在，则抛出异常
         try {
-            Index.createEmptyIndex("student$id");
-            Index.createEmptyIndex("student$name");
-            Index.createEmptyIndex("student$score");
-            Index.createEmptyIndex("student$score");
+            Index.createEmptyIndex(fileDir + "student$id");
+            Index.createEmptyIndex(fileDir + "student$name");
+            Index.createEmptyIndex(fileDir + "student$score");
+            Index.createEmptyIndex(fileDir + "student$score");
         } catch (IndexAlreadyExistException e) {
-            log.error("Exception Error :", e);
+            log.error(fileDir + "Exception Error :", e);
         }
 
         // 拿到这个索引,若没有则抛出异常
         try {
-            Index.getIndex("student$id");
-            Index.getIndex("employee$id");
+            Index.getIndex(fileDir + "student$id");
+            Index.getIndex(fileDir + "employee$id");
         } catch (IndexNotFoundException e) {
             log.error("Exception Error :", e);
         }
@@ -50,7 +52,7 @@ public class IndexTest extends TestCase {
         Index testIndex = null;
         var standardRand = new ArrayList<Long>();
         try {
-            testIndex = Index.createEmptyIndex("testInsert$id");
+            testIndex = Index.createEmptyIndex(fileDir + "testInsert$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
@@ -83,7 +85,7 @@ public class IndexTest extends TestCase {
         var standardRand = new ArrayList<Long>();
 
         try {
-            testIndex = Index.createEmptyIndex("testQuery$id");
+            testIndex = Index.createEmptyIndex(fileDir + "testQuery$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
