@@ -17,6 +17,7 @@ import java.util.List;
 public class SqlParser {
 
     private static List<JsqlpStatementParser> jsqlpStatementParsers = new ArrayList<>() {{
+        add(new SelectStatementParser());
         add(new InsertStatementParser());
         add(new UpdateStatementParser());
         add(new DeleteStatementParser());

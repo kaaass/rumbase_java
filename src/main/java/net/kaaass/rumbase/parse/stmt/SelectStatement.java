@@ -35,19 +35,19 @@ public class SelectStatement implements ISqlStatement {
     private String fromTable;
 
     /**
-     * 需要Join的表，按顺序从fromTable开始连接
+     * 需要Join的表，按顺序从fromTable开始连接，为null代表不join
      * 如：a join b on cond1 join c on cond2, d
      * 则fromTable为a，joins有3项[b, c, d]
      */
     private List<JoinTable> joins;
 
     /**
-     * 选择时用于过滤的条件
+     * 选择时用于过滤的条件，为null代表不进行过滤
      */
     private ConditionExpression where;
 
     /**
-     * 选择后结果排序的规则
+     * 选择后结果排序的规则，为null代表不排序
      */
     private List<OrderBy> orderBys;
 
@@ -58,11 +58,9 @@ public class SelectStatement implements ISqlStatement {
     @RequiredArgsConstructor
     public static class JoinTable {
 
-        @NonNull
-        private String tableName;
+        private final String tableName;
 
-        @NonNull
-        private ConditionExpression joinOn;
+        private final ConditionExpression joinOn;
 
         /*
          * Join方式
