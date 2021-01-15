@@ -1,17 +1,20 @@
 package net.kaaass.rumbase.page.mock;
 
 import net.kaaass.rumbase.page.PageManager;
-import net.kaaass.rumbase.page.exception.BufferExeception;
+import net.kaaass.rumbase.page.exception.BufferException;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ *
+ */
 public class MockBuffer {
     private static MockBuffer instance = null;
     private int size = 0;
 
     private MockBuffer() {
         this.lock = new ReentrantLock();
-        size = PageManager.PAGE_NUM;
+        size = PageManager.BUFFER_SIZE;
     }
 
     public static MockBuffer getInstance() {
@@ -27,9 +30,9 @@ public class MockBuffer {
 
     private final byte[] byteBuffer = new byte[PageManager.BYTE_BUFFER_SIZE];
 
-    public void put(int offset, byte[] bytes) throws BufferExeception {
+    public void put(int offset, byte[] bytes) throws BufferException {
         if (this.size <= 0) {
-            throw new BufferExeception(1);
+            throw new BufferException(1);
         }
         lock.lock();
         try {
