@@ -95,7 +95,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
         synchronized (txCache) {
             for (TransactionContext context : txCache.values()) {
-                snapshot.add(context.getXid());
+                if (context.getStatus() == TransactionStatus.ACTIVE) {
+                    snapshot.add(context.getXid());
+                }
             }
         }
 
@@ -184,9 +186,10 @@ public class TransactionManagerImpl implements TransactionManager {
             page.unpin();
         }
 
-        TransactionContext oldContext = txCache.get(xid);
-        TransactionContext newContext = new TransactionContextImpl(oldContext.getXid(), oldContext.getIsolation(), oldContext.getManager(), oldContext.getSnapshot(), status);
-        txCache.put(xid, newContext);
+        var context = txCache.get(xid);
+        if (context instanceof TransactionContextImpl) {
+            ((TransactionContextImpl) context).setStatus(status);
+        }
     }
 
     /**

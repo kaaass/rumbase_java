@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.record.exception;
 
 import net.kaaass.rumbase.exception.RumbaseException;
+import net.kaaass.rumbase.exception.RumbaseRuntimeException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,11 +9,11 @@ import java.util.Map;
 /**
  * E5002 存储数据错误异常
  * <p>
- * E5002-1 存储数据元信息不存在
+ * E5002-1 存储数据元信息不存在，存储数据可能损坏
  *
  * @author kaaass
  */
-public class StorageCorruptedException extends RumbaseException {
+public class StorageCorruptedException extends RumbaseRuntimeException {
 
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "存储数据元信息不存在");

@@ -12,6 +12,7 @@ import net.kaaass.rumbase.record.exception.StorageCorruptedException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionStatus;
+import net.kaaass.rumbase.transaction.exception.DeadlockException;
 
 import java.util.Optional;
 
@@ -35,7 +36,6 @@ public class MvccRecordStorage implements IRecordStorage {
      */
     private byte[] metadataCache = null;
 
-    @SneakyThrows
     @Override
     public long insert(TransactionContext txContext, byte[] rawData) {
         var data = new byte[rawData.length + 8];
@@ -52,7 +52,11 @@ public class MvccRecordStorage implements IRecordStorage {
     public Optional<byte[]> queryOptional(TransactionContext txContext, long recordId) throws RecordNotFoundException {
         // 串行化事务则申请读锁
         if (txContext.getIsolation() == TransactionIsolation.SERIALIZABLE) {
-            txContext.sharedLock(recordId, this.identifiedName);
+            try {
+                txContext.sharedLock(recordId, this.identifiedName);
+            } catch (DeadlockException e) {
+                throw new NeedRollbackException(2, e);
+            }
         }
         // 读取数据
         byte[] data;
@@ -69,17 +73,25 @@ public class MvccRecordStorage implements IRecordStorage {
         }
     }
 
-    @SneakyThrows
     @Override
-    public void delete(TransactionContext txContext, long recordId) {
+    public void delete(TransactionContext txContext, long recordId) throws RecordNotFoundException {
         // 读取数据
-        var data = storage.queryItemByUuid(recordId);
+        byte[] data;
+        try {
+            data = storage.queryItemByUuid(recordId);
+        } catch (UUIDException e) {
+            throw new RecordNotFoundException(1, e);
+        }
         // 判断可见性，若不可见直接返回
         if (!isVisible(txContext, data)) {
-            return;
+            throw new RecordNotFoundException(2);
         }
         // 申请互斥锁
-        txContext.exclusiveLock(recordId, this.identifiedName);
+        try {
+            txContext.exclusiveLock(recordId, this.identifiedName);
+        } catch (DeadlockException e) {
+            throw new NeedRollbackException(2, e);
+        }
         var xid = txContext.getXid();
         if (xid == 0) {
             xid = -1;
@@ -87,7 +99,7 @@ public class MvccRecordStorage implements IRecordStorage {
         // 是否已经被删除
         var xmax = readXmax(data);
         if (xmax == xid) {
-            return;
+            throw new RecordNotFoundException(2);
         }
         // 版本跳跃检查
         if (isVersionSkip(txContext, data)) {
@@ -96,7 +108,11 @@ public class MvccRecordStorage implements IRecordStorage {
         }
         // 更新记录
         writeXmax(data, xid);
-        storage.updateItemByUuid(txContext, recordId, data);
+        try {
+            storage.updateItemByUuid(txContext, recordId, data);
+        } catch (UUIDException e) {
+            throw new RecordNotFoundException(1, e);
+        }
     }
 
     /**
@@ -174,7 +190,6 @@ public class MvccRecordStorage implements IRecordStorage {
                 && (xmax > txContext.getXid() || txContext.getSnapshot().contains(xmax));
     }
 
-    @SneakyThrows
     @Override
     public byte[] getMetadata(TransactionContext txContext) {
         // TODO 申请全表锁，用this锁代替

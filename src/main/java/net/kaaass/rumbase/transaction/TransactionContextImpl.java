@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.transaction;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
 import net.kaaass.rumbase.transaction.lock.LockTable;
 import net.kaaass.rumbase.transaction.lock.LockTableImpl;
@@ -39,6 +40,7 @@ public class TransactionContextImpl implements TransactionContext {
      * 事务状态
      */
     @Getter
+    @Setter
     private TransactionStatus status;
 
     /**
