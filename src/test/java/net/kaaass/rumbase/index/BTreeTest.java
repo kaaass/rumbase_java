@@ -38,7 +38,12 @@ public class BTreeTest extends TestCase {
 
         // 拿到这个索引,若没有则抛出异常
         Index.getIndex(fileDir + "student$id");
-        Index.getIndex(fileDir + "employee$id");
+        try{
+            Index.getIndex(fileDir + "employee$id");
+            fail("should get exception");
+        } catch (IndexNotFoundException e) {
+            log.error("Exception Error :", e);
+        }
     }
 
     /**
@@ -58,6 +63,35 @@ public class BTreeTest extends TestCase {
             testIndex.insert(i, new Random().nextLong());
 
             testIndex.insert(i, new Random().nextLong());
+        }
+
+        // 测试数据是否符合预期
+        int cnt = 0;
+        for (var pair : testIndex) {
+            assertEquals(cnt / 2,
+                    pair.getKey());
+            log.debug("{}", pair);
+            cnt++;
+        }
+    }
+
+    /**
+     * 测试不按顺寻key插入的情况
+     */
+    public void testInsertRandomKey() {
+        Index testIndex = null;
+        try {
+            testIndex = Index.createEmptyIndex(fileDir + "testInsertRandomKey$id");
+        } catch (IndexAlreadyExistException e) {
+            log.error("Exception Error :", e);
+        }
+
+        for (int i = 40000; i >= 0; i--) {
+
+            assert testIndex != null;
+            testIndex.insert(i, new Random().nextLong());
+
+            testIndex.insert(40000 - i, new Random().nextLong());
         }
 
         // 测试数据是否符合预期

@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  * @author 无索魏
  */
 public class BPlusTreeIndex implements Index {
-    Page root;
+//    Page root;
     PageStorage pageStorage;
 
     private enum PageType {  //页类型
@@ -40,6 +40,7 @@ public class BPlusTreeIndex implements Index {
     public static int MAX_PAGE_ITEM = (4096 - 24)/16;
     public static int PAGE_BEGIN_POSTION = 24;
     public static int PAGE_MID_POSTION = PAGE_BEGIN_POSTION + 16 * (BPlusTreeIndex.MAX_PAGE_ITEM)/2 ;
+    private static final int rootNum = 4;
 
     private Map<Long, ReadWriteLock> RW_LOCKS = new HashMap<>();
 
@@ -49,18 +50,23 @@ public class BPlusTreeIndex implements Index {
         } catch (FileException e) {
             e.printStackTrace();
         }
-        root = pageStorage.get(4);
     }
 
+
     synchronized public void initPage() {
-        initRootLeaf(root);
+        initRootAsLeaf();
         Page metaPage = this.pageStorage.get(0);
+        //pin
+        metaPage.pin();
         setPageType(metaPage,PageType.META);
         byte[] bs = ByteUtil.long2Bytes(5);
         try {
             metaPage.patchData(4,bs);
         } catch (PageException e) {
             e.printStackTrace();
+        }finally {
+            //unpin
+            metaPage.unpin();
         }
     }
 
@@ -72,19 +78,29 @@ public class BPlusTreeIndex implements Index {
     @Override
     synchronized public void insert(long dataHash, long uuid) {
         Stack<Long> pageStack = new Stack<>();
-        Page currentPage = this.root;
+        Page currentPage = this.pageStorage.get(rootNum);
+        //pin
+        currentPage.pin();
         while (getPageType(currentPage) != PageType.LEAF) {
             long nextPageNum = 0;
 
             try {
                 nextPageNum = queryFirstInternalItem(currentPage,dataHash);
             } catch (ItemInNextPageException e) {
+                //unpin
+                currentPage.unpin();
                 currentPage = this.pageStorage.get(e.getNextPageNum());
+                //pin
+                currentPage.pin();
                 continue;
             }
 
             pageStack.add(nextPageNum);
+            //unpin
+            currentPage.unpin();
             currentPage = this.pageStorage.get(nextPageNum);
+            //pin
+            currentPage.pin();
         }
         boolean isInsert = false;
         while (!isInsert) {
@@ -92,8 +108,14 @@ public class BPlusTreeIndex implements Index {
             try {
                 insertLeafItem(currentPage, dataHash, uuid);
                 isInsert = true;
+                //unpin
+                currentPage.unpin();
             } catch (ItemInNextPageException e) {
+                //unpin
+                currentPage.unpin();
                 currentPage = this.pageStorage.get(e.getNextPageNum());
+                //pin
+                currentPage.pin();
             } catch (PageFullException e) {
                 long splitPageNum = 0;
                 if (pageStack.size() != 0) {
@@ -101,6 +123,8 @@ public class BPlusTreeIndex implements Index {
                 }
                 long rawPageNum = this.getRawPageNum();
                 Page rawPage = this.pageStorage.get(rawPageNum);
+                //pin
+                rawPage.pin();
                 long newKey = insertFullLeaf(currentPage, rawPage, rawPageNum, dataHash, uuid);
                 boolean isInsertInternal = false, stackNeed = true;
                 Page parent = null;
@@ -110,22 +134,40 @@ public class BPlusTreeIndex implements Index {
                         if (pageStack.size() > 0) {
                             parentNum = pageStack.pop();
                             parent = this.pageStorage.get(parentNum);
+                            //pin
+                            parent.pin();
                         } else {
+                            Page root = this.pageStorage.get(rootNum);
+                            //pin
+                            root.pin();
                             if (getPageType(root) == PageType.LEAF) {
                                 long rawPageNum0 = this.getRawPageNum();
                                 Page rawPage0 = this.pageStorage.get(rawPageNum0);
+                                //pin
+                                rawPage0.pin();
 
                                 try {
                                     rawPage0.writeData(root.getDataBytes());
                                 } catch (PageException pageException) {
+                                    //unpin
+                                    rawPage.unpin();
+                                    rawPage0.unpin();
+                                    root.unpin();
                                     pageException.printStackTrace();
                                 }
 
-                                initRootInternal(root, newKey, rawPageNum0, rawPageNum);
+                                //unpin
+                                rawPage.unpin();
+                                rawPage0.unpin();
+                                root.unpin();
+                                initRootAsInternal(newKey, rawPageNum0, rawPageNum);
                             } else {
 
                                 try {
                                     insertInternalItem(root, getMaxKey(rawPage), splitPageNum, rawPageNum, newKey);
+                                    //unpin
+                                    rawPage.unpin();
+                                    root.unpin();
                                 } catch (PageFullException pageFullException) {
                                     long rawPageNum0 = this.getRawPageNum();
                                     Page rawPage0 = this.pageStorage.get(rawPageNum0);
@@ -134,12 +176,24 @@ public class BPlusTreeIndex implements Index {
                                     try {
                                         rawPage0.writeData(root.getDataBytes());
                                     } catch (PageException pageException) {
+                                        //unpin
+                                        rawPage0.unpin();
+                                        rawPage1.unpin();
+                                        rawPage.unpin();
                                         pageException.printStackTrace();
                                     }
 
                                     newKey = insertFullInternal(rawPage0, rawPage1, rawPageNum1, getMaxKey(rawPage), splitPageNum, rawPageNum, newKey);
-                                    initRootInternal(root, newKey, rawPageNum0, rawPageNum1);
+                                    //unpin
+                                    rawPage0.unpin();
+                                    rawPage1.unpin();
+                                    rawPage.unpin();
+                                    root.unpin();
+                                    initRootAsInternal(newKey, rawPageNum0, rawPageNum1);
                                 } catch (ItemInNextPageException itemInNextPageException) {
+                                    //unpin
+                                    rawPage.unpin();
+                                    root.unpin();
                                     itemInNextPageException.printStackTrace();
                                 }
 
@@ -156,16 +210,25 @@ public class BPlusTreeIndex implements Index {
                         insertInternalItem(parent, getMaxKey(rawPage), splitPageNum, rawPageNum, newKey);
                         isInsertInternal = true;
                         isInsert = true;
-
+                        //unpin
+                        parent.unpin();
                     } catch (PageFullException ee) {
                         long rawPageNum0 = this.getRawPageNum();
                         Page rawPage0 = this.pageStorage.get(rawPageNum0);
+                        //pin
+                        rawPage0.pin();
                         newKey = insertFullInternal(parent, rawPage0, rawPageNum0, getMaxKey(rawPage), splitPageNum, rawPageNum, newKey);
                         rawPageNum = rawPageNum0;
+                        //unpin
+                        rawPage.unpin();
+                        parent.unpin();
                         rawPage = rawPage0;
                         splitPageNum = parentNum;
                     }  catch (ItemInNextPageException ee) {
+                        //unpin
+                        parent.unpin();
                         parent = this.pageStorage.get(ee.getNextPageNum());
+                        parent.pin();
                         stackNeed = false;
                     }
 
@@ -177,16 +240,26 @@ public class BPlusTreeIndex implements Index {
 
     @Override
     synchronized public List<Long> query(long keyHash) {
-        Page currentPage = this.root;
+        Page currentPage = this.pageStorage.get(rootNum);
+        //pin
+        currentPage.pin();
         long nextPageNum = 0;
         while (getPageType(currentPage) != PageType.LEAF) {
             try {
                 nextPageNum = queryFirstInternalItem(currentPage, keyHash);
             } catch (ItemInNextPageException e) {
+                //unpin
+                currentPage.unpin();
                 currentPage = this.pageStorage.get(e.getNextPageNum());
+                //pin
+                currentPage.pin();
                 continue;
             }
+            //unpin
+            currentPage.unpin();
             currentPage = this.pageStorage.get(nextPageNum);
+            //pin
+            currentPage.pin();
         }
         int pos = 0;
         while (true) {
@@ -194,7 +267,12 @@ public class BPlusTreeIndex implements Index {
                 pos = queryKeyPos(currentPage, keyHash);
                 break;
             } catch (ItemInNextPageException e) {
-                currentPage = this.pageStorage.get(e.getNextPageNum());
+                var nextPageNum0 =  getPageNextPage(currentPage);
+                //unpin
+                currentPage.unpin();
+                currentPage = this.pageStorage.get(nextPageNum0);
+                //pin
+                currentPage.pin();
             }
         }
         List<Long> res = new LinkedList<>();
@@ -202,7 +280,12 @@ public class BPlusTreeIndex implements Index {
         while (true) {
             if (pos >= getPageItemNum(currentPage)) {
                 pos = 0;
-                currentPage = this.pageStorage.get(getPageNextPage(currentPage));
+                var nextPageNum0 =  getPageNextPage(currentPage);
+                //unpin
+                currentPage.unpin();
+                currentPage = this.pageStorage.get(nextPageNum0);
+                //pin
+                currentPage.pin();
             }
             long key = getKeyByPosition(currentPage, pos);
             if (key == keyHash) {
@@ -213,21 +296,33 @@ public class BPlusTreeIndex implements Index {
             }
             pos ++;
         }
+        //unpin
+        currentPage.unpin();
         return res;
     }
 
     @Override
     synchronized public Iterator<Pair> findFirst(long dataHash) {
-        Page currentPage = this.root;
+        Page currentPage = this.pageStorage.get(rootNum);
+        //pin
+        currentPage.pin();
         long nextPageNum = 0;
         while (getPageType(currentPage) != PageType.LEAF) {
             try {
                 nextPageNum = queryFirstInternalItem(currentPage, dataHash);
             } catch (ItemInNextPageException e) {
+                //unpin
+                currentPage.unpin();
                 currentPage = this.pageStorage.get(e.getNextPageNum());
+                //pin
+                currentPage.pin();
                 continue;
             }
+            //unpin
+            currentPage.unpin();
             currentPage = this.pageStorage.get(nextPageNum);
+            //pin
+            currentPage.pin();
         }
         int position = 0;
         while (true) {
@@ -235,24 +330,41 @@ public class BPlusTreeIndex implements Index {
                 position = queryKeyPos(currentPage, dataHash);
                 break;
             } catch (ItemInNextPageException e) {
+                //unpin
+                currentPage.unpin();
                 currentPage = this.pageStorage.get(e.getNextPageNum());
+                //pin
+                currentPage.pin();
+                continue;
             }
         }
-        return new BPlusTreeIterator(this,currentPage, position);
+        Iterator res= new BPlusTreeIterator(this,currentPage, position);
+        currentPage.unpin();
+        return res;
     }
 
     @Override
     synchronized public Iterator<Pair> findUpperbound(long dataHash) {
-        Page currentPage = this.root;
+        Page currentPage = this.pageStorage.get(rootNum);
+        //pin
+        currentPage.pin();
         long nextPageNum = 0;
         while (getPageType(currentPage) != PageType.LEAF) {
             try {
                 nextPageNum = queryUpperboundInternal(currentPage, dataHash);
             } catch (ItemInNextPageException e) {
+                //unpin
+                currentPage.unpin();
                 currentPage = this.pageStorage.get(e.getNextPageNum());
+                //pin
+                currentPage.pin();
                 continue;
             }
+            //unpin
+            currentPage.unpin();
             currentPage = this.pageStorage.get(nextPageNum);
+            //pin
+            currentPage.pin();
         }
         int position = 0;
         while (true) {
@@ -260,21 +372,35 @@ public class BPlusTreeIndex implements Index {
                 position = queryUpperboundKeyPos(currentPage, dataHash);
                 break;
             } catch (ItemInNextPageException e) {
+                //unpin
+                currentPage.unpin();
                 currentPage = this.pageStorage.get(e.getNextPageNum());
+                //pin
+                currentPage.pin();
             }
         }
-        return new BPlusTreeIterator(this,currentPage, position);
+        Iterator res= new BPlusTreeIterator(this,currentPage, position);
+        currentPage.unpin();
+        return res;
     }
 
     @Override
     synchronized public Iterator<Pair> findFirst() {
-        Page currentPage = this.root;
+        Page currentPage = this.pageStorage.get(rootNum);
+        //pin
+        currentPage.pin();
         long nextPageNum = 0;
         while (getPageType(currentPage) != PageType.LEAF) {
             nextPageNum = getMinChild(currentPage);
+            //unpin
+            currentPage.unpin();
             currentPage = this.pageStorage.get(nextPageNum);
+            //pin
+            currentPage.pin();
         }
-        return new BPlusTreeIterator(this,currentPage, 0);
+        Iterator res= new BPlusTreeIterator(this,currentPage, 0);
+        currentPage.unpin();
+        return res;
     }
 
     /**
@@ -352,11 +478,16 @@ public class BPlusTreeIndex implements Index {
      */
     private long getRawPageNum() {
         Page page = this.pageStorage.get(0);
+        //pin
+        page.pin();
         if (getPageType(page) != PageType.META) {
             try {
                 throw new PageTypeException(2);
             } catch (PageTypeException e) {
+                //unpin
+                page.unpin();
                 e.printStackTrace();
+                throw new RuntimeException();
             }
         }
         long res = ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),4,8));
@@ -365,18 +496,23 @@ public class BPlusTreeIndex implements Index {
             page.patchData(4,bs);
         } catch (PageException e) {
             e.printStackTrace();
+        } finally {
+          //unpin
+          page.unpin();
         }
         return res;
     }
 
     /**
      * 将根，从LEAF节点变为INTERNAL节点
-     * @param page
      * @param minKey 通过minKey初始化根节点
      * @param minPageNum 小于minKey的页的页号
      * @param maxPageNum 大于minKey的页的页号
      */
-    private void initRootInternal(Page page, long minKey, long minPageNum, long maxPageNum) {
+    private void initRootAsInternal(long minKey, long minPageNum, long maxPageNum) {
+        //pin
+        Page page = this.pageStorage.get(rootNum);
+        page.pin();
         setPageType(page, PageType.INTERNAL);
         setPageItemNum(page, 2);
         setMaxKey(page, Long.MAX_VALUE);
@@ -388,18 +524,25 @@ public class BPlusTreeIndex implements Index {
             page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + 16,inserted);
         } catch (PageException e) {
             e.printStackTrace();
+        } finally {
+            //unpin
+            page.unpin();
         }
     }
 
     /**
      * 将一个页初始化为根，且为LEAF节点
-     * @param page
      */
-    private void initRootLeaf(Page page) {
+    private void initRootAsLeaf() {
+        //pin
+        Page page = this.pageStorage.get(rootNum);
+        page.pin();
         setPageType(page, PageType.LEAF);
         setPageItemNum(page, 0);
         setMaxKey(page, Long.MAX_VALUE);
         setPageNextPage(page, 0);
+        //unpin
+        page.unpin();
     }
 
     /**
@@ -905,7 +1048,11 @@ public class BPlusTreeIndex implements Index {
         } else if (typeNum == PageType.META.ordinal()) {
             return PageType.META;
         }
-        new PageTypeException(1);
+        try {
+            throw new PageTypeException(1);
+        } catch (PageTypeException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -914,10 +1061,13 @@ public class BPlusTreeIndex implements Index {
         Page currentPage;
         int currentPosition;
         int currentPageItemNum;
+        boolean isEnd = false;
 
         public BPlusTreeIterator(BPlusTreeIndex bPlusTreeIndex, Page currentPage, int currentPosition) {
             this.bPlusTreeIndex = bPlusTreeIndex;
             this.currentPage = currentPage;
+            //pin 双重pin 传进来之前已经pin过次此来
+            currentPage.pin();
             this.currentPosition = currentPosition;
             this.currentPageItemNum = getPageItemNum(currentPage);
         }
@@ -928,11 +1078,12 @@ public class BPlusTreeIndex implements Index {
                 if (currentPageItemNum > currentPosition) {
                     return true;
                 } else {
-                    if (getPageNextPage(currentPage) != 0) {
+                    if (!isEnd && getPageNextPage(currentPage) != 0) {
                         return true;
+                    } else{
+                        return false;
                     }
                 }
-                return false;
             }
         }
 
@@ -947,10 +1098,19 @@ public class BPlusTreeIndex implements Index {
                 else {
                     long nextPageNum = getPageNextPage(currentPage);
                     if (nextPageNum == 0) {
+                        if (isEnd) {
+                            isEnd = true;
+                            //unpin
+                            currentPage.unpin();
+                        }
                         return null;
                     } else {
                         System.out.println("nextPage*****************");
+                        //unpin
+                        currentPage.unpin();
                         currentPage = this.bPlusTreeIndex.pageStorage.get(nextPageNum);
+                        //pin
+                        currentPage.pin();
                         currentPageItemNum = getPageItemNum(currentPage);
                         currentPosition = 0;
                         Pair res = new Pair(getKeyByPosition(currentPage,currentPosition), getValByPosition(currentPage,currentPosition));
