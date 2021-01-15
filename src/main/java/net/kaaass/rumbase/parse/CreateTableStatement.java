@@ -12,7 +12,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-public class CreateTableStatement {
+public class CreateTableStatement implements ISqlStatement {
 
     /**
      * 创建表的表名

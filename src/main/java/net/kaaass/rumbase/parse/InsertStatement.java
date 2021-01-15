@@ -12,7 +12,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-public class InsertStatement {
+public class InsertStatement implements ISqlStatement {
 
     /**
      * 插入行的目标表名

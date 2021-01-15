@@ -12,7 +12,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-public class UpdateStatement {
+public class UpdateStatement implements ISqlStatement {
 
     /**
      * 更新的目标表名

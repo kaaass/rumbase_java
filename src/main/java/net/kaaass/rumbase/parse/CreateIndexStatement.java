@@ -12,7 +12,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-public class CreateIndexStatement {
+public class CreateIndexStatement implements ISqlStatement {
 
     /**
      * 待创建的索引名称

@@ -10,7 +10,7 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class DeleteStatement {
+public class DeleteStatement implements ISqlStatement {
 
     /**
      * 删除的目标表名

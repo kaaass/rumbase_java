@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-public class SelectStatement {
+public class SelectStatement implements ISqlStatement {
 
     /**
      * 选择的结果行是否不允许重复
