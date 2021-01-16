@@ -78,6 +78,7 @@ public class TableManager {
         try {
             metaTable = Table.load(metaRecord);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             // 新建表
             var fields = new ArrayList<BaseField>();
             var keyField = new VarcharField("key", 255, false, null);
@@ -104,7 +105,7 @@ public class TableManager {
 
         var data = metaTable.readAll(context);
         var map = new HashMap<String, String>();
-        data.stream().map(row -> map.put((String) row.get(0), (String) row.get(1)));
+        data.forEach(row -> map.put((String) row.get(0), (String) row.get(1)));
 
         if (!map.containsKey("table_num")) {
             metaTable.insert(context, new ArrayList<>(){{
