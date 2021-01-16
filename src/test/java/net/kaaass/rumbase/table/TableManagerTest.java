@@ -49,7 +49,7 @@ public class TableManagerTest extends TestCase {
         }
 
         var tables = tbm.showTables();
-        assertEquals(2, tables.size());
+        assertEquals(4, tables.size());
         assertEquals(prefix + "Table", tables.get(0));
 
         new File("data/metadata.db").deleteOnExit();
@@ -82,7 +82,6 @@ public class TableManagerTest extends TestCase {
 
         new File("data/metadata.db").deleteOnExit();
         new File("data/metadata$key").deleteOnExit();
-
 
     }
 
@@ -123,10 +122,8 @@ public class TableManagerTest extends TestCase {
         } catch (TableExistenceException e) {
             fail();
         }
-
         new File("data/metadata.db").deleteOnExit();
         new File("data/metadata$key").deleteOnExit();
-
     }
 
 }

@@ -77,6 +77,7 @@ public class TableManager {
         Table metaTable;
         try {
             metaTable = Table.load(metaRecord);
+            tableCache.put("metadata", metaTable);
         } catch (RuntimeException e) {
             // 新建表
             var fields = new ArrayList<BaseField>();
@@ -101,7 +102,6 @@ public class TableManager {
             metaTable.persist(context);
             tableCache.put("metadata", metaTable);
         }
-
         var data = metaTable.readAll(context);
         var map = new HashMap<String, String>();
         data.forEach(row -> map.put((String) row.get(0), (String) row.get(1)));
