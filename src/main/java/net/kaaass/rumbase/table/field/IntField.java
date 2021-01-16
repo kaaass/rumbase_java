@@ -35,7 +35,7 @@ public class IntField extends BaseField {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
             out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
             var flags = new byte[]{0};
-            flags[0] |= indexed() ? 1 : 0;
+            flags[0] |= isNullable() ? 1 : 0;
             if (indexed()) {
                 flags[0] |= 2;
                 out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
