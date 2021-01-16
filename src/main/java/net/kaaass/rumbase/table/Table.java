@@ -85,7 +85,7 @@ public class Table {
      * @param fields    表的字段结构
      */
     public Table(@NonNull String tableName, @NonNull List<BaseField> fields) {
-        this.recordStorage = RecordManager.fromFile(tableName + ".db");
+        this.recordStorage = RecordManager.fromFile("data/table" + tableName + ".db");
         this.tableName = tableName;
         this.fields = fields;
         this.next = -1;

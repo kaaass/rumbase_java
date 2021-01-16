@@ -59,6 +59,6 @@ public class CreateTableExecutor implements Executable {
 
         }
 
-        manager.createTable(context, tableName, baseFields, tableName + ".db");
+        manager.createTable(context, tableName, baseFields, "data/table/" + tableName + ".db");
     }
 }

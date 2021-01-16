@@ -11,6 +11,7 @@ import net.kaaass.rumbase.table.Table;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -222,7 +223,13 @@ public abstract class BaseField{
      */
     public void createIndex() throws IndexAlreadyExistException {
         var delimiter = "$";
-        indexName = parentTable.getPath() + delimiter + name;
+
+        var indexDir = new File("data/index/");
+        if (!indexDir.exists() && !indexDir.isDirectory()) {
+            indexDir.mkdirs();
+        }
+
+        indexName = "data/index/" + parentTable.getTableName() + delimiter + name;
 
         index = Index.createEmptyIndex(indexName);
     }

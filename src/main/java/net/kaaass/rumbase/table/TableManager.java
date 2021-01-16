@@ -13,6 +13,7 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -127,6 +128,11 @@ public class TableManager {
     ) throws TableExistenceException {
         if (tableCache.containsKey(tableName)) {
             throw new TableExistenceException(1);
+        }
+
+        var tableDir = new File("data/table/");
+        if (!tableDir.exists() && !tableDir.isDirectory()) {
+            tableDir.mkdirs();
         }
 
         var table = new Table(tableName, baseFields, path);
