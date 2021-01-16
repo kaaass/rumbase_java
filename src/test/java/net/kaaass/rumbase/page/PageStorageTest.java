@@ -152,4 +152,7 @@ public class PageStorageTest extends TestCase {
         assertArrayEquals(data4, dataFromFile4);
     }
 
+    public void testFlushAll(){
+        PageManager.flush();
+    }
 }
