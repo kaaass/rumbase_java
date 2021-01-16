@@ -83,13 +83,13 @@ public class InsertExecutorTest extends TestCase {
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testDeleteAll.__reserved__", fields);
+        var dummy = new Table("testInsertValue.__reserved__", fields);
         var id = new IntField("ID", false, dummy);
         fields.add(new VarcharField("LastName", 20, false, dummy));
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "Person", fields, PATH + "testDeleteAll.Person.db");
+            manager.createTable(context, "Person", fields, PATH + "testInsertValue.Person.db");
             id.createIndex();
             table = manager.getTable("Person");
         } catch (TableExistenceException | IndexAlreadyExistException e) {
