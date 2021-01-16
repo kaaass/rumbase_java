@@ -7,17 +7,17 @@ import net.kaaass.rumbase.parse.stmt.*;
  *
  * @author kaaass
  */
-public interface ISqlStatementVisitor {
+public interface ISqlStatementVisitor<T> {
 
-    void visit(SelectStatement statement);
+    T visit(SelectStatement statement);
 
-    void visit(InsertStatement statement);
+    T visit(InsertStatement statement);
 
-    void visit(UpdateStatement statement);
+    T visit(UpdateStatement statement);
 
-    void visit(DeleteStatement statement);
+    T visit(DeleteStatement statement);
 
-    void visit(CreateIndexStatement statement);
+    T visit(CreateIndexStatement statement);
 
-    void visit(CreateTableStatement statement);
+    T visit(CreateTableStatement statement);
 }

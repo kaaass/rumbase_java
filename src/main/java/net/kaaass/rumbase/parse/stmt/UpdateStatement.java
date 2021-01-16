@@ -39,7 +39,7 @@ public class UpdateStatement implements ISqlStatement {
     private ConditionExpression where;
 
     @Override
-    public void accept(ISqlStatementVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ISqlStatementVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

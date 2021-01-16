@@ -33,7 +33,7 @@ public class CreateIndexStatement implements ISqlStatement {
     private List<ColumnIdentifier> columns;
 
     @Override
-    public void accept(ISqlStatementVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ISqlStatementVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

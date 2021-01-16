@@ -87,6 +87,7 @@ public class Server {
         }
         // 关闭所有活动会话
         for (var session : activeSession) {
+            session.say("服务器正在关闭...");
             session.onClose();
         }
         activeSession.clear();

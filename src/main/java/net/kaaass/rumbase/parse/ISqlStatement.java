@@ -7,5 +7,5 @@ package net.kaaass.rumbase.parse;
  */
 public interface ISqlStatement {
 
-    void accept(ISqlStatementVisitor visitor);
+    <T> T accept(ISqlStatementVisitor<T> visitor);
 }

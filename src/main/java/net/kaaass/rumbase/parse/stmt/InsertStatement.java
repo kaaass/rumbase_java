@@ -33,7 +33,7 @@ public class InsertStatement implements ISqlStatement {
     private List<String> values;
 
     @Override
-    public void accept(ISqlStatementVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ISqlStatementVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

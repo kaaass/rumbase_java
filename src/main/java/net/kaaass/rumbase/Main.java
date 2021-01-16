@@ -16,13 +16,13 @@ public class Main {
         // 启动
         log.info("Start preparing...");
         Server.getInstance().prepare();
-        // 运行
-        log.info("Starting server...");
-        Server.getInstance().run();
         // 注册程序退出事件
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Shutdown...");
             Server.getInstance().shutdown();
-        }));
+        }, "Shutdown-thread"));
+        // 运行
+        log.info("Starting server...");
+        Server.getInstance().run();
     }
 }

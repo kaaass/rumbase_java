@@ -27,8 +27,8 @@ public class CreateTableStatement implements ISqlStatement {
     private List<ColumnDefinition> columnDefinitions;
 
     @Override
-    public void accept(ISqlStatementVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ISqlStatementVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     /**

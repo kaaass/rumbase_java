@@ -52,8 +52,8 @@ public class SelectStatement implements ISqlStatement {
     private List<OrderBy> orderBys;
 
     @Override
-    public void accept(ISqlStatementVisitor visitor) {
-        visitor.visit(this);
+    public <T> T accept(ISqlStatementVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     /**
