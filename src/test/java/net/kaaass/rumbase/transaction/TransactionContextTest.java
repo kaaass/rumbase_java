@@ -210,50 +210,55 @@ public class TransactionContextTest {
     @Test
     public void testDeadlock() throws IOException, FileException, InterruptedException, StatusException {
         var manager = new TransactionManagerImpl("test_gen_files/test_deadlock.log");
-        var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-        var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-        String tableName = "test";
+        for (int i = 0; i < 50; i++) {
+            log.info("============= Test times {} =============", i);
+            var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+            var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+            String tableName = "test";
 
-        transaction1.start();
-        transaction2.start();
+            transaction1.start();
+            transaction2.start();
 
-        AtomicBoolean syncPoint = new AtomicBoolean(false);
-        AtomicBoolean deadlockDetect = new AtomicBoolean(false);
-        Thread thread = new Thread(() -> {
-            try {
-                while (!syncPoint.get()) {
-                    Thread.sleep(3);
+            AtomicBoolean syncPoint = new AtomicBoolean(false);
+            AtomicBoolean deadlockDetect = new AtomicBoolean(false);
+            Thread thread = new Thread(() -> {
+                try {
+                    while (!syncPoint.get()) {
+                        Thread.sleep(3);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+                try {
+                    transaction2.exclusiveLock(1, tableName);
+                } catch (DeadlockException e) {
+                    deadlockDetect.set(true);
+                    e.printStackTrace();
+                    try {
+                        transaction2.rollback();
+                    } catch (StatusException statusException) {
+                        statusException.printStackTrace();
+                    }
+                } catch (StatusException e) {
+                    e.printStackTrace();
+                }
+            });
+            thread.start();
             try {
-                transaction2.exclusiveLock(1, tableName);
+                transaction1.exclusiveLock(1, tableName);
+                transaction2.exclusiveLock(2, tableName);
+                syncPoint.set(true);
+                transaction1.exclusiveLock(2, tableName);
             } catch (DeadlockException e) {
                 deadlockDetect.set(true);
                 e.printStackTrace();
-                try {
-                    transaction2.rollback();
-                } catch (StatusException statusException) {
-                    statusException.printStackTrace();
-                }
-            } catch (StatusException e) {
-                e.printStackTrace();
+                log.info("rollback tx2");
+                transaction2.rollback();
             }
-        });
-        thread.start();
-        try {
-            transaction1.exclusiveLock(1, tableName);
-            transaction2.exclusiveLock(2, tableName);
-            syncPoint.set(true);
-            transaction1.exclusiveLock(2, tableName);
-        } catch (DeadlockException e) {
-            deadlockDetect.set(true);
-            e.printStackTrace();
-            transaction2.rollback();
+            thread.join();
+            assertTrue("Deadlock should be detected", deadlockDetect.get());
+            transaction1.commit();
+            log.info("tx1 committed");
         }
-        thread.join();
-        assertTrue("Deadlock should be detected", deadlockDetect.get());
-        transaction1.commit();
     }
 }

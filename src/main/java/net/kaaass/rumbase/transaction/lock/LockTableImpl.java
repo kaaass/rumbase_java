@@ -75,6 +75,7 @@ public class LockTableImpl implements LockTable {
             // 判断是否能加锁
             boolean canGrant = list.canGrant(mode);
             log.info("{} can grant {} lock : {}", xid, mode, canGrant);
+            // TODO 并发度差，最好改成读写锁
             synchronized (this) {
                 // 虚加锁
                 list.weakInsert(xid, id, mode, canGrant);
@@ -90,10 +91,13 @@ public class LockTableImpl implements LockTable {
             // 对于互斥锁，如果发生等待，在等待处即已释放，此处无需释放
             canUnlock = canGrant;
 
-            // 移除虚锁
-            list.pop();
-            // 正式加锁
-            list.insert(xid, id, mode, canGrant);
+            // TODO 并发度差，最好改成读写锁
+            synchronized (list) {
+                // 移除虚锁
+                list.pop();
+                // 正式加锁
+                list.insert(xid, id, mode, canGrant);
+            }
         } finally {
             if (canUnlock) {
                 list.mutexLock.unlock();
