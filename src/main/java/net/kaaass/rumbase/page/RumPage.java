@@ -20,11 +20,6 @@ public class RumPage implements Page {
         this.dirty = false;
         this.filepath = filepath;
         this.offset = offset;//在内存中的偏移,指的是以页为单位的偏移
-        try{
-            out = new RandomAccessFile(filepath, "rw");
-        }catch(Exception e){
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -67,6 +62,7 @@ public class RumPage implements Page {
         File file = new File(this.filepath);
         synchronized (this) {
             try {
+                RandomAccessFile out = new RandomAccessFile(file, "rw");
                 try {
                     out.seek((PageManager.FILE_HEAD_SIZE + this.pageId) * (long)PageManager.PAGE_SIZE);
                 } catch (Exception e) {
@@ -79,6 +75,7 @@ public class RumPage implements Page {
                 } catch (Exception e) {
                     throw new FileException(2);
                 }
+                out.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -121,19 +118,10 @@ public class RumPage implements Page {
         return this.pageId;
     }
 
-    @Override
-    protected void finalize() {
-        try{
-            this.out.close();
-        }catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
     private final byte[] data;
     private final long pageId;
     boolean dirty;
     int pinned = 0;
     String filepath;
     int offset;
-    RandomAccessFile out = null;
 }
