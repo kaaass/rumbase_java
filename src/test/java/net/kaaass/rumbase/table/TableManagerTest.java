@@ -20,8 +20,10 @@ import java.util.ArrayList;
 @Slf4j
 public class TableManagerTest extends TestCase {
 
+    private static final String PATH = "build/";
+
     public void testShowTables() {
-        var prefix = "testShowTables";
+        var prefix = PATH + "testShowTables";
 
         var tbm = new TableManager();
 
@@ -49,7 +51,7 @@ public class TableManagerTest extends TestCase {
     }
 
     public void testCreateTable() {
-        var prefix = "testCreateTable";
+        var prefix = PATH + "testCreateTable";
 
         var tbm = new TableManager();
 
@@ -74,7 +76,7 @@ public class TableManagerTest extends TestCase {
     }
 
     public void testGetTable() {
-        var prefix = "testGetTable";
+        var prefix = PATH + "testGetTable";
 
         var tbm = new TableManager();
 
