@@ -1,8 +1,10 @@
 package net.kaaass.rumbase.record;
 
+import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -63,5 +65,5 @@ public interface IRecordStorage {
      *
      * @param metadata 元信息数据
      */
-    void setMetadata(TransactionContext txContext, byte[] metadata);
+    void setMetadata(TransactionContext txContext, byte[] metadata) throws IOException, FileException;
 }

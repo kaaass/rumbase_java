@@ -3,8 +3,11 @@ package net.kaaass.rumbase.dataitem;
 import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.recovery.IRecoveryStorage;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -13,6 +16,20 @@ import java.util.List;
  * @author kaito
  */
 public interface IItemStorage {
+
+    void setMetaUuid(long uuid) throws IOException, PageException;
+
+    /**
+     * 获得日志管理器
+     * @return
+     */
+    IRecoveryStorage getRecoveryStorage();
+
+    /**
+     * 获取表的tempFreePage
+     * @return
+     */
+    public int getMaxPageId();
 
     /**
      *  将uuid对应的页强制写回
@@ -25,7 +42,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @return 返回数据项的UUID
      */
-    long insertItem(TransactionContext txContext, byte[] item);
+    long insertItem(TransactionContext txContext, byte[] item) throws IOException, FileException;
 
     /**
      * 不用日志进行插入，用于日志的管理
@@ -71,7 +88,9 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException;
+    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException, FileException, IOException;
+
+    byte[] updateItemWithoutLog(long uuid,byte[] item) throws UUIDException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
@@ -85,13 +104,13 @@ public interface IItemStorage {
      *
      * @param metadata 头信息
      */
-    void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException;
+    void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException;
 
     /**
      *  不使用日志设置元数据
      * @param metadata 头信息
      */
-    void setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException;
+    long setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException;
 
     /**
      * 清理多余的数据项，空间清理时使用。

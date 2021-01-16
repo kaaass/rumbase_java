@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.logging.LogManager;
 
 /**
  * 数据项管理器的具体实现
@@ -111,7 +110,7 @@ public class ItemStorage implements IItemStorage {
         header.pin();
         if (checkTableHeader(header)) {
             // 如果表头标志存在，就解析对应表头信息
-            var h = parseHeader(header);
+            var h = parseTableHeader(header);
             header.unpin();
             var logStorage = RecoveryManager.getRecoveryStorage(fileName);
             return new ItemStorage(fileName, h.tempFreePage, h.headerUuid, pageStorage,logStorage);
@@ -144,7 +143,7 @@ public class ItemStorage implements IItemStorage {
         header.pin();
         if (checkTableHeader(header)) {
             // 如果表头标志存在，就解析对应表头信息
-            var h = parseHeader(header);
+            var h = parseTableHeader(header);
             header.unpin();
             return new ItemStorage(fileName, h.tempFreePage, h.headerUuid, pageStorage);
         } else {
@@ -228,7 +227,7 @@ public class ItemStorage implements IItemStorage {
      *
      * @return 解析得到的表头对象
      */
-    private static TableHeader parseHeader(Page page) throws PageCorruptedException {
+    private static TableHeader parseTableHeader(Page page) throws PageCorruptedException {
         try {
             return JBBPParser.prepare("int headerFlag;int tempFreePage;byte hasHeaderInfo;long headerUuid;").
                     parse(page.getData()).mapTo(new TableHeader());
@@ -329,14 +328,41 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
+    public void setMetaUuid(long uuid) throws IOException, PageException {
+        var page = getPage(0);
+        try {
+            var bytes = JBBPOut.BeginBin().
+                    Byte(HAS_HEADER).
+                    Long(uuid).End().toByteArray();
+            page.patchData(HEADER_OFFSET, bytes);
+        }finally {
+            releasePage(page);
+        }
+
+    }
+
+    @Override
+    public IRecoveryStorage getRecoveryStorage() {
+        return this.recoveryStorage;
+    }
+
+    @Override
+    public int getMaxPageId() {
+        var page = getPage(0);
+        var header = parseTableHeader(page);
+        return header.tempFreePage;
+    }
+
+    @Override
     public void flush(long uuid) throws FileException {
         var page = getPage(uuid);
         page.flush();
     }
 
     @Override
-    public synchronized long insertItem(TransactionContext txContext, byte[] item) {
+    public synchronized long insertItem(TransactionContext txContext, byte[] item) throws IOException, FileException {
         long uuid = insertItemWithoutLog(item);
+        recoveryStorage.insert(txContext.getXid(),uuid,item);
         return uuid;
     }
     @Override
@@ -352,7 +378,7 @@ public class ItemStorage implements IItemStorage {
             if (pageHeader.leftSpace - Math.min(item.length, MAX_RECORD_SIZE) <= MIN_LEFT_SPACE) {
                 // 如果剩余空间过小的话，就切换到下一个页进行，同时修改表头信息.并且，若数据过大则使用拉链，所以取512和数据大小较小的
                 addTempFreePage();
-                return insertItemWithoutLog( item);
+                return insertItemWithoutLog(item);
             } else {
                 // 剩余空间足够，则插入
                 int rnd = Math.abs(new Random().nextInt());
@@ -524,15 +550,23 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException {
+    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException, FileException, IOException {
+        var item_before = updateItemWithoutLog(uuid, item);
+        recoveryStorage.update(txContext.getXid(),uuid,item_before,item);
+    }
+
+    @Override
+    public byte[] updateItemWithoutLog(long uuid, byte[] item) throws UUIDException {
         var page = getPage(uuid);
         try {
             if (checkUuidExist(uuid)) {
+                // 若uuid存在
                 var pageHeader = getPageHeader(page);
                 var items = pageHeader.get().item;
                 try {
                     for (var i : items) {
                         if (i.uuid == getRndByUuid(uuid)) {
+                            var item_before = parseData(page,i);
                             var offset = i.offset;
                             var bytes = JBBPOut.BeginBin().
                                     Byte(NORMAL_DATA).
@@ -540,24 +574,26 @@ public class ItemStorage implements IItemStorage {
                                     .Byte(item)
                                     .End().toByteArray();
                             page.patchData(offset, bytes);
-                            return;
+                            return item_before;
                         }
                     }
                 } catch (PageException | IOException e) {
                     throw new PageCorruptedException(2, e);
                 }
             } else {
+                // uuid不存在一般是恢复的时候 前面事务被取消.
                 throw new UUIDException(2);
             }
         } finally {
             releasePage(page);
         }
+        return new byte[1];
     }
 
     @Override
     public byte[] getMetadata() {
         var page = getPage(0);
-        var header = parseHeader(page);
+        var header = parseTableHeader(page);
         if (checkTableHeader(page) && header.hasHeaderInfo == HAS_HEADER) {
             // 若表头已经被初始化并且有标志位的话，就说明有表头信息，进行获取.
             byte[] h;
@@ -578,13 +614,15 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException {
-        setMetadataWithoutLog(metadata);
-
+    public void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException {
+        var page = getPage(0);
+        var header = parseTableHeader(page);
+        var uuid = setMetadataWithoutLog(metadata);
+        recoveryStorage.updateMeta(txContext.getXid(),header.headerUuid,metadata);
     }
 
     @Override
-    public void setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException {
+    public long setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException {
         var page = getPage(0);
         try {
             var headerUuid = insertItemWithoutLog(metadata);
@@ -592,6 +630,7 @@ public class ItemStorage implements IItemStorage {
                     Byte(HAS_HEADER).
                     Long(headerUuid).End().toByteArray();
             page.patchData(HEADER_OFFSET, bytes);
+            return headerUuid;
         } catch (Exception e) {
             throw new PageCorruptedException(1, e);
         } finally {

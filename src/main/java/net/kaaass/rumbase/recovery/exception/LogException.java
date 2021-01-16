@@ -13,6 +13,7 @@ public class LogException extends RumbaseException {
 
     public static final Map<Integer, String> REASONS = new HashMap<Integer, String>() {{
         put(1, "日志文件无法解析");
+        put(2,"事务ID不存在");
     }};
 
     public LogException(int subId) {

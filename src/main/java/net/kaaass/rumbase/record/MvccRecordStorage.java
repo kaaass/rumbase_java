@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.record.exception.NeedRollbackException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.record.exception.StorageCorruptedException;
@@ -13,6 +14,7 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionStatus;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -205,7 +207,7 @@ public class MvccRecordStorage implements IRecordStorage {
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext, byte[] metadata) {
+    public void setMetadata(TransactionContext txContext, byte[] metadata) throws IOException, FileException {
         // TODO 申请全表锁，用this锁代替
         // 主要逻辑：为了保证事务性，使用UUID数组，结合可见性选择对应的记录。倒序记录便于存储。
         synchronized (this) {

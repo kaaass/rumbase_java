@@ -109,7 +109,7 @@ public class IItemStorageTest extends TestCase {
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         TransactionContext txContext = TransactionContext.empty();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 500; i++) {
             long uuid = iItemStorage.insertItem(txContext, bytes);
             long uuid2 = iItemStorage.insertItem(txContext, bytes);
             long uuid3 = iItemStorage.insertItem(txContext, bytes);

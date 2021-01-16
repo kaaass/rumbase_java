@@ -1,6 +1,8 @@
 package net.kaaass.rumbase.recovery;
 
 import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.recovery.exception.LogException;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,18 +50,22 @@ public interface IRecoveryStorage {
      * @param xid
      * @param uuid
      */
-    void update(int xid, long uuid, byte[] item_before,byte[] item_after) throws IOException, FileException;
+    void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) throws IOException, FileException;
 
     /**
      * 更新数据项的日志头
      *
      * @param xid
-     * @param metaUUID 头信息的UUID
      */
-    void updateMeta(int xid, long metaUUID) throws IOException, FileException;
+    void updateMeta(int xid, long beforeUuid,byte[] metadata) throws IOException, FileException;
 
     /**
      * 模拟打印日志资料
      */
     List<byte[]> getContent();
+
+    /**
+     * 恢复数据
+     */
+    void recovery() throws IOException, LogException, FileException, PageException;
 }

@@ -2,9 +2,11 @@ package net.kaaass.rumbase.record;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -57,7 +59,7 @@ public class IRecordStorageTest extends TestCase {
         assertTrue("record should be deleted", result.isEmpty());
     }
 
-    public void testMetadata() {
+    public void testMetadata() throws IOException, FileException {
         var storage = RecordManager.fromFile("test_metadata");
         var context = TransactionContext.empty();
 

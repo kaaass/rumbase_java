@@ -4,6 +4,7 @@ import lombok.Data;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.recovery.IRecoveryStorage;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.util.*;
@@ -81,6 +82,21 @@ public class MockItemStorage implements IItemStorage {
 
 
     @Override
+    public void setMetaUuid(long uuid) {
+
+    }
+
+    @Override
+    public IRecoveryStorage getRecoveryStorage() {
+        return null;
+    }
+
+    @Override
+    public int getMaxPageId() {
+        return 0;
+    }
+
+    @Override
     public void flush(long uuid) {
 
     }
@@ -127,6 +143,11 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
+    public byte[] updateItemWithoutLog(long uuid, byte[] item) throws UUIDException {
+        return new byte[0];
+    }
+
+    @Override
     public byte[] getMetadata() {
         return meta;
     }
@@ -137,8 +158,9 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException {
+    public long setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException {
 
+        return 0;
     }
 
 

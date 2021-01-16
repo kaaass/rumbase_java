@@ -25,10 +25,10 @@ public class RecoveryManager {
     }
 
     public static IRecoveryStorage getRecoveryStorage(String fileName) throws FileException, IOException, LogException, PageException {
-        return RecoveryStorage.ofFile(fileName + ".log");
+        return RecoveryStorage.ofFile(fileName);
     }
 
     public static IRecoveryStorage createRecoveryStorage(String fileName) throws IOException, FileException, PageException, LogException {
-        return RecoveryStorage.ofNewFile(fileName + ".log");
+        return RecoveryStorage.ofNewFile(fileName);
     }
 }

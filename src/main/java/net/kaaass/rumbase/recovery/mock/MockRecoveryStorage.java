@@ -2,6 +2,7 @@ package net.kaaass.rumbase.recovery.mock;
 
 import net.kaaass.rumbase.recovery.IRecoveryStorage;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,24 +50,27 @@ public class MockRecoveryStorage implements IRecoveryStorage {
     }
 
     @Override
-    public void update(int xid, long uuid, byte[] item,byte[] item_after) {
+    public void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) {
         String updateStr = "update " + xid + " " + uuid + " ";
         // 对控制语句、数据两部分进行合并得到最终日志记录
         byte[] first = updateStr.getBytes();
-        byte[] result = Arrays.copyOf(first, first.length + item.length);
-        System.arraycopy(item, 0, result, first.length, item.length);
+        byte[] result = Arrays.copyOf(first, first.length + itemBefore.length);
+        System.arraycopy(itemBefore, 0, result, first.length, itemBefore.length);
         bytes.add(result);
     }
 
     @Override
-    public void updateMeta(int xid, long metaUUID) {
-        String updateMetaStr = "meta " + xid + " " + metaUUID;
-        bytes.add(updateMetaStr.getBytes());
+    public void updateMeta(int xid,long beforeUuid,byte[] metadata) {
     }
 
     @Override
     public List<byte[]> getContent() {
         return bytes;
+    }
+
+    @Override
+    public void recovery() throws IOException {
+
     }
 
 
