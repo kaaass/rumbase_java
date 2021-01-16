@@ -2,10 +2,12 @@ package net.kaaass.rumbase.query;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.stmt.CreateTableStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.Table;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
@@ -19,7 +21,7 @@ import java.io.File;
 @Slf4j
 public class CreateTableExecutorTest extends TestCase {
 
-    public void testCreate() throws SqlSyntaxException {
+    public void testCreate() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "CREATE TABLE testCreate$Persons\n" +
                 "(\n" +
                 "Id_P int not null,\n" +
@@ -67,6 +69,8 @@ public class CreateTableExecutorTest extends TestCase {
         assertEquals(255, ((VarcharField)fields.get(1)).getLimit());
         assertFalse(fields.get(2).isNullable());
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
     }
 }

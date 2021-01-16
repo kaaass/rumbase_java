@@ -192,7 +192,9 @@ public class SelectExecutorTest extends TestCase {
         assertEquals(8000f, data.get(1).get(2));
 
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
 
     }
 }

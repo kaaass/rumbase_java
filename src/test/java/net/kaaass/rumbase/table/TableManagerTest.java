@@ -25,10 +25,8 @@ import java.util.ArrayList;
 @Slf4j
 public class TableManagerTest extends TestCase {
 
-    private static final String PATH = "build/";
-
     public void testShowTables() throws IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
-        var prefix = PATH + "testShowTables";
+        var prefix = "testShowTables";
 
         var tbm = new TableManager();
 
@@ -51,14 +49,16 @@ public class TableManagerTest extends TestCase {
         }
 
         var tables = tbm.showTables();
-        assertEquals(1, tables.size());
+        assertEquals(2, tables.size());
         assertEquals(prefix + "Table", tables.get(0));
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
     }
 
     public void testCreateTable() throws IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
-        var prefix = PATH + "testCreateTable";
+        var prefix = "testCreateTable";
 
         var tbm = new TableManager();
 
@@ -80,12 +80,14 @@ public class TableManagerTest extends TestCase {
             fail();
         }
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
 
     }
 
     public void testGetTable() throws IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
-        var prefix = PATH + "testGetTable";
+        var prefix = "testGetTable";
 
         var tbm = new TableManager();
 
@@ -122,7 +124,9 @@ public class TableManagerTest extends TestCase {
             fail();
         }
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
     }
 
 }

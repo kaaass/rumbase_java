@@ -23,14 +23,10 @@ import java.util.ArrayList;
 @Slf4j
 public class CreateIndexExecutorTest extends TestCase {
 
-    private static final String PATH = "build/";
-
     public void testParseSingle() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "CREATE INDEX PersonIndex ON testParseSingle$Person (LastName) ;";
         // 解析
-        var stmt = SqlParser.parseStatement(sql);catch ( e) {
-            e.printStackTrace();
-        }
+        var stmt = SqlParser.parseStatement(sql);
         assertTrue(stmt instanceof CreateIndexStatement);
         // 准备预期结果
         var manager = new TableManager();
@@ -38,7 +34,7 @@ public class CreateIndexExecutorTest extends TestCase {
         var fields = new ArrayList<BaseField>();
         fields.add(new VarcharField("LastName", 20, false, null));
         try {
-            manager.createTable(context, "testParseSingle$Person", fields, PATH + "testParseSingle.Person.db");
+            manager.createTable(context, "testParseSingle$Person", fields, "testParseSingle.Person.db");
         } catch (TableExistenceException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
@@ -53,13 +49,14 @@ public class CreateIndexExecutorTest extends TestCase {
             createExe.execute();
 
             assertTrue(field.get().indexed());
-            assertEquals("build/testParseSingle.Person.db$LastName", field.get().getIndexName());
+            assertEquals("data/index/testParseSingle$Person$LastName", field.get().getIndexName());
         } catch (TableExistenceException | IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
             fail();
         }
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
     }
 
     public void testParseMulti() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
@@ -71,11 +68,10 @@ public class CreateIndexExecutorTest extends TestCase {
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testParseMulti.__reserved__", fields);
-        fields.add(new VarcharField("LastName", 20, false, dummy));
-        fields.add(new IntField("ID", false, dummy));
+        fields.add(new VarcharField("LastName", 20, false, null));
+        fields.add(new IntField("ID", false, null));
         try {
-            manager.createTable(context, "testParseMulti$Person", fields, PATH + "testParseMulti.Person.db");
+            manager.createTable(context, "testParseMulti$Person", fields, "testParseMulti.Person.db");
         } catch (TableExistenceException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
@@ -94,12 +90,14 @@ public class CreateIndexExecutorTest extends TestCase {
 
             assertTrue(field1.get().indexed());
             assertFalse(field2.get().indexed());
-            assertEquals("build/testParseMulti.Person.db$LastName", field1.get().getIndexName());
+            assertEquals("data/index/testParseMulti$Person$LastName", field1.get().getIndexName());
         } catch (TableExistenceException | IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
             fail();
         }
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
     }
 }

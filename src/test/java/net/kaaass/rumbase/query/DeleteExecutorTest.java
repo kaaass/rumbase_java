@@ -23,8 +23,6 @@ import java.util.ArrayList;
 @Slf4j
 public class DeleteExecutorTest extends TestCase {
 
-    private static final String PATH = "build/";
-
     public void testDelete() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "DELETE FROM testDelete$Person WHERE LastName = 'KevinAxel'";
         // 解析
@@ -39,7 +37,7 @@ public class DeleteExecutorTest extends TestCase {
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "testDelete$Person", fields, PATH + "testDelete.Person.db");
+            manager.createTable(context, "testDelete$Person", fields, "data/table/testDelete.Person.db");
             id.createIndex();
             table = manager.getTable("testDelete$Person");
         } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
@@ -104,7 +102,9 @@ public class DeleteExecutorTest extends TestCase {
             fail();
         }
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
 
     }
 
@@ -122,7 +122,7 @@ public class DeleteExecutorTest extends TestCase {
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "testDeleteAll$Person", fields, PATH + "testDeleteAll.Person.db");
+            manager.createTable(context, "testDeleteAll$Person", fields, "data/table/testDeleteAll.Person.db");
             id.createIndex();
             table = manager.getTable("testDeleteAll$Person");
         } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
@@ -183,7 +183,9 @@ public class DeleteExecutorTest extends TestCase {
             fail();
         }
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
 
     }
 }

@@ -17,6 +17,7 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -85,6 +86,10 @@ public class Table {
      * @param fields    表的字段结构
      */
     public Table(@NonNull String tableName, @NonNull List<BaseField> fields) {
+        var file = new File("data/table/");
+        if (!file.exists() && !file.isDirectory()) {
+            file.mkdirs();
+        }
         this.recordStorage = RecordManager.fromFile("data/table", tableName + ".db");
         this.tableName = tableName;
         this.fields = fields;
@@ -146,7 +151,7 @@ public class Table {
             var next = in.readLong(JBBPByteOrder.BIG_ENDIAN);
             var fieldNum = in.readInt(JBBPByteOrder.BIG_ENDIAN);
             var fieldList = new ArrayList<BaseField>();
-            var table = new Table(name, fieldList);
+            var table = new Table(name, fieldList, recordStorage.getIdentifiedName().substring(4));
             for (int i = 0; i < fieldNum; i++) {
                 var f = BaseField.load(stream, table);
                 fieldList.add(f);

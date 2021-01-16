@@ -30,10 +30,8 @@ import static org.junit.Assert.assertArrayEquals;
 @Slf4j
 public class TableTest extends TestCase {
 
-    private static final String PATH = "build/";
-
     public void testLoad() throws IndexNotFoundException {
-        var prefix = PATH + "testLoad";
+        var prefix = "testLoad";
 
         var byteOS = new ByteArrayOutputStream();
         var out = new JBBPBitOutputStream(byteOS);
@@ -117,7 +115,7 @@ public class TableTest extends TestCase {
 
     Table createTestTable(String prefix) {
         var fieldList = new ArrayList<BaseField>();
-        var table = new Table(PATH + prefix + "Table", fieldList);
+        var table = new Table(prefix + "Table", fieldList);
 
         // 增加测试表字段
         var intField = new IntField(prefix + "age", false, table);

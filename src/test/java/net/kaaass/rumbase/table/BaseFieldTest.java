@@ -23,8 +23,6 @@ import static org.junit.Assert.assertArrayEquals;
 @Slf4j
 public class BaseFieldTest extends TestCase {
 
-    private static final String PATH = "build/";
-
     public void testCheckStr() {
 
         // test int
@@ -198,7 +196,7 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testDoubleCreateIndex() {
-        var dummy = new Table(PATH + "testCreateIndexTable", new ArrayList<>());
+        var dummy = new Table("testCreateIndexTable", new ArrayList<>());
 
         BaseField field = new IntField("testCreateIndexField", false, dummy);
         try {
@@ -217,7 +215,7 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testInsertIndex() {
-        var dummy = new Table(PATH + "testInsertIndexTable", new ArrayList<>());
+        var dummy = new Table("testInsertIndexTable", new ArrayList<>());
 
         var intField = new IntField("testInsertIndexInt", false, dummy);
 
@@ -309,7 +307,8 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testQueryIndex() {
-        var dummy = new Table(PATH + "testQueryIndexTable", new ArrayList<>());
+
+        var dummy = new Table("testQueryIndexTable", new ArrayList<>());
 
         var intField = new IntField("testQueryIndexInt", false, dummy);
 

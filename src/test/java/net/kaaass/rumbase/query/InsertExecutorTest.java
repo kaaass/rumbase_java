@@ -23,8 +23,6 @@ import java.util.ArrayList;
 @Slf4j
 public class InsertExecutorTest extends TestCase {
 
-    private static final String PATH = "build/";
-
     public void testInsertColumnValue() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "INSERT INTO Persons (Persons.LastName, Address) VALUES ('Wilson', 'Champs-Elysees')";
         // 解析
@@ -39,7 +37,7 @@ public class InsertExecutorTest extends TestCase {
         fields.add(new VarcharField("Address", 255, false, null));
         Table table = null;
         try {
-            manager.createTable(context, "Persons", fields, PATH + "testInsertColumnValue.Persons.db");
+            manager.createTable(context, "Persons", fields, "testInsertColumnValue.Persons.db");
             lastName.createIndex();
             table = manager.getTable("Persons");
         } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
@@ -69,7 +67,9 @@ public class InsertExecutorTest extends TestCase {
             fail();
         }
 
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata$key").deleteOnExit();
+
 
     }
 
@@ -87,7 +87,7 @@ public class InsertExecutorTest extends TestCase {
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "Person", fields, PATH + "testInsertValue.Person.db");
+            manager.createTable(context, "Person", fields, "testInsertValue.Person.db");
             id.createIndex();
             table = manager.getTable("Person");
         } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
@@ -96,7 +96,8 @@ public class InsertExecutorTest extends TestCase {
         }
 
         assertNotNull(table);
-        new File("metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
+        new File("data/metadata.db").deleteOnExit();
 
     }
 }
