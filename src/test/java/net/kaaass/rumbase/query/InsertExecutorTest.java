@@ -34,10 +34,9 @@ public class InsertExecutorTest extends TestCase {
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testInsertColumnValue.__reserved__", fields);
-        var lastName = new VarcharField("LastName", 20, false, dummy);
+        var lastName = new VarcharField("LastName", 20, false, null);
         fields.add(lastName);
-        fields.add(new VarcharField("Address", 255, false, dummy));
+        fields.add(new VarcharField("Address", 255, false, null));
         Table table = null;
         try {
             manager.createTable(context, "Persons", fields, PATH + "testInsertColumnValue.Persons.db");
@@ -83,9 +82,8 @@ public class InsertExecutorTest extends TestCase {
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testInsertValue.__reserved__", fields);
-        var id = new IntField("ID", false, dummy);
-        fields.add(new VarcharField("LastName", 20, false, dummy));
+        var id = new IntField("ID", false, null);
+        fields.add(new VarcharField("LastName", 20, false, null));
         fields.add(id);
         Table table = null;
         try {

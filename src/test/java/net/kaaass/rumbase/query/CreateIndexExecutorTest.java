@@ -31,8 +31,7 @@ public class CreateIndexExecutorTest extends TestCase {
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testParseSingle.__reserved__", fields);
-        fields.add(new VarcharField("LastName", 20, false, dummy));
+        fields.add(new VarcharField("LastName", 20, false, null));
         try {
             manager.createTable(context, "testParseSingle$Person", fields, PATH + "testParseSingle.Person.db");
         } catch (TableExistenceException e) {
@@ -49,7 +48,7 @@ public class CreateIndexExecutorTest extends TestCase {
             createExe.execute();
 
             assertTrue(field.get().indexed());
-            assertEquals("PersonIndex", field.get().getIndexName());
+            assertEquals("build/testParseSingle.Person.db$LastName", field.get().getIndexName());
         } catch (TableExistenceException | IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
             fail();
@@ -90,7 +89,7 @@ public class CreateIndexExecutorTest extends TestCase {
 
             assertTrue(field1.get().indexed());
             assertFalse(field2.get().indexed());
-            assertEquals("PersonIndex", field1.get().getIndexName());
+            assertEquals("build/testParseMulti.Person.db$LastName", field1.get().getIndexName());
         } catch (TableExistenceException | IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
             fail();
