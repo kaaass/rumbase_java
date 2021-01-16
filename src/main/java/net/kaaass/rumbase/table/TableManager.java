@@ -104,7 +104,9 @@ public class TableManager {
 
         var data = metaTable.readAll(context);
         var map = new HashMap<String, String>();
-        data.stream().map(row -> map.put((String) row.get(0), (String) row.get(1)));
+        for (var row: data) {
+            map.put((String) row.get(0), (String) row.get(1));
+        }
 
         if (!map.containsKey("table_num")) {
             metaTable.insert(context, new ArrayList<>(){{

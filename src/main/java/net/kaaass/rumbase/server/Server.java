@@ -85,7 +85,7 @@ public class Server {
      */
     public void run() {
         // 监听端口
-        try (ServerSocket server = new ServerSocket(8888)) {
+        try (ServerSocket server = new ServerSocket(8889)) {
             log.info("开始监听 {}", server.getLocalSocketAddress());
 
             server.setSoTimeout(1000);
