@@ -3,6 +3,11 @@ package net.kaaass.rumbase.page;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.mock.MockPageStorage;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author XuanLaoYee
  */
@@ -20,6 +25,17 @@ public class PageManager {
      * @throws FileException 若文件不存在则创建，创建过程中出现错误会抛出错误
      */
     public static PageStorage fromFile(String filepath) throws FileException {
-        return new RumPageStorage(filepath);
+        PageStorage storage = new RumPageStorage(filepath);
+        storages.add(storage);
+        return storage;
     }
+    /**
+     * 取数据库文件生成文件管理的对象
+     */
+    public static void flush(){
+        for(PageStorage storage : storages){
+            storage.flush();
+        }
+    }
+    public static List<PageStorage> storages = new ArrayList<>();
 }

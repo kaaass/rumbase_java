@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.index.btree;
 
+import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.Index;
 import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.index.exception.ItemInNextPageException;
@@ -19,6 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 /**
  * @author 无索魏
  */
+@Slf4j
 public class BPlusTreeIndex implements Index {
 //    Page root;
     PageStorage pageStorage;
@@ -1175,7 +1177,7 @@ public class BPlusTreeIndex implements Index {
                         }
                         return null;
                     } else {
-                        System.out.println("nextPage*****************");
+                        log.debug("nextPage, num = {}", nextPageNum);
                         //unpin
                         currentPage.unpin();
                         currentPage = this.bPlusTreeIndex.pageStorage.get(nextPageNum);

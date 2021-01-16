@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
 import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -60,6 +61,7 @@ public class IRecordStorageTest extends TestCase {
     }
 
     public void testMetadata() {
+        new File(PATH + "test_metadata").deleteOnExit();
         var storage = RecordManager.fromFile(PATH + "test_metadata");
         var context = TransactionContext.empty();
 
