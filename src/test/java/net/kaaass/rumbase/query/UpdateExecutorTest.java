@@ -101,14 +101,14 @@ public class UpdateExecutorTest extends TestCase {
             assertEquals(2, data.size());
 
             assertEquals(3, data.get(0).size());
-            assertEquals("Wilson", (String) data.get(0).get(0));
-            assertEquals("Nanjing", (String) data.get(0).get(1));
-            assertEquals("Zhongshan 23", (String) data.get(0).get(2));
+            assertEquals("KAAAsS", (String) data.get(0).get(0));
+            assertEquals("WenZhou", (String) data.get(0).get(1));
+            assertEquals("Zhongshan 78", (String) data.get(0).get(2));
 
             assertEquals(3, data.get(1).size());
-            assertEquals("KAAAsS", (String) data.get(1).get(0));
-            assertEquals("WenZhou", (String) data.get(1).get(1));
-            assertEquals("Zhongshan 78", (String) data.get(1).get(2));
+            assertEquals("Wilson", (String) data.get(1).get(0));
+            assertEquals("Nanjing", (String) data.get(1).get(1));
+            assertEquals("Zhongshan 23", (String) data.get(1).get(2));
 
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
