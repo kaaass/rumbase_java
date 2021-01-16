@@ -24,7 +24,7 @@ public class UpdateExecutorTest extends TestCase {
 
     private static final String PATH = "build/";
 
-    public void testUpdateWithCondition() throws SqlSyntaxException {
+    public void testUpdateWithCondition() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "UPDATE testUpdateWithCondition$Person SET Address = 'Zhongshan 23', City = 'Nanjing'\n" +
                 "WHERE LastName = 'Wilson'";
         // 解析
@@ -44,7 +44,7 @@ public class UpdateExecutorTest extends TestCase {
             manager.createTable(context, "testUpdateWithCondition$Person", fields, PATH + "testUpdateWithCondition.Person.db");
             lastName.createIndex();
             table = manager.getTable("testUpdateWithCondition$Person");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -119,7 +119,7 @@ public class UpdateExecutorTest extends TestCase {
 
     }
 
-    public void testUpdateWithoutCondition() throws SqlSyntaxException {
+    public void testUpdateWithoutCondition() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "UPDATE testUpdateWithoutCondition$Person SET Address = 'Zhongshan 23', City = 'Nanjing'";
         // 解析
         var stmt = SqlParser.parseStatement(sql);

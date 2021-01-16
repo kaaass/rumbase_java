@@ -25,7 +25,7 @@ public class DeleteExecutorTest extends TestCase {
 
     private static final String PATH = "build/";
 
-    public void testDelete() throws SqlSyntaxException {
+    public void testDelete() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "DELETE FROM testDelete$Person WHERE LastName = 'KevinAxel'";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
@@ -42,7 +42,7 @@ public class DeleteExecutorTest extends TestCase {
             manager.createTable(context, "testDelete$Person", fields, PATH + "testDelete.Person.db");
             id.createIndex();
             table = manager.getTable("testDelete$Person");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -108,7 +108,7 @@ public class DeleteExecutorTest extends TestCase {
 
     }
 
-    public void testDeleteAll() throws SqlSyntaxException {
+    public void testDeleteAll() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "DELETE FROM testDeleteAll$Person ";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
@@ -125,7 +125,7 @@ public class DeleteExecutorTest extends TestCase {
             manager.createTable(context, "testDeleteAll$Person", fields, PATH + "testDeleteAll.Person.db");
             id.createIndex();
             table = manager.getTable("testDeleteAll$Person");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }

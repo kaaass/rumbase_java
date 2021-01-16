@@ -234,6 +234,27 @@ public abstract class BaseField{
         index = Index.createEmptyIndex(indexName);
     }
 
+
+    /**
+     * 创建索引
+     *
+     * @throws IndexAlreadyExistException 索引已存在
+     */
+    public void createIndex(String path) throws IndexAlreadyExistException {
+        var delimiter = "$";
+
+        var indexDir = new File(path);
+        if (!indexDir.exists() && !indexDir.isDirectory()) {
+            indexDir.mkdirs();
+        }
+
+        indexName = path + parentTable.getTableName() + delimiter + name;
+
+        index = Index.createEmptyIndex(indexName);
+    }
+
+
+
     /**
      * 向索引插入一个键值对
      * @param value 值对象

@@ -26,7 +26,7 @@ public class SelectExecutorTest extends TestCase {
 
     private static final String PATH = "build/";
 
-    public void testSelect() throws SqlSyntaxException {
+    public void testSelect() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "SELECT distinct name, testSelect$account.ID, testSelect$account.balance \n" +
                 "from testSelect$account join testSelect$payment on testSelect$account.ID = testSelect$payment.ID\n" +
                 "WHERE testSelect$account.ID > 1 and (testSelect$payment.type = 'N' or testSelect$payment.type = 'T') \n" +
@@ -49,11 +49,10 @@ public class SelectExecutorTest extends TestCase {
             manager.createTable(context, "testSelect$account", accountFields, PATH + "testSelect.account.db");
             id.createIndex();
             account = manager.getTable("testSelect$account");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }
-
         assertNotNull(account);
         try {
             account.insert(context, new ArrayList<>() {{
@@ -113,7 +112,7 @@ public class SelectExecutorTest extends TestCase {
             manager.createTable(context, "testSelect$payment", paymentFields, PATH + "testSelect.payment.db");
             paymentId.createIndex();
             payment = manager.getTable("testSelect$payment");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }

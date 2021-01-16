@@ -76,6 +76,11 @@ public class VarcharField extends BaseField {
             return 0;
         }
 
+        if (str.startsWith(DELIMIT) && str.endsWith(DELIMIT)) {
+            var substr = str.substring(1, str.length() - 1);
+            return substr.hashCode();
+        }
+
         return str.hashCode();
     }
 

@@ -345,7 +345,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
                     currentContext);
             executor.execute();
             say("成功创建表\n");
-        } catch (ArgumentException | TableConflictException | TableExistenceException e) {
+        } catch (ArgumentException | TableConflictException | TableExistenceException | RecordNotFoundException e) {
             log.debug("会话 {} 执行语句异常", sessionId, e);
             say(e);
         } catch (Exception e) {

@@ -4,7 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.parse.stmt.CreateTableStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
-import net.kaaass.rumbase.table.Table;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -30,7 +30,7 @@ public class CreateTableExecutor implements Executable {
     private final TransactionContext context;
 
     @Override
-    public void execute() throws TableExistenceException, TableConflictException, ArgumentException {
+    public void execute() throws TableExistenceException, TableConflictException, ArgumentException, RecordNotFoundException {
         var tableName = statement.getTableName();
         var baseFields = new ArrayList<BaseField>();
         boolean nullable;

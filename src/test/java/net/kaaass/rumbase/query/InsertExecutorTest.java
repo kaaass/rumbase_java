@@ -25,7 +25,7 @@ public class InsertExecutorTest extends TestCase {
 
     private static final String PATH = "build/";
 
-    public void testInsertColumnValue() throws SqlSyntaxException {
+    public void testInsertColumnValue() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "INSERT INTO Persons (Persons.LastName, Address) VALUES ('Wilson', 'Champs-Elysees')";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
@@ -42,7 +42,7 @@ public class InsertExecutorTest extends TestCase {
             manager.createTable(context, "Persons", fields, PATH + "testInsertColumnValue.Persons.db");
             lastName.createIndex();
             table = manager.getTable("Persons");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -73,7 +73,7 @@ public class InsertExecutorTest extends TestCase {
 
     }
 
-    public void testInsertValue() throws SqlSyntaxException {
+    public void testInsertValue() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "INSERT INTO stu VALUES (20200101, 'KAAAsS', true, 3.9)";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
@@ -90,7 +90,7 @@ public class InsertExecutorTest extends TestCase {
             manager.createTable(context, "Person", fields, PATH + "testInsertValue.Person.db");
             id.createIndex();
             table = manager.getTable("Person");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }
