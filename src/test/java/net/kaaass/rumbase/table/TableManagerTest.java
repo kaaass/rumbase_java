@@ -2,6 +2,10 @@ package net.kaaass.rumbase.table;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
+import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.field.FloatField;
@@ -23,7 +27,7 @@ public class TableManagerTest extends TestCase {
 
     private static final String PATH = "build/";
 
-    public void testShowTables() {
+    public void testShowTables() throws IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var prefix = PATH + "testShowTables";
 
         var tbm = new TableManager();
@@ -41,7 +45,7 @@ public class TableManagerTest extends TestCase {
 
         try {
             tbm.createTable(TransactionContext.empty(), prefix + "Table", fieldList, prefix + ".db");
-        } catch (TableExistenceException e) {
+        } catch (TableExistenceException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             e.printStackTrace();
             fail();
         }
@@ -53,7 +57,7 @@ public class TableManagerTest extends TestCase {
         new File("metadata.db").deleteOnExit();
     }
 
-    public void testCreateTable() {
+    public void testCreateTable() throws IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var prefix = PATH + "testCreateTable";
 
         var tbm = new TableManager();
@@ -80,7 +84,7 @@ public class TableManagerTest extends TestCase {
 
     }
 
-    public void testGetTable() {
+    public void testGetTable() throws IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var prefix = PATH + "testGetTable";
 
         var tbm = new TableManager();

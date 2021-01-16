@@ -6,8 +6,11 @@ import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.stmt.CreateIndexStatement;
+import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.Table;
 import net.kaaass.rumbase.table.TableManager;
+import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.field.IntField;
@@ -22,10 +25,12 @@ public class CreateIndexExecutorTest extends TestCase {
 
     private static final String PATH = "build/";
 
-    public void testParseSingle() throws SqlSyntaxException {
+    public void testParseSingle() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "CREATE INDEX PersonIndex ON testParseSingle$Person (LastName) ;";
         // 解析
-        var stmt = SqlParser.parseStatement(sql);
+        var stmt = SqlParser.parseStatement(sql);catch ( e) {
+            e.printStackTrace();
+        }
         assertTrue(stmt instanceof CreateIndexStatement);
         // 准备预期结果
         var manager = new TableManager();
@@ -34,7 +39,7 @@ public class CreateIndexExecutorTest extends TestCase {
         fields.add(new VarcharField("LastName", 20, false, null));
         try {
             manager.createTable(context, "testParseSingle$Person", fields, PATH + "testParseSingle.Person.db");
-        } catch (TableExistenceException e) {
+        } catch (TableExistenceException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }
@@ -57,7 +62,7 @@ public class CreateIndexExecutorTest extends TestCase {
         new File("metadata.db").deleteOnExit();
     }
 
-    public void testParseMulti() throws SqlSyntaxException {
+    public void testParseMulti() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "CREATE INDEX PersonIndex ON testParseMulti$Person (LastName, ID) ;";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
@@ -71,7 +76,7 @@ public class CreateIndexExecutorTest extends TestCase {
         fields.add(new IntField("ID", false, dummy));
         try {
             manager.createTable(context, "testParseMulti$Person", fields, PATH + "testParseMulti.Person.db");
-        } catch (TableExistenceException e) {
+        } catch (TableExistenceException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
             fail();
         }
