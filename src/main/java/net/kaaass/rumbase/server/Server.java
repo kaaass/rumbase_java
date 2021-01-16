@@ -3,9 +3,14 @@ package net.kaaass.rumbase.server;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.page.PageManager;
 import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.TableManager;
+import net.kaaass.rumbase.table.exception.TableConflictException;
+import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.transaction.TransactionManager;
 import net.kaaass.rumbase.transaction.TransactionManagerImpl;
 
@@ -61,7 +66,12 @@ public class Server {
         // 初始化表管理器
         log.info("初始化表管理器...");
         // TODO 先恢复metadata
-        tableManager = new TableManager();
+        try {
+            tableManager = new TableManager();
+        } catch (TableExistenceException | TableConflictException | RecordNotFoundException | ArgumentException | IndexAlreadyExistException e) {
+            log.error("初始化表管理器失败", e);
+            System.exit(1);
+        }
         // 初始化线程池
         log.info("初始化线程池...");
         var namedThreadFactory = Executors.defaultThreadFactory();

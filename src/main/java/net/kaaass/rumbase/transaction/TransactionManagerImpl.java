@@ -61,7 +61,7 @@ public class TransactionManagerImpl implements TransactionManager {
      * 事务管理器
      */
     public TransactionManagerImpl() throws IOException, FileException {
-        this("xid.log");
+        this("data/xid.log");
     }
 
     /**
