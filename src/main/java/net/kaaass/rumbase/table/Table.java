@@ -4,13 +4,11 @@ import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.*;
-import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
-import net.kaaass.rumbase.record.mock.MockRecordStorage;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
@@ -86,8 +84,7 @@ public class Table {
      * @param fields    表的字段结构
      */
     public Table(@NonNull String tableName, @NonNull List<BaseField> fields) {
-        // fixme remove mock
-        this.recordStorage = MockRecordStorage.ofFile(tableName);
+        this.recordStorage = RecordManager.fromFile(tableName);
         this.tableName = tableName;
         this.fields = fields;
         this.next = -1;
@@ -104,8 +101,7 @@ public class Table {
      * @param fields    表的字段结构
      */
     public Table(@NonNull String tableName, @NonNull List<BaseField> fields, String path) {
-        // fixme remove mock
-        this.recordStorage = MockRecordStorage.ofFile(path);
+        this.recordStorage = RecordManager.fromFile(path);
         this.tableName = tableName;
         this.fields = fields;
         this.next = -1;
