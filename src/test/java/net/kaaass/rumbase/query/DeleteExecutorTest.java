@@ -34,9 +34,8 @@ public class DeleteExecutorTest extends TestCase {
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testDelete.__reserved__", fields);
-        var id = new IntField("ID", false, dummy);
-        fields.add(new VarcharField("LastName", 20, false, dummy));
+        var id = new IntField("ID", false, null);
+        fields.add(new VarcharField("LastName", 20, false, null));
         fields.add(id);
         Table table = null;
         try {
@@ -118,9 +117,8 @@ public class DeleteExecutorTest extends TestCase {
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testDeleteAll.__reserved__", fields);
-        var id = new IntField("ID", false, dummy);
-        fields.add(new VarcharField("LastName", 20, false, dummy));
+        var id = new IntField("ID", false, null);
+        fields.add(new VarcharField("LastName", 20, false, null));
         fields.add(id);
         Table table = null;
         try {

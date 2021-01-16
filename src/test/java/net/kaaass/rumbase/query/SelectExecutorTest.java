@@ -106,10 +106,9 @@ public class SelectExecutorTest extends TestCase {
 
         // 创建payment表
         var paymentFields = new ArrayList<BaseField>();
-        var paymentDummy = new Table("testSelect.__reserved__", paymentFields);
-        var paymentId = new IntField("ID", false, paymentDummy);
+        var paymentId = new IntField("ID", false, null);
         paymentFields.add(paymentId);
-        paymentFields.add(new VarcharField("type", 1, false, paymentDummy));
+        paymentFields.add(new VarcharField("type", 1, false, null));
         Table payment = null;
         try {
             manager.createTable(context, "testSelect$payment", paymentFields, PATH + "testSelect.payment.db");
