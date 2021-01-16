@@ -47,7 +47,13 @@ public class MvccRecordStorage implements IRecordStorage {
         writePayload(data, rawData);
         // 不用检查版本跳跃的原因是，插入本身不用；更新操作必定先删除，而删除检查
         // 插入记录
-        return storage.insertItem(txContext, data);
+        try {
+            return storage.insertItem(txContext, data);
+        } catch (IOException | FileException e) {
+            e.printStackTrace();
+            // FIXME
+            return -1;
+        }
     }
 
     @Override
@@ -114,6 +120,9 @@ public class MvccRecordStorage implements IRecordStorage {
             storage.updateItemByUuid(txContext, recordId, data);
         } catch (UUIDException e) {
             throw new RecordNotFoundException(1, e);
+        } catch (IOException | FileException e) {
+            e.printStackTrace();
+            // FIXME
         }
     }
 
@@ -222,7 +231,7 @@ public class MvccRecordStorage implements IRecordStorage {
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext, byte[] metadata) throws IOException, FileException {
+    public void setMetadata(TransactionContext txContext, byte[] metadata) {
         // TODO 申请全表锁，用this锁代替
         // 主要逻辑：为了保证事务性，使用UUID数组，结合可见性选择对应的记录。倒序记录便于存储。
         synchronized (this) {
@@ -233,7 +242,12 @@ public class MvccRecordStorage implements IRecordStorage {
             var newMetadata = new byte[oldMetadata.length + 8];
             System.arraycopy(oldMetadata, 0, newMetadata, 8, oldMetadata.length);
             MvccUtil.writeLong(newMetadata, 0, newId);
-            storage.setMetadata(txContext, newMetadata);
+            try {
+                storage.setMetadata(txContext, newMetadata);
+            } catch (IOException | FileException e) {
+                e.printStackTrace();
+                // FIXME
+            }
             // 缓存取消
             this.metadataCache = null;
         }
