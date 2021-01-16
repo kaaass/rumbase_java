@@ -20,4 +20,14 @@ public interface ISqlStatementVisitor<T> {
     T visit(CreateIndexStatement statement);
 
     T visit(CreateTableStatement statement);
+
+    T visit(StartTransactionStatement statement);
+
+    T visit(CommitStatement statement);
+
+    T visit(RollbackStatement statement);
+
+    T visit(ExitStatement statement);
+
+    T visit(ShutdownStatement statement);
 }

@@ -4,12 +4,14 @@ import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.exception.RumbaseException;
+import net.kaaass.rumbase.exception.RumbaseRuntimeException;
 import net.kaaass.rumbase.parse.ISqlStatement;
 import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.stmt.*;
 import net.kaaass.rumbase.transaction.TransactionContext;
+import net.kaaass.rumbase.transaction.TransactionIsolation;
 
 import java.io.*;
 import java.net.Socket;
@@ -59,20 +61,26 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         log.debug("会话 {} 解析SQL语句: {}", sessionId, stmt);
         say("Parsed: " + stmt.toString() + "\n");
         // 执行SQL
-        return stmt.accept(this);
+        try {
+            return stmt.accept(this);
+            // TODO 自动回滚事务、SQL日志
+        } catch (RumbaseRuntimeException e) {
+            log.info("会话 {} 发生错误", sessionId, e);
+            say(e);
+            return false;
+        } catch (Exception e) {
+            log.warn("会话 {} 运行SQL语句出现未知异常，输入：{}", sessionId, sql, e);
+            say("发生未知异常，请检查服务器日志");
+            return false;
+        }
     }
 
     @Override
     public void run() {
-        // 准备读写
-        try {
-            scanner = new Scanner(new BufferedInputStream(connection.getInputStream()));
-            writer = new OutputStreamWriter(new BufferedOutputStream(connection.getOutputStream()));
-        } catch (IOException e) {
-            log.info("无法处理IO，会话建立失败", e);
-        }
-        // 打印欢迎信息
-        say("Welcome to Rumbase DMBS\n\n");
+        // 加载
+        onInit();
+        // 加载成功，加入活跃会话
+        server.getActiveSession().add(this);
         // 进入REPL模式
         var exit = false;
         while (!exit && !connection.isClosed()) {
@@ -103,11 +111,44 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
     }
 
     /**
+     * 当会话开始加载
+     */
+    public void onInit() {
+        // 准备读写
+        try {
+            scanner = new Scanner(new BufferedInputStream(connection.getInputStream()));
+            writer = new OutputStreamWriter(new BufferedOutputStream(connection.getOutputStream()));
+        } catch (IOException e) {
+            log.info("无法处理IO，会话建立失败", e);
+        }
+        // 打印欢迎信息
+        say("Welcome to Rumbase DMBS\n\n");
+    }
+
+    /**
      * 当会话被关闭
      */
     public void onClose() {
-        log.info("关闭会话 {} ...", sessionId);
-        // TODO
+        log.info("正在关闭会话 {} ...", sessionId);
+        // 提交活动事务
+        if (currentContext != null) {
+            say("正在提交当前事务...\n");
+            try {
+                currentContext.commit();
+            } catch (RumbaseRuntimeException e) {
+                log.warn("退出会话 {} 时提交事务失败", sessionId, e);
+                say(e);
+            }
+        }
+        // 删除活跃会话
+        server.getActiveSession().remove(this);
+        // 退出成功
+        say("Bye\n");
+        try {
+            writer.close();
+            scanner.close();
+        } catch (IOException ignore) {
+        }
     }
 
     public void say(CharSequence chars) {
@@ -119,6 +160,10 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
     }
 
     private void say(RumbaseException e) {
+        say(e.getMessage() + "\n");
+    }
+
+    private void say(RumbaseRuntimeException e) {
         say(e.getMessage() + "\n");
     }
 
@@ -161,5 +206,57 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
     public Boolean visit(CreateTableStatement statement) {
         // TODO
         return false;
+    }
+
+    @Override
+    public Boolean visit(StartTransactionStatement statement) {
+        if (currentContext != null) {
+            say("请先提交当前事务！\n");
+            return false;
+        }
+        // 创建事务
+        // TODO 默认使用可重复读隔离度，应该从配置读取
+        currentContext = server.getTransactionManager().createTransactionContext(TransactionIsolation.REPEATABLE_READ);
+        say("成功创建事务" + currentContext.getXid() + "\n");
+        return false;
+    }
+
+    @Override
+    public Boolean visit(CommitStatement statement) {
+        if (currentContext == null) {
+            say("当前会话内无事务\n");
+            return false;
+        }
+        // 提交事务
+        currentContext.commit();
+        say("成功提交事务" + currentContext.getXid() + "\n");
+        currentContext = null;
+        return false;
+    }
+
+    @Override
+    public Boolean visit(RollbackStatement statement) {
+        if (currentContext == null) {
+            say("当前会话内无事务\n");
+            return false;
+        }
+        // 回滚事务
+        currentContext.rollback();
+        say("成功回滚事务" + currentContext.getXid() + "\n");
+        currentContext = null;
+        return false;
+    }
+
+    @Override
+    public Boolean visit(ExitStatement statement) {
+        say("正在关闭会话...\n");
+        return true;
+    }
+
+    @Override
+    public Boolean visit(ShutdownStatement statement) {
+        say("正在关闭服务器...\n");
+        System.exit(0);
+        return true;
     }
 }
