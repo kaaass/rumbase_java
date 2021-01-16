@@ -23,7 +23,7 @@ import java.util.Locale;
  */
 public class IntField extends BaseField {
 
-    public IntField(@NonNull String name, boolean nullable, @NonNull Table parentTable) {
+    public IntField(@NonNull String name, boolean nullable, Table parentTable) {
         super(name, FieldType.INT, nullable, parentTable);
     }
 
