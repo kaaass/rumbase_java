@@ -5,6 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.*;
 import net.kaaass.rumbase.index.Pair;
+import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
@@ -135,7 +136,6 @@ public class Table {
 
     public static Table load(IRecordStorage recordStorage) {
 
-        // fixme context
         var context = TransactionContext.empty();
         var meta = recordStorage.getMetadata(context);
         var stream = new ByteArrayInputStream(meta);
@@ -149,14 +149,12 @@ public class Table {
             var table = new Table(name, fieldList);
             for (int i = 0; i < fieldNum; i++) {
                 var f = BaseField.load(stream, table);
-                if (f != null) {
-                    fieldList.add(f);
-                }
+                fieldList.add(f);
             }
             table.next = next;
             table.status = TableStatus.valueOf(status);
             return table;
-        } catch (IOException e) {
+        } catch (IOException | IndexNotFoundException e) {
             e.printStackTrace();
         }
         return null;
@@ -289,9 +287,9 @@ public class Table {
             try {
                 return Optional.of(parseEntry(bytes.get()));
             } catch (IOException e) {
-                // fixme 不该出现这样的事情（吧）
                 // 查询到的entry和当前表冲突
-                throw new TableConflictException(3);            }
+                throw new TableConflictException(3);
+            }
         } else {
             return Optional.empty();
         }

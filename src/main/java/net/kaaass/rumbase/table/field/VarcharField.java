@@ -55,7 +55,6 @@ public class VarcharField extends BaseField {
                 out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
             }
             out.writeInt(limit, JBBPByteOrder.BIG_ENDIAN);
-            // todo （字段约束）
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -164,7 +163,6 @@ public class VarcharField extends BaseField {
             }
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
             throw new RuntimeException(e);
         }
     }
@@ -187,7 +185,6 @@ public class VarcharField extends BaseField {
             }
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
             throw new RuntimeException(e);
         } catch (ClassCastException e){
             throw new TableConflictException(1);
