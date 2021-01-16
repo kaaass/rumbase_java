@@ -46,19 +46,18 @@ public class InsertExecutor implements Executable{
         var insertArray = new ArrayList<String>();
         boolean ok;
 
-        for (BaseField f : table.getFields()) {
+        for (int j = 0; j < len; j++) {
+            var insertField = columns.get(j);
             ok = false;
-            for (int j = 0; j < len; j++) {
-                var insertField = columns.get(j);
+            for (BaseField f : table.getFields()) {
                 if (f.getName().equals(insertField.getFieldName())) {
 
                     insertArray.add(statement.getValues().get(j));
                     ok = true;
-
                 }
             }
             if (!ok) {
-                insertArray.add("");
+                throw new TableConflictException(1);
             }
         }
 

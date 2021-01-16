@@ -40,11 +40,10 @@ public class SelectExecutorTest extends TestCase {
 
         // 创建account表
         var accountFields = new ArrayList<BaseField>();
-        var accountDummy = new Table("testSelect.__reserved__", accountFields);
-        var id = new IntField("ID", false, accountDummy);
+        var id = new IntField("ID", false, null);
         accountFields.add(id);
-        accountFields.add(new VarcharField("name", 20, false, accountDummy));
-        accountFields.add(new FloatField("balance", false, accountDummy));
+        accountFields.add(new VarcharField("name", 20, false, null));
+        accountFields.add(new FloatField("balance", false, null));
         Table account = null;
         try {
             manager.createTable(context, "testSelect$account", accountFields, PATH + "testSelect.account.db");
