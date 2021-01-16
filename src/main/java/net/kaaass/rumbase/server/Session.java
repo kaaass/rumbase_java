@@ -320,7 +320,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         // 执行语句
         try {
             var executor = new CreateIndexExecutor(statement,
-                    server.getTableManager());
+                    server.getTableManager(), currentContext);
             executor.execute();
             say("成功创建索引\n");
         } catch (TableExistenceException | IndexAlreadyExistException e) {

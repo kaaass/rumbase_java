@@ -45,7 +45,7 @@ public class CreateIndexExecutorTest extends TestCase {
             assertTrue(field.isPresent());
             assertFalse(field.get().indexed());
 
-            var createExe = new CreateIndexExecutor((CreateIndexStatement) stmt, manager);
+            var createExe = new CreateIndexExecutor((CreateIndexStatement) stmt, manager, context);
             createExe.execute();
 
             assertTrue(field.get().indexed());
@@ -85,7 +85,7 @@ public class CreateIndexExecutorTest extends TestCase {
             assertTrue(field2.isPresent());
             assertFalse(field2.get().indexed());
 
-            var createExe = new CreateIndexExecutor((CreateIndexStatement) stmt, manager);
+            var createExe = new CreateIndexExecutor((CreateIndexStatement) stmt, manager, context);
             createExe.execute();
 
             assertTrue(field1.get().indexed());

@@ -134,7 +134,7 @@ public class Table {
         recordStorage.setMetadata(context, byteOutStream.toByteArray());
     }
 
-    public static Table load(IRecordStorage recordStorage) throws IndexNotFoundException {
+    public static Table load(IRecordStorage recordStorage) {
 
         var context = TransactionContext.empty();
         var meta = recordStorage.getMetadata(context);
@@ -154,10 +154,9 @@ public class Table {
             table.next = next;
             table.status = TableStatus.valueOf(status);
             return table;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | IndexNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**
