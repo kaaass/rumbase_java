@@ -2,6 +2,7 @@ package net.kaaass.rumbase.query;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.stmt.InsertStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.table.TableManager;
@@ -34,7 +35,13 @@ public class InsertExecutor implements Executable{
         var table = manager.getTable(statement.getTableName());
 
         var columns = statement.getColumns();
-        // FIXME columns 为空默认填写表所有字段
+        if (columns == null || columns.isEmpty()) {
+            if (columns == null) {
+                columns = new ArrayList<>();
+            }
+            var finalColumns = columns;
+            table.getFields().forEach(f -> finalColumns.add(new ColumnIdentifier(table.getTableName(), f.getName())));
+        }
         var len = columns.size();
         var insertArray = new ArrayList<String>();
         boolean ok;
