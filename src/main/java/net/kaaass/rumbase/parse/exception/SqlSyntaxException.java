@@ -24,6 +24,10 @@ public class SqlSyntaxException extends RumbaseException {
         super(5001, subId, REASONS.get(subId));
     }
 
+    public SqlSyntaxException(int subId, String subReason) {
+        super(5001, subId, REASONS.get(subId) + "：" + subReason);
+    }
+
     public SqlSyntaxException(int subId, Throwable e) {
         super(5001, subId, REASONS.get(subId), e);
     }
