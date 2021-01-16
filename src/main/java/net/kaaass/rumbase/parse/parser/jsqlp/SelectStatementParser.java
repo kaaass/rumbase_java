@@ -67,10 +67,7 @@ public class SelectStatementParser implements JsqlpStatementParser {
         if (stmt.getJoins() != null) {
             joins = stmt.getJoins().stream()
                     .map(join -> {
-                        ConditionExpression joinOn = null;
-                        if (join.getOnExpression() != null) {
-                            joinOn = new ConditionExpression(join.getOnExpression(), tableName);
-                        }
+                        ConditionExpression joinOn = joinOn = new ConditionExpression(join.getOnExpression(), tableName);
                         var table = getTableFromItem(join.getRightItem());
                         var result = new SelectStatement.JoinTable(table, joinOn);
                         result.setOuter(join.isOuter());
@@ -87,7 +84,7 @@ public class SelectStatementParser implements JsqlpStatementParser {
         // 解析where
         ConditionExpression where = null;
         if (stmt.getWhere() != null) {
-            where = new ConditionExpression(stmt.getWhere(), "");
+            where = new ConditionExpression(stmt.getWhere(), tableName);
         }
         // 解析orderBy
         ColumnIdentifier[] columnIdentifiers = new ColumnIdentifier[1];
@@ -95,12 +92,12 @@ public class SelectStatementParser implements JsqlpStatementParser {
 
             @Override
             public void visit(Column column) {
-                columnIdentifiers[0] = new ColumnIdentifier(column.getTable().getName(), column.getColumnName());
+                columnIdentifiers[0] = ParserUtil.mapColumn(column, tableName);
             }
         };
         List<SelectStatement.OrderBy> orderBys = null;
         if (stmt.getOrderByElements() != null) {
-            stmt.getOrderByElements().stream()
+            orderBys = stmt.getOrderByElements().stream()
                     .map(orderByElement -> {
                         orderByElement.getExpression().accept(orderVisitor);
                         return new SelectStatement.OrderBy(columnIdentifiers[0], orderByElement.isAsc());
