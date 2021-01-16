@@ -10,6 +10,7 @@ import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +26,9 @@ import static org.junit.Assert.assertArrayEquals;
 public class IRecoveryTest extends TestCase {
 
     public void testInsert() throws PageException, LogException, FileException, IOException, UUIDException {
-        String fileName = "testInsert.db";
+        new File("test_gen_files/testInsert.db").delete();
+        new File("test_gen_files/testInsert.db.log").delete();
+        String fileName = "test_gen_files/testInsert.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         var txContext = TransactionContext.empty();
@@ -53,10 +56,13 @@ public class IRecoveryTest extends TestCase {
         // 测试表中有的数据是否被重复插入
         var list = iItemStorage.listItemByPageId(1);
         assertEquals(2,list.size());
+
     }
 
     public void testInsertFail() throws PageException, LogException, FileException, IOException, UUIDException {
-        String fileName = "testInsertFailed.db";
+        new File("test_gen_files/testInsertFailed.db").delete();
+        new File("test_gen_files/testInsertFailed.db.log").delete();
+        String fileName = "test_gen_files/testInsertFailed.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         var txContext = TransactionContext.empty();
@@ -77,7 +83,9 @@ public class IRecoveryTest extends TestCase {
     }
 
     public void testUpdate() throws PageException, LogException, FileException, IOException, UUIDException {
-        String fileName = "testUpdate.db";
+        new File("test_gen_files/testUpdate.db").delete();
+        new File("test_gen_files/testUpdate.db.log").delete();
+        String fileName = "test_gen_files/testUpdate.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         byte[] bytesUpdate = new byte[]{2,3,4,5};
@@ -124,7 +132,9 @@ public class IRecoveryTest extends TestCase {
     }
 
     public void testUpdateMeta() throws PageException, LogException, FileException, IOException {
-        String fileName = "testUpdateMeta.db";
+        new File("test_gen_files/testUpdateMeta.db").delete();
+        new File("test_gen_files/testUpdateMeta.db.log").delete();
+        String fileName = "test_gen_files/testUpdateMeta.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         byte[] bytesUpdate = new byte[]{2,3,4,5};
@@ -150,7 +160,9 @@ public class IRecoveryTest extends TestCase {
     }
 
     public void testUpdateMetaFail() throws PageException, LogException, FileException, IOException {
-        String fileName = "testUpdateMetaFail.db";
+        new File("test_gen_files/testUpdateMetaFail.db").delete();
+        new File("test_gen_files/testUpdateMetaFail.db.log").delete();
+        String fileName = "test_gen_files/testUpdateMetaFail.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         byte[] bytesUpdate = new byte[]{2,3,4,5};
