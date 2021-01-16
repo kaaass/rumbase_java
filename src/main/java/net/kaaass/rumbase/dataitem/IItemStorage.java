@@ -104,7 +104,7 @@ public interface IItemStorage {
      *
      * @param metadata 头信息
      */
-    void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException;
+    long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException;
 
     /**
      *  不使用日志设置元数据

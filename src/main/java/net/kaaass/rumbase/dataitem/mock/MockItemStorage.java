@@ -153,8 +153,9 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext, byte[] metadata) {
+    public long setMetadata(TransactionContext txContext, byte[] metadata) {
         this.meta = metadata;
+        return 0;
     }
 
     @Override

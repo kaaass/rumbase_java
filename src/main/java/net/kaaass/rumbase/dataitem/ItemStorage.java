@@ -614,11 +614,12 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException {
+    public long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException {
         var page = getPage(0);
         var header = parseTableHeader(page);
         var uuid = setMetadataWithoutLog(metadata);
         recoveryStorage.updateMeta(txContext.getXid(),header.headerUuid,metadata);
+        return uuid;
     }
 
     @Override

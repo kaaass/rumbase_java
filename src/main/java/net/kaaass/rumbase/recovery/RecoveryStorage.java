@@ -172,7 +172,8 @@ public class RecoveryStorage implements  IRecoveryStorage {
             switch (tx.type){
                 case TX_COMMIT:
                     // 若是commit 则放入commitXid并将对应的xid移出abort
-                    abortXids.remove(tx.xid);
+                    Integer id = tx.xid;
+                    abortXids.remove(id);
                     commitXids.add(tx.xid);
                     break;
                 case TX_ABORT:
@@ -227,7 +228,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
 
     private UpdateMetaLog parseUpdateMeta(byte[] log) throws IOException {
         var updateMeta = JBBPParser.prepare("byte type;int xid;long beforeUuid;" +
-                "int length;byte[length] metadata").
+                "int length;byte[length] metadata;").
                     parse(log).mapTo(new UpdateMetaLog());
         return updateMeta;
     }
@@ -340,7 +341,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
      */
     public static class UpdateLog{
         @Bin
-        Byte type;
+        byte type;
         @Bin
         int xid;
         @Bin
@@ -360,7 +361,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
 
     public static class UpdateMetaLog{
         @Bin
-        Byte type;
+        byte type;
         @Bin
         int xid;
         @Bin
