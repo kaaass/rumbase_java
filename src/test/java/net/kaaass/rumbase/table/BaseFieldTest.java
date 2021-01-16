@@ -3,6 +3,7 @@ package net.kaaass.rumbase.table;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.*;
@@ -420,7 +421,7 @@ public class BaseFieldTest extends TestCase {
         }
     }
 
-    public void testLoad() {
+    public void testLoad() throws IndexNotFoundException {
         var bytes = new byte[]{
                 // testLoadInt
                 11,
