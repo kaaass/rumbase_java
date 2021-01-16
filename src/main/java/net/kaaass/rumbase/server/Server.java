@@ -3,7 +3,9 @@ package net.kaaass.rumbase.server;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.page.PageManager;
 import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.transaction.TransactionManager;
 import net.kaaass.rumbase.transaction.TransactionManagerImpl;
 
@@ -30,6 +32,9 @@ public class Server {
     @Setter
     private boolean acceptNewConnection = true;
 
+    @Getter
+    private TableManager tableManager = null;
+
     private final AtomicLong sessionCounter = new AtomicLong(0);
 
     @Getter
@@ -40,13 +45,19 @@ public class Server {
      */
     public void prepare() {
         // 初始化事务管理器
+        log.info("初始化事务管理器...");
         try {
             transactionManager = new TransactionManagerImpl();
         } catch (IOException | FileException e) {
             log.error("初始化事务管理器失败", e);
             System.exit(1);
         }
+        // 初始化表管理器
+        log.info("初始化表管理器...");
+        // TODO 先恢复metadata
+        tableManager = new TableManager();
         // 初始化线程池
+        log.info("初始化线程池...");
         var namedThreadFactory = Executors.defaultThreadFactory();
         threadPool = new ThreadPoolExecutor(5, 200,
                 0L, TimeUnit.MILLISECONDS,
@@ -82,16 +93,20 @@ public class Server {
      */
     public void shutdown() {
         // 关闭线程池
+        log.info("正在关闭线程池...");
         if (threadPool != null) {
             threadPool.shutdown();
         }
         // 关闭所有活动会话
+        log.info("正在关闭所有活动会话...");
         for (var session : activeSession) {
             session.say("服务器正在关闭...\n");
             session.onClose();
         }
         activeSession.clear();
-        // TODO 释放文件、写回文件
+        // 释放文件、写回文件
+        log.info("正在写回文件...");
+        PageManager.flush();
     }
 
     private static final Server INSTANCE = new Server();

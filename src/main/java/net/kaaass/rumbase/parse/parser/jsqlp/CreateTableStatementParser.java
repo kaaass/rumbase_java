@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.parse.parser.jsqlp;
 
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.parser.JsqlpStatementParser;
 import net.kaaass.rumbase.parse.stmt.CreateTableStatement;
 import net.sf.jsqlparser.statement.Statement;
@@ -17,11 +18,14 @@ import java.util.stream.Collectors;
  */
 public class CreateTableStatementParser implements JsqlpStatementParser {
     @Override
-    public ISqlStatement parse(Statement input) {
+    public ISqlStatement parse(Statement input) throws SqlSyntaxException {
         var stmt = (CreateTable) input;
         // 解析表名
         var tableName = stmt.getTable().getName();
         // 解析字段定义
+        if (stmt.getColumnDefinitions() == null) {
+            throw new SqlSyntaxException(1, "表字段不能为空");
+        }
         var columnDefs = stmt.getColumnDefinitions().stream()
                 .map(def -> new CreateTableStatement.ColumnDefinition(
                         mapColType(def.getColDataType()),

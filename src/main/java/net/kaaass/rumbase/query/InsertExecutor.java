@@ -34,6 +34,7 @@ public class InsertExecutor implements Executable{
         var table = manager.getTable(statement.getTableName());
 
         var columns = statement.getColumns();
+        // FIXME columns 为空默认填写表所有字段
         var len = columns.size();
         var insertArray = new ArrayList<String>();
         boolean ok;

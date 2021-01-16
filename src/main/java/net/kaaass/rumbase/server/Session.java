@@ -5,11 +5,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.exception.RumbaseRuntimeException;
+import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.ISqlStatement;
 import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.stmt.*;
+import net.kaaass.rumbase.query.*;
+import net.kaaass.rumbase.query.exception.ArgumentException;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
+import net.kaaass.rumbase.table.exception.TableConflictException;
+import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 
@@ -17,6 +23,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
  * 存储、管理会话中的数据库状态
@@ -57,7 +64,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
             return false;
         } catch (Exception e) {
             log.warn("会话 {} 解析SQL语句出现异常错误，输入：{}", sessionId, sql, e);
-            say("解析异常，请检查服务器日志");
+            say("解析异常，请检查服务器日志\n");
             return false;
         }
         log.debug("会话 {} 解析SQL语句: {}", sessionId, stmt);
@@ -71,7 +78,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
             return false;
         } catch (Exception e) {
             log.warn("会话 {} 运行SQL语句出现未知异常，输入：{}", sessionId, sql, e);
-            say("发生未知异常，请检查服务器日志");
+            say("发生未知异常，请检查服务器日志\n");
             return false;
         }
     }
@@ -178,7 +185,14 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         checkAutoCommitBefore();
         // 执行语句
         try {
-            // TODO
+            var executor = new SelectExecutor(statement,
+                    server.getTableManager(),
+                    currentContext);
+            executor.execute();
+            saySelectResult(executor, statement.getFromTable());
+        } catch (TableExistenceException | IndexAlreadyExistException | ArgumentException | TableConflictException | RecordNotFoundException e) {
+            log.debug("会话 {} 执行语句异常", sessionId, e);
+            say(e);
         } catch (Exception e) {
             // 发生任何错误都回滚
             checkAutoCommitAfter(true);
@@ -188,12 +202,65 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         return false;
     }
 
+    /**
+     * 以表格格式输出选择语句的结果
+     * @param executor 结果集
+     */
+    private void saySelectResult(SelectExecutor executor, String defaultTable) {
+        var columns =
+                executor.getResultTable().stream()
+                    .map(column -> column.getTableName().equals(defaultTable) ?
+                            column.getFieldName() :
+                            column.getTableName() + "." + column.getFieldName())
+                    .collect(Collectors.toList());
+        var rows = executor.getResultData();
+        log.debug("查询结果 {}, {}", columns, rows);
+        // 格式化为表格
+        int[] maxLengths = new int[columns.size()];
+        for (int i = 0; i < columns.size(); i++) {
+            maxLengths[i] = columns.get(i).length();
+        }
+        for (var row : rows) {
+            for (int i = 0; i < row.size(); i++) {
+                row.set(i, row.get(i).toString());
+                maxLengths[i] = Math.max(maxLengths[i], ((String) row.get(i)).length());
+            }
+        }
+        // 生成行格式
+        StringBuilder formatBuilder = new StringBuilder("|");
+        for (int maxLength : maxLengths) {
+            formatBuilder.append("%-").append(maxLength + 2).append("s |");
+        }
+        String format = formatBuilder.toString();
+        // 输出行首
+        var result = new StringBuilder();
+        result.append(String.format(format, columns)).append("\n");
+        for (int i = 0; i < columns.size(); i++) {
+            result.append(i == 0 ? '|' : '+');
+            result.append("-".repeat(Math.max(0, maxLengths[i] + 3)));
+        }
+        result.append('|');
+        // 输出内容
+        for (var row : rows) {
+            result.append(String.format(format, row.toArray(new Object[0]))).append("\n");
+        }
+        say(result);
+        say("共 " + rows.size() + " 条记录\n");
+    }
+
     @Override
     public Boolean visit(InsertStatement statement) {
         checkAutoCommitBefore();
         // 执行语句
         try {
-            // TODO
+            var executor = new InsertExecutor(statement,
+                    server.getTableManager(),
+                    currentContext);
+            executor.execute();
+            say("语句执行成功\n");
+        } catch (TableExistenceException | ArgumentException | TableConflictException e) {
+            log.debug("会话 {} 执行语句异常", sessionId, e);
+            say(e);
         } catch (Exception e) {
             // 发生任何错误都回滚
             checkAutoCommitAfter(true);
@@ -208,7 +275,14 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         checkAutoCommitBefore();
         // 执行语句
         try {
-            // TODO
+            var executor = new UpdateExecutor(statement,
+                    server.getTableManager(),
+                    currentContext);
+            executor.execute();
+            say("语句执行成功\n");
+        } catch (TableExistenceException | IndexAlreadyExistException | ArgumentException | TableConflictException | RecordNotFoundException e) {
+            log.debug("会话 {} 执行语句异常", sessionId, e);
+            say(e);
         } catch (Exception e) {
             // 发生任何错误都回滚
             checkAutoCommitAfter(true);
@@ -223,7 +297,14 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         checkAutoCommitBefore();
         // 执行语句
         try {
-            // TODO
+            var executor = new DeleteExecutor(statement,
+                    server.getTableManager(),
+                    currentContext);
+            executor.execute();
+            say("语句执行成功\n");
+        } catch (TableExistenceException | IndexAlreadyExistException | ArgumentException | TableConflictException | RecordNotFoundException e) {
+            log.debug("会话 {} 执行语句异常", sessionId, e);
+            say(e);
         } catch (Exception e) {
             // 发生任何错误都回滚
             checkAutoCommitAfter(true);
@@ -238,7 +319,13 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         checkAutoCommitBefore();
         // 执行语句
         try {
-            // TODO
+            var executor = new CreateIndexExecutor(statement,
+                    server.getTableManager());
+            executor.execute();
+            say("成功创建索引\n");
+        } catch (TableExistenceException | IndexAlreadyExistException e) {
+            log.debug("会话 {} 执行语句异常", sessionId, e);
+            say(e);
         } catch (Exception e) {
             // 发生任何错误都回滚
             checkAutoCommitAfter(true);
@@ -253,7 +340,14 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         checkAutoCommitBefore();
         // 执行语句
         try {
-            // TODO
+            var executor = new CreateTableExecutor(statement,
+                    server.getTableManager(),
+                    currentContext);
+            executor.execute();
+            say("成功创建表\n");
+        } catch (ArgumentException | TableConflictException | TableExistenceException e) {
+            log.debug("会话 {} 执行语句异常", sessionId, e);
+            say(e);
         } catch (Exception e) {
             // 发生任何错误都回滚
             checkAutoCommitAfter(true);
