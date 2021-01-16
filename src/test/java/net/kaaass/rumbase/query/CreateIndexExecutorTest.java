@@ -28,9 +28,7 @@ public class CreateIndexExecutorTest extends TestCase {
     public void testParseSingle() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "CREATE INDEX PersonIndex ON testParseSingle$Person (LastName) ;";
         // 解析
-        var stmt = SqlParser.parseStatement(sql);catch ( e) {
-            e.printStackTrace();
-        }
+        var stmt = SqlParser.parseStatement(sql);
         assertTrue(stmt instanceof CreateIndexStatement);
         // 准备预期结果
         var manager = new TableManager();
