@@ -20,7 +20,7 @@ public class RecoveryManager {
      * @return 数据库日志管理器
      */
     public static void recovery(String fileName) throws PageException, LogException, FileException, IOException {
-        // TODO:对数据进行恢复
+
         RecoveryStorage.ofFile(fileName).recovery();
     }
 
