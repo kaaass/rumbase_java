@@ -2,7 +2,7 @@ package net.kaaass.rumbase.query;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import net.kaaass.rumbase.parse.CreateTableStatement;
+import net.kaaass.rumbase.parse.stmt.CreateTableStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.table.Table;
 import net.kaaass.rumbase.table.TableManager;

@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
-import net.kaaass.rumbase.parse.SelectStatement;
 
+import net.kaaass.rumbase.parse.stmt.SelectStatement;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.transaction.TransactionContext;
 

@@ -2,7 +2,7 @@ package net.kaaass.rumbase.query;
 
 import lombok.NonNull;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
-import net.kaaass.rumbase.parse.SelectStatement;
+import net.kaaass.rumbase.parse.stmt.SelectStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.TableManager;
