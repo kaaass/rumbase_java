@@ -40,6 +40,8 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
 
     private Writer writer = null;
 
+    private boolean autoCommit = false;
+
     /**
      * 执行SQL语句并输出相关结果
      * @return 是否退出
@@ -173,38 +175,126 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
 
     @Override
     public Boolean visit(SelectStatement statement) {
-        // TODO
+        checkAutoCommitBefore();
+        // 执行语句
+        try {
+            // TODO
+        } catch (Exception e) {
+            // 发生任何错误都回滚
+            checkAutoCommitAfter(true);
+            throw e;
+        }
+        checkAutoCommitAfter(false);
         return false;
     }
 
     @Override
     public Boolean visit(InsertStatement statement) {
-        // TODO
+        checkAutoCommitBefore();
+        // 执行语句
+        try {
+            // TODO
+        } catch (Exception e) {
+            // 发生任何错误都回滚
+            checkAutoCommitAfter(true);
+            throw e;
+        }
+        checkAutoCommitAfter(false);
         return false;
     }
 
     @Override
     public Boolean visit(UpdateStatement statement) {
-        // TODO
+        checkAutoCommitBefore();
+        // 执行语句
+        try {
+            // TODO
+        } catch (Exception e) {
+            // 发生任何错误都回滚
+            checkAutoCommitAfter(true);
+            throw e;
+        }
+        checkAutoCommitAfter(false);
         return false;
     }
 
     @Override
     public Boolean visit(DeleteStatement statement) {
-        // TODO
+        checkAutoCommitBefore();
+        // 执行语句
+        try {
+            // TODO
+        } catch (Exception e) {
+            // 发生任何错误都回滚
+            checkAutoCommitAfter(true);
+            throw e;
+        }
+        checkAutoCommitAfter(false);
         return false;
     }
 
     @Override
     public Boolean visit(CreateIndexStatement statement) {
-        // TODO
+        checkAutoCommitBefore();
+        // 执行语句
+        try {
+            // TODO
+        } catch (Exception e) {
+            // 发生任何错误都回滚
+            checkAutoCommitAfter(true);
+            throw e;
+        }
+        checkAutoCommitAfter(false);
         return false;
     }
 
     @Override
     public Boolean visit(CreateTableStatement statement) {
-        // TODO
+        checkAutoCommitBefore();
+        // 执行语句
+        try {
+            // TODO
+        } catch (Exception e) {
+            // 发生任何错误都回滚
+            checkAutoCommitAfter(true);
+            throw e;
+        }
+        checkAutoCommitAfter(false);
         return false;
+    }
+
+    /**
+     * 执行前尝试自动提交
+     */
+    private void checkAutoCommitBefore() {
+        assert !autoCommit;
+        if (currentContext == null) {
+            // 自动创建事务
+            // TODO 默认使用可重复读隔离度，应该从配置读取
+            currentContext = server.getTransactionManager().createTransactionContext(TransactionIsolation.REPEATABLE_READ);
+            // 设置自动提交
+            autoCommit = true;
+        }
+    }
+
+    /**
+     * 执行后尝试自动提交
+     * @param rollback 是否需要回滚
+     */
+    private void checkAutoCommitAfter(boolean rollback) {
+        if (autoCommit) {
+            try {
+                assert currentContext != null;
+                if (rollback) {
+                    currentContext.rollback();
+                } else {
+                    currentContext.commit();
+                }
+            } finally {
+                // 完成自动提交
+                autoCommit = false;
+            }
+        }
     }
 
     @Override
