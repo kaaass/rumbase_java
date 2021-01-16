@@ -6,6 +6,7 @@ import lombok.*;
 import net.kaaass.rumbase.index.Index;
 import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.table.Table;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -99,7 +100,7 @@ public abstract class BaseField{
      * @param stream 输入流
      * @return 字段
      */
-    public static BaseField load(InputStream stream, Table table) {
+    public static BaseField load(InputStream stream, Table table) throws IndexNotFoundException {
         var in = new JBBPBitInputStream(stream);
 
         try {
@@ -112,28 +113,34 @@ public abstract class BaseField{
             if (indexed) {
                 indexName = in.readString(JBBPByteOrder.BIG_ENDIAN);
             }
-            // todo 重建索引
 
             BaseField field;
             switch (type) {
                 case INT:
                     field = new IntField(name, nullable, table);
                     field.setIndexName(indexName);
+                    if (indexed) {
+                        field.index = Index.getIndex(indexName);
+                    }
                     return field;
                 case FLOAT:
                     field = new FloatField(name, nullable, table);
                     field.setIndexName(indexName);
+                    if (indexed) {
+                        field.index = Index.getIndex(indexName);
+                    }
                     return field;
                 default:
                     field = new VarcharField(name, in.readInt(JBBPByteOrder.BIG_ENDIAN), nullable, table);
                     field.setIndexName(indexName);
+                    if (indexed) {
+                        field.index = Index.getIndex(indexName);
+                    }
                     return field;
             }
         } catch (IOException e) {
-            // todo
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**

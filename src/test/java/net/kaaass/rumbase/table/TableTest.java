@@ -5,6 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
@@ -31,7 +32,7 @@ public class TableTest extends TestCase {
 
     private static final String PATH = "build/";
 
-    public void testLoad() {
+    public void testLoad() throws IndexNotFoundException {
         var prefix = PATH + "testLoad";
 
         var byteOS = new ByteArrayOutputStream();
@@ -487,7 +488,7 @@ public class TableTest extends TestCase {
         failEntry.add("1.2");
 
         var fieldList = new ArrayList<BaseField>();
-        var table = new Table(PATH + "testCheckStringEntryTable", fieldList);
+        var table = new Table("testCheckStringEntryTable", fieldList);
         var intField = new IntField("testCheckStringEntryInt", false, table);
         var floatField = new FloatField("testCheckStringEntryFloat", false, table);
         var varcharField = new VarcharField("testCheckStringEntryVarchar", 20, false, table);
