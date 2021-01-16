@@ -111,7 +111,7 @@ public class MvccReadRepeatableTest extends TestCase {
 
     public void testReadSelfReal() throws RecordNotFoundException, IOException, FileException, StatusException {
         var storage = RecordManager.fromFile(PATH + "testReadSelfReal");
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("build/xid.log");
         // 创建事务1
         var tx1 = manager.createTransactionContext(TransactionIsolation.REPEATABLE_READ);
         tx1.start();
@@ -134,7 +134,7 @@ public class MvccReadRepeatableTest extends TestCase {
 
     public void testReadOtherReal() throws RecordNotFoundException, IOException, FileException, StatusException {
         var storage = RecordManager.fromFile(PATH + "testReadOtherReal");
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("build/xid.log");
         // 创建事务12
         var tx1 = manager.createTransactionContext(TransactionIsolation.REPEATABLE_READ);
         tx1.start();
@@ -166,7 +166,7 @@ public class MvccReadRepeatableTest extends TestCase {
 
     public void testDeleteReal() throws RecordNotFoundException, IOException, FileException, StatusException {
         var storage = RecordManager.fromFile(PATH + "testDeleteReal");
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("build/xid.log");
         // 创建事务1、记录a1a2
         var tx1 = manager.createTransactionContext(TransactionIsolation.REPEATABLE_READ);
         tx1.start();
@@ -196,7 +196,7 @@ public class MvccReadRepeatableTest extends TestCase {
 
     public void testVersionSkipReal() throws RecordNotFoundException, NeedRollbackException, IOException, FileException, StatusException {
         var storage = RecordManager.fromFile(PATH + "testDeleteReal");
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("build/xid.log");
         // 创建公共版本
         var r = storage.insert(TransactionContext.empty(), new byte[]{0x1, 0x2, 0x3, 0x4});
         // 进行版本跳跃操作

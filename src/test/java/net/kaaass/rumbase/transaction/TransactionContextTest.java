@@ -48,7 +48,7 @@ public class TransactionContextTest {
             removeDir(dir);
         }
         dir.mkdir();
-        new File("xid.log").deleteOnExit();
+        new File("build/xid.log").deleteOnExit();
     }
 
     /**

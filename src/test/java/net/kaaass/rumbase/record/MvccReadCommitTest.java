@@ -88,7 +88,7 @@ public class MvccReadCommitTest extends TestCase {
 
     public void testReadSelfReal() throws RecordNotFoundException, IOException, FileException, StatusException {
         var storage = RecordManager.fromFile(PATH + "testReadSelfReal");
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("build/xid.log");
         // 创建事务1
         var tx1 = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         tx1.start();
@@ -111,7 +111,7 @@ public class MvccReadCommitTest extends TestCase {
 
     public void testReadOtherReal() throws RecordNotFoundException, IOException, FileException, StatusException {
         var storage = RecordManager.fromFile(PATH + "testReadOtherReal");
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("build/xid.log");
         // 创建事务12
         var tx1 = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         tx1.start();
@@ -142,7 +142,7 @@ public class MvccReadCommitTest extends TestCase {
 
     public void testDeleteReal() throws RecordNotFoundException, IOException, FileException, StatusException {
         var storage = RecordManager.fromFile(PATH + "testDeleteReal");
-        var manager = new TransactionManagerImpl();
+        var manager = new TransactionManagerImpl("build/xid.log");
         // 创建事务1、记录a1a2
         var tx1 = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         tx1.start();
