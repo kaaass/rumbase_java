@@ -384,6 +384,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
                 } else {
                     currentContext.commit();
                 }
+                currentContext = null;
             } finally {
                 // 完成自动提交
                 autoCommit = false;
