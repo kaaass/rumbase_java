@@ -29,7 +29,10 @@ import static org.junit.Assert.assertArrayEquals;
 @Slf4j
 public class TableTest extends TestCase {
 
+    private static final String PATH = "build/";
+
     public void testLoad() {
+        var prefix = PATH + "testLoad";
 
         var byteOS = new ByteArrayOutputStream();
         var out = new JBBPBitOutputStream(byteOS);
@@ -53,10 +56,10 @@ public class TableTest extends TestCase {
             fail();
         }
 
-        var storage = RecordManager.fromFile("testLoadTable");
+        var storage = RecordManager.fromFile(prefix + "Table");
         storage.setMetadata(TransactionContext.empty(), byteOS.toByteArray());
 
-        var table = Table.load(RecordManager.fromFile("testLoadTable"));
+        var table = Table.load(RecordManager.fromFile(prefix + "Table"));
 
         assertNotNull(table);
         assertEquals("testLoadTable", table.getTableName());
@@ -74,6 +77,7 @@ public class TableTest extends TestCase {
     }
 
     public void testPersist() {
+
         var fieldList = new ArrayList<BaseField>();
         var table = new Table("testPersistTable", fieldList);
         var context = TransactionContext.empty();
@@ -112,7 +116,7 @@ public class TableTest extends TestCase {
 
     Table createTestTable(String prefix) {
         var fieldList = new ArrayList<BaseField>();
-        var table = new Table(prefix + "Table", fieldList);
+        var table = new Table(PATH + prefix + "Table", fieldList);
 
         // 增加测试表字段
         var intField = new IntField(prefix + "age", false, table);

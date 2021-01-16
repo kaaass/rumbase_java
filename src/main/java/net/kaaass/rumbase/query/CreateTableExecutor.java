@@ -60,6 +60,7 @@ public class CreateTableExecutor implements Executable {
 
         }
 
+        // FIXME: 2021/1/16 没创建文件？
         manager.createTable(context, tableName, baseFields, tableName + ".db");
     }
 }

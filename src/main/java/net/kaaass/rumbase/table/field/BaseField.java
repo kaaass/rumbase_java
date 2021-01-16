@@ -210,7 +210,7 @@ public abstract class BaseField{
      */
     public void createIndex() throws IndexAlreadyExistException {
         var delimiter = "$";
-        var indexName = parentTable.getTableName() + delimiter + name;
+        var indexName = parentTable.getPath() + delimiter + name;
 
         index = Index.createEmptyIndex(indexName);
     }

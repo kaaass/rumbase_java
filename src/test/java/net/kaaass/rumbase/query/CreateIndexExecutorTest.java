@@ -14,10 +14,13 @@ import net.kaaass.rumbase.table.field.IntField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
 import java.util.ArrayList;
 
 @Slf4j
 public class CreateIndexExecutorTest extends TestCase {
+
+    private static final String PATH = "build/";
 
     public void testParseSingle() throws SqlSyntaxException {
         var sql = "CREATE INDEX PersonIndex ON testParseSingle$Person (LastName) ;";
@@ -31,7 +34,7 @@ public class CreateIndexExecutorTest extends TestCase {
         var dummy = new Table("testParseSingle.__reserved__", fields);
         fields.add(new VarcharField("LastName", 20, false, dummy));
         try {
-            manager.createTable(context, "testParseSingle$Person", fields, "testParseSingle.Person.db");
+            manager.createTable(context, "testParseSingle$Person", fields, PATH + "testParseSingle.Person.db");
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
             fail();
@@ -52,7 +55,7 @@ public class CreateIndexExecutorTest extends TestCase {
             fail();
         }
 
-
+        new File("metadata.db").deleteOnExit();
     }
 
     public void testParseMulti() throws SqlSyntaxException {
@@ -68,7 +71,7 @@ public class CreateIndexExecutorTest extends TestCase {
         fields.add(new VarcharField("LastName", 20, false, dummy));
         fields.add(new IntField("ID", false, dummy));
         try {
-            manager.createTable(context, "testParseMulti$Person", fields, "testParseMulti.Person.db");
+            manager.createTable(context, "testParseMulti$Person", fields, PATH + "testParseMulti.Person.db");
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
             fail();
@@ -92,5 +95,7 @@ public class CreateIndexExecutorTest extends TestCase {
             log.error("Exception expected: ", e);
             fail();
         }
+
+        new File("metadata.db").deleteOnExit();
     }
 }

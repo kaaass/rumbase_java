@@ -3,7 +3,6 @@ package net.kaaass.rumbase.table;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
-import lombok.NoArgsConstructor;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.table.field.BaseField;
@@ -57,7 +56,6 @@ public class TableManager {
     public void abort(TransactionContext context) {
         context.rollback();
     }
-
 
     public TableManager() {
         load();
@@ -124,7 +122,7 @@ public class TableManager {
             throw new TableExistenceException(1);
         }
 
-        var table = new Table(tableName, baseFields);
+        var table = new Table(tableName, baseFields, path);
 
         for (var f: baseFields) {
             f.setParentTable(table);

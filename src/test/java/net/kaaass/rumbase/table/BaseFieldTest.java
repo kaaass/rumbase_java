@@ -22,9 +22,11 @@ import static org.junit.Assert.assertArrayEquals;
 @Slf4j
 public class BaseFieldTest extends TestCase {
 
+    private static final String PATH = "build/";
+
     public void testCheckStr() {
 
-        var dummy = new Table("testCheckStrTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testCheckStrTable", new ArrayList<>());
 
         // test int
         var intField = new IntField("testCheckStrInt", false, dummy);
@@ -47,7 +49,7 @@ public class BaseFieldTest extends TestCase {
 
     public void testDeserialize() {
 
-        var dummy = new Table("testDeserializeTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testDeserializeTable", new ArrayList<>());
 
         // 测试数据
         var bytes = new byte[]{
@@ -95,7 +97,7 @@ public class BaseFieldTest extends TestCase {
 
     public void testCheckInputStream() {
 
-        var dummy = new Table("testCheckInputStreamTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testCheckInputStreamTable", new ArrayList<>());
 
         // 测试数据
         var bytes = new byte[]{
@@ -124,7 +126,7 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testSerialize() {
-        var dummy = new Table("testSerialize", new ArrayList<>());
+        var dummy = new Table(PATH + "testSerialize", new ArrayList<>());
 
 
         var intField = new IntField("testSerializeInt", false, dummy);
@@ -202,7 +204,7 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testDoubleCreateIndex() {
-        var dummy = new Table("testCreateIndexTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testCreateIndexTable", new ArrayList<>());
 
         BaseField field = new IntField("testCreateIndexField", false, dummy);
         try {
@@ -221,7 +223,7 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testInsertIndex() {
-        var dummy = new Table("testInsertIndexTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testInsertIndexTable", new ArrayList<>());
 
         var intField = new IntField("testInsertIndexInt", false, dummy);
 
@@ -313,7 +315,7 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testQueryIndex() {
-        var dummy = new Table("testQueryIndexTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testQueryIndexTable", new ArrayList<>());
 
         var intField = new IntField("testQueryIndexInt", false, dummy);
 
@@ -464,7 +466,7 @@ public class BaseFieldTest extends TestCase {
 
         };
         var stream = new ByteArrayInputStream(bytes);
-        var dummy = new Table("testLoadTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testLoadTable", new ArrayList<>());
 
         var intField = BaseField.load(stream, dummy);
         assertNotNull(intField);
@@ -485,7 +487,7 @@ public class BaseFieldTest extends TestCase {
     }
 
     public void testPersist() {
-        var dummy = new Table("testLoadTable", new ArrayList<>());
+        var dummy = new Table(PATH + "testLoadTable", new ArrayList<>());
         var out = new ByteArrayOutputStream();
 
         var intField = new IntField("testPersistInt", false, dummy);

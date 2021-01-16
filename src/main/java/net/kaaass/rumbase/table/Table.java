@@ -73,6 +73,9 @@ public class Table {
     @Setter
     List<BaseField> fields = new ArrayList<>();
 
+    @Getter
+    private final String path;
+
     /**
      * 直接通过表名、字段创建表
      * <p>
@@ -88,7 +91,28 @@ public class Table {
         this.tableName = tableName;
         this.fields = fields;
         this.next = -1;
+        this.path = tableName;
     }
+
+    /**
+     * 直接通过表名、字段创建表
+     * <p>
+     * 不检测是否与已存在表冲突，这个留给表管理器处检测
+     * </p>
+     *
+     * @param tableName 表名
+     * @param fields    表的字段结构
+     */
+    public Table(@NonNull String tableName, @NonNull List<BaseField> fields, String path) {
+        // fixme remove mock
+        this.recordStorage = MockRecordStorage.ofFile(path);
+        this.tableName = tableName;
+        this.fields = fields;
+        this.next = -1;
+        this.path = path;
+    }
+
+
 
     /**
      * 将当前表结构信息持久化到外存中

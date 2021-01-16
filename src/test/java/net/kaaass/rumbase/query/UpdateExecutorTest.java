@@ -16,10 +16,13 @@ import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
 import java.util.ArrayList;
 
 @Slf4j
 public class UpdateExecutorTest extends TestCase {
+
+    private static final String PATH = "build/";
 
     public void testUpdateWithCondition() throws SqlSyntaxException {
         var sql = "UPDATE testUpdateWithCondition$Person SET Address = 'Zhongshan 23', City = 'Nanjing'\n" +
@@ -38,7 +41,7 @@ public class UpdateExecutorTest extends TestCase {
         fields.add(new VarcharField("Address", 20, false, dummy));
         Table table = null;
         try {
-            manager.createTable(context, "testUpdateWithCondition$Person", fields, "testUpdateWithCondition.Person.db");
+            manager.createTable(context, "testUpdateWithCondition$Person", fields, PATH + "testUpdateWithCondition.Person.db");
             lastName.createIndex();
             table = manager.getTable("testUpdateWithCondition$Person");
         } catch (TableExistenceException | IndexAlreadyExistException e) {
@@ -112,6 +115,7 @@ public class UpdateExecutorTest extends TestCase {
             log.error("Exception expected: ", e);
             fail();
         }
+        new File("metadata.db").deleteOnExit();
 
     }
 
@@ -131,7 +135,7 @@ public class UpdateExecutorTest extends TestCase {
         fields.add(new VarcharField("Address", 20, false, dummy));
         Table table = null;
         try {
-            manager.createTable(context, "testUpdateWithoutCondition$Person", fields, "testUpdateWithoutCondition.Person.db");
+            manager.createTable(context, "testUpdateWithoutCondition$Person", fields, PATH + "testUpdateWithoutCondition.Person.db");
             lastName.createIndex();
             table = manager.getTable("testUpdateWithoutCondition$Person");
         } catch (TableExistenceException | IndexAlreadyExistException e) {
@@ -205,6 +209,7 @@ public class UpdateExecutorTest extends TestCase {
             log.error("Exception expected: ", e);
             fail();
         }
+        new File("metadata.db").deleteOnExit();
 
     }
 }

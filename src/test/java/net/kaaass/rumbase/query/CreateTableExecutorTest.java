@@ -14,6 +14,8 @@ import net.kaaass.rumbase.table.field.FieldType;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
+
 @Slf4j
 public class CreateTableExecutorTest extends TestCase {
 
@@ -65,5 +67,6 @@ public class CreateTableExecutorTest extends TestCase {
         assertEquals(255, ((VarcharField)fields.get(1)).getLimit());
         assertFalse(fields.get(2).isNullable());
 
+        new File("metadata.db").deleteOnExit();
     }
 }

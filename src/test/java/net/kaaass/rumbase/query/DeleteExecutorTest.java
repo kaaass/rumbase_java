@@ -17,10 +17,14 @@ import net.kaaass.rumbase.table.field.IntField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
 import java.util.ArrayList;
 
 @Slf4j
 public class DeleteExecutorTest extends TestCase {
+
+    private static final String PATH = "build/";
+
     public void testDelete() throws SqlSyntaxException {
         var sql = "DELETE FROM testDelete$Person WHERE LastName = 'KevinAxel'";
         // 解析
@@ -36,7 +40,7 @@ public class DeleteExecutorTest extends TestCase {
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "testDelete$Person", fields, "testDelete.Person.db");
+            manager.createTable(context, "testDelete$Person", fields, PATH + "testDelete.Person.db");
             id.createIndex();
             table = manager.getTable("testDelete$Person");
         } catch (TableExistenceException | IndexAlreadyExistException e) {
@@ -101,6 +105,7 @@ public class DeleteExecutorTest extends TestCase {
             fail();
         }
 
+        new File("metadata.db").deleteOnExit();
 
     }
 
@@ -119,7 +124,7 @@ public class DeleteExecutorTest extends TestCase {
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "testDeleteAll$Person", fields, "testDeleteAll.Person.db");
+            manager.createTable(context, "testDeleteAll$Person", fields, PATH + "testDeleteAll.Person.db");
             id.createIndex();
             table = manager.getTable("testDeleteAll$Person");
         } catch (TableExistenceException | IndexAlreadyExistException e) {
@@ -179,5 +184,8 @@ public class DeleteExecutorTest extends TestCase {
             log.error("Exception expected: ", e);
             fail();
         }
+
+        new File("metadata.db").deleteOnExit();
+
     }
 }

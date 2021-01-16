@@ -17,10 +17,13 @@ import net.kaaass.rumbase.table.field.IntField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
 import java.util.ArrayList;
 
 @Slf4j
 public class InsertExecutorTest extends TestCase {
+
+    private static final String PATH = "build/";
 
     public void testInsertColumnValue() throws SqlSyntaxException {
         var sql = "INSERT INTO Persons (Persons.LastName, Address) VALUES ('Wilson', 'Champs-Elysees')";
@@ -37,7 +40,7 @@ public class InsertExecutorTest extends TestCase {
         fields.add(new VarcharField("Address", 255, false, dummy));
         Table table = null;
         try {
-            manager.createTable(context, "Persons", fields, "testInsertColumnValue.Persons.db");
+            manager.createTable(context, "Persons", fields, PATH + "testInsertColumnValue.Persons.db");
             lastName.createIndex();
             table = manager.getTable("Persons");
         } catch (TableExistenceException | IndexAlreadyExistException e) {
@@ -67,6 +70,7 @@ public class InsertExecutorTest extends TestCase {
             fail();
         }
 
+        new File("metadata.db").deleteOnExit();
 
     }
 
@@ -85,7 +89,7 @@ public class InsertExecutorTest extends TestCase {
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "Person", fields, "testDeleteAll.Person.db");
+            manager.createTable(context, "Person", fields, PATH + "testDeleteAll.Person.db");
             id.createIndex();
             table = manager.getTable("Person");
         } catch (TableExistenceException | IndexAlreadyExistException e) {
@@ -94,5 +98,7 @@ public class InsertExecutorTest extends TestCase {
         }
 
         assertNotNull(table);
+        new File("metadata.db").deleteOnExit();
+
     }
 }

@@ -9,6 +9,7 @@ import net.kaaass.rumbase.table.field.IntField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -48,6 +49,8 @@ public class TableManagerTest extends TestCase {
         var tables = tbm.showTables();
         assertEquals(1, tables.size());
         assertEquals(prefix + "Table", tables.get(0));
+
+        new File("metadata.db").deleteOnExit();
     }
 
     public void testCreateTable() {
@@ -72,6 +75,8 @@ public class TableManagerTest extends TestCase {
             e.printStackTrace();
             fail();
         }
+
+        new File("metadata.db").deleteOnExit();
 
     }
 
@@ -112,6 +117,8 @@ public class TableManagerTest extends TestCase {
         } catch (TableExistenceException e) {
             fail();
         }
+
+        new File("metadata.db").deleteOnExit();
     }
 
 }
