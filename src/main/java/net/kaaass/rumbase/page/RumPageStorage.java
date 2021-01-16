@@ -16,10 +16,6 @@ public class RumPageStorage implements PageStorage {
     public RumPageStorage(String filepath) throws FileException {
         this.filepath = filepath;
         pageMap = new HashMap<>();
-    }
-
-    @Override
-    public Page get(long pageId) {
         File file = new File(filepath);
         //文件不存在时创建新文件
         if (!file.exists()) {
@@ -27,28 +23,38 @@ public class RumPageStorage implements PageStorage {
                 file.createNewFile();
                 FileOutputStream out = new FileOutputStream(file);
                 out.write(new byte[PageManager.PAGE_SIZE * 10]);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        try{
+            fw = new FileWriter(file, true);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        this.file = new File(filepath);
+    }
+
+    @Override
+    public Page get(long pageId) {
         //文件会预留5页作为文件头
         try {
-            FileInputStream in = new FileInputStream(file);
             byte[] data = new byte[PageManager.PAGE_SIZE];
             try {
+                FileInputStream in = new FileInputStream(file);;
                 //当文件存储容量不够时追加
                 while (in.available() < (pageId + 1 + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
-                    FileWriter fw = new FileWriter(file, true);
                     char[] blank = new char[PageManager.PAGE_SIZE * (in.available() / PageManager.PAGE_SIZE)];
                     Arrays.fill(blank, (char)0);
                     fw.write(blank);
-                    fw.close();
                 }
                 in.skip((pageId + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
                 int readNumber = in.read(data);
                 if (readNumber < PageManager.PAGE_SIZE) {
                     throw new FileException(4);
                 }
+                in.close();
             } catch (Exception e) {
                 throw new FileException(4);
             }
@@ -96,6 +102,16 @@ public class RumPageStorage implements PageStorage {
         }
     }
 
+    @Override
+    protected void finalize() {
+        try{
+            this.fw.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
     private final Map<Long, Page> pageMap;
     private final String filepath;
+    FileWriter fw = null;
+    File file = null;
 }
