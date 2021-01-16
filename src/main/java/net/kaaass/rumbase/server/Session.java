@@ -234,12 +234,12 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         String format = formatBuilder.toString();
         // 输出行首
         var result = new StringBuilder();
-        result.append(String.format(format, columns)).append("\n");
+        result.append(String.format(format, columns.toArray(new Object[0]))).append("\n");
         for (int i = 0; i < columns.size(); i++) {
             result.append(i == 0 ? '|' : '+');
             result.append("-".repeat(Math.max(0, maxLengths[i] + 3)));
         }
-        result.append('|');
+        result.append("|\n");
         // 输出内容
         for (var row : rows) {
             result.append(String.format(format, row.toArray(new Object[0]))).append("\n");
