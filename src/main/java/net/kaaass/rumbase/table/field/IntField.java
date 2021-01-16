@@ -43,7 +43,6 @@ public class IntField extends BaseField {
             } else {
                 out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
             }
-            // todo （字段约束）
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -183,8 +182,7 @@ public class IntField extends BaseField {
 
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         } catch (NumberFormatException e) {
             throw new TableConflictException(1);
         }
@@ -208,8 +206,7 @@ public class IntField extends BaseField {
             }
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         } catch (NumberFormatException e) {
             throw new TableConflictException(1);
         }
