@@ -3,6 +3,7 @@ package net.kaaass.rumbase.parse.stmt;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 
 import java.util.List;
 
@@ -24,6 +25,11 @@ public class CreateTableStatement implements ISqlStatement {
      * 创建表中的列定义
      */
     private List<ColumnDefinition> columnDefinitions;
+
+    @Override
+    public void accept(ISqlStatementVisitor visitor) {
+        visitor.visit(this);
+    }
 
     /**
      * SQL语法树：列定义

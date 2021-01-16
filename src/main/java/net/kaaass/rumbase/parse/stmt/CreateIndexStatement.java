@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 
 import java.util.List;
 
@@ -30,4 +31,9 @@ public class CreateIndexStatement implements ISqlStatement {
      * 索引的目标列
      */
     private List<ColumnIdentifier> columns;
+
+    @Override
+    public void accept(ISqlStatementVisitor visitor) {
+        visitor.visit(this);
+    }
 }

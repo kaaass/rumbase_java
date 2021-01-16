@@ -5,6 +5,7 @@ import lombok.Data;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ConditionExpression;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 
 import java.util.List;
 
@@ -36,4 +37,9 @@ public class UpdateStatement implements ISqlStatement {
      * 更新行的条件
      */
     private ConditionExpression where;
+
+    @Override
+    public void accept(ISqlStatementVisitor visitor) {
+        visitor.visit(this);
+    }
 }
