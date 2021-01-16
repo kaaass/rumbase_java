@@ -30,4 +30,8 @@ public interface ISqlStatementVisitor<T> {
     T visit(ExitStatement statement);
 
     T visit(ShutdownStatement statement);
+
+    T visit(FlushStatement statement);
+
+    T visit(ExecStatement statement);
 }

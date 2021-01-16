@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.exception.RumbaseRuntimeException;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.page.PageManager;
 import net.kaaass.rumbase.parse.ISqlStatement;
 import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 import net.kaaass.rumbase.parse.SqlParser;
@@ -21,6 +22,9 @@ import net.kaaass.rumbase.transaction.TransactionIsolation;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -442,5 +446,32 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         say("正在关闭服务器...\n");
         System.exit(0);
         return true;
+    }
+
+    @Override
+    public Boolean visit(FlushStatement statement) {
+        PageManager.flush();
+        say("已刷新缓冲\n");
+        return false;
+    }
+
+    @Override
+    public Boolean visit(ExecStatement statement) {
+        // 读入文件
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(Paths.get(statement.getFilepath()));
+        } catch (IOException e) {
+            say("文件读取失败，请检查文件是否存在\n");
+            return false;
+        }
+        // 逐行解析
+        for (var line : lines) {
+            if (line.isBlank() || line.startsWith("#")) {
+                continue;
+            }
+            this.executeSql(line);
+        }
+        return false;
     }
 }

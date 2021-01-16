@@ -3,6 +3,7 @@ package net.kaaass.rumbase.parse;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.parser.CommandStatementParser;
 import net.kaaass.rumbase.parse.parser.JsqlpStatementParser;
+import net.kaaass.rumbase.parse.parser.command.ExecStatementParser;
 import net.kaaass.rumbase.parse.parser.jsqlp.*;
 import net.kaaass.rumbase.parse.stmt.*;
 import net.sf.jsqlparser.JSQLParserException;
@@ -25,6 +26,8 @@ public class SqlParser {
         add(new CommandStatementParser(RollbackStatement.class, "rollback"));
         add(new CommandStatementParser(ExitStatement.class, "exit"));
         add(new CommandStatementParser(ShutdownStatement.class, "shutdown"));
+        add(new CommandStatementParser(FlushStatement.class, "flush"));
+        add(new ExecStatementParser());
     }};
 
     private static final List<JsqlpStatementParser> JSQLP_STATEMENT_PARSERS = new ArrayList<>() {{
