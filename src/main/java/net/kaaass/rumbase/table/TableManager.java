@@ -78,7 +78,6 @@ public class TableManager {
         try {
             metaTable = Table.load(metaRecord);
         } catch (RuntimeException e) {
-            e.printStackTrace();
             // 新建表
             var fields = new ArrayList<BaseField>();
             var keyField = new VarcharField("key", 255, false, null);
