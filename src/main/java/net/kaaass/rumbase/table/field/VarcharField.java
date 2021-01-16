@@ -33,7 +33,7 @@ public class VarcharField extends BaseField {
 
     private static final String DELIMIT = "'";
 
-    public VarcharField(@NonNull String name, int limit, boolean nullable, @NonNull Table parentTable) {
+    public VarcharField(@NonNull String name, int limit, boolean nullable, Table parentTable) {
         super(name, FieldType.VARCHAR, nullable, parentTable);
         this.limit = limit;
     }

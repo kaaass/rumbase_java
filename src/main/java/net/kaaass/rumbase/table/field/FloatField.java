@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 public class FloatField extends BaseField {
 
-    public FloatField(@NonNull String name, boolean nullable, @NonNull Table parentTable) {
+    public FloatField(@NonNull String name, boolean nullable, Table parentTable) {
         super(name, FieldType.FLOAT, nullable, parentTable);
     }
 
