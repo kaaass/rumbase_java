@@ -487,7 +487,7 @@ public class TableTest extends TestCase {
         failEntry.add("1.2");
 
         var fieldList = new ArrayList<BaseField>();
-        var table = new Table("testCheckStringEntryTable", fieldList);
+        var table = new Table(PATH + "testCheckStringEntryTable", fieldList);
         var intField = new IntField("testCheckStringEntryInt", false, table);
         var floatField = new FloatField("testCheckStringEntryFloat", false, table);
         var varcharField = new VarcharField("testCheckStringEntryVarchar", 20, false, table);
