@@ -160,6 +160,7 @@ public class TableManager {
             e.printStackTrace();
         }
 
+        metaRecord.setMetadata(context, byteOutStream.toByteArray());
         tableCache.put(tableName, table);
     }
 
