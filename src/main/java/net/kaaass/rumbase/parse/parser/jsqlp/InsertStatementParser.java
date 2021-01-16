@@ -38,6 +38,7 @@ public class InsertStatementParser implements JsqlpStatementParser {
             public void visit(ExpressionList expressionList) {
                 expressionList.getExpressions().stream()
                         .map(Objects::toString)
+                        .map(s -> "NULL".equals(s) ? null : s)
                         .forEach(values::add);
             }
         });

@@ -226,7 +226,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         }
         for (var row : rows) {
             for (int i = 0; i < row.size(); i++) {
-                row.set(i, row.get(i).toString());
+                row.set(i, row.get(i) == null ? "NULL" : row.get(i).toString());
                 maxLengths[i] = Math.max(maxLengths[i], ((String) row.get(i)).length());
             }
         }
