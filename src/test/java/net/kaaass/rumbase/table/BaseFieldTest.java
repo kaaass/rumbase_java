@@ -40,8 +40,8 @@ public class BaseFieldTest extends TestCase {
 
         // test varchar
         var varcharField = new VarcharField("testCheckStrVarchar", 20, false, dummy);
-        assertTrue(varcharField.checkStr("aaaa"));
-        assertFalse(varcharField.checkStr("aaaa aaaa aaaa aaaa aaaa"));
+        assertTrue(varcharField.checkStr("'aaaa'"));
+        assertFalse(varcharField.checkStr("'aaaa aaaa aaaa aaaa aaaa'"));
 
     }
 
@@ -144,7 +144,7 @@ public class BaseFieldTest extends TestCase {
         }
 
         try {
-            intField.serialize(intBos2, "xx");
+            intField.serialize(intBos2, "'xx'");
             fail();
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
@@ -167,7 +167,7 @@ public class BaseFieldTest extends TestCase {
         }
 
         try {
-            floatField.serialize(floatBos2, "xx");
+            floatField.serialize(floatBos2, "'xx'");
             fail();
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
@@ -178,7 +178,7 @@ public class BaseFieldTest extends TestCase {
         var varcharBos2 = new ByteArrayOutputStream();
 
         try {
-            varcharField.serialize(varcharBos1, "test varchar");
+            varcharField.serialize(varcharBos1, "'test varchar'");
             var expected = new byte[]{
                     0,
                     12,
@@ -193,7 +193,7 @@ public class BaseFieldTest extends TestCase {
         }
 
         try {
-            varcharField.serialize(varcharBos2, "test varchar too looooooooooooong");
+            varcharField.serialize(varcharBos2, "'test varchar too looooooooooooong'");
             fail();
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);

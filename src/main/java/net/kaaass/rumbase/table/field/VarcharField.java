@@ -31,6 +31,8 @@ public class VarcharField extends BaseField {
     @Getter
     private final int limit;
 
+    private static final String DELIMIT = "'";
+
     public VarcharField(@NonNull String name, int limit, boolean nullable, @NonNull Table parentTable) {
         super(name, FieldType.VARCHAR, nullable, parentTable);
         this.limit = limit;
@@ -64,7 +66,7 @@ public class VarcharField extends BaseField {
         if (valStr == null || valStr.isBlank()) {
             return isNullable();
         }
-        return valStr.length() <= this.limit;
+        return valStr.startsWith(DELIMIT) && valStr.endsWith(DELIMIT) && valStr.length() <= this.limit + 2 * DELIMIT.length();
     }
 
     @Override
@@ -110,12 +112,7 @@ public class VarcharField extends BaseField {
                 }
             }
 
-            var str = stream.readString(JBBPByteOrder.BIG_ENDIAN);
-            if (checkStr(str)) {
-                return str;
-            } else {
-                throw new TableConflictException(3);
-            }
+            return stream.readString(JBBPByteOrder.BIG_ENDIAN);
         } catch (IOException e) {
             throw new TableConflictException(1);
         }
@@ -134,7 +131,7 @@ public class VarcharField extends BaseField {
             }
 
             var str = stream.readString(JBBPByteOrder.BIG_ENDIAN);
-            return checkStr(str);
+            return true;
         } catch (IOException e) {
             return false;
         }
@@ -153,13 +150,22 @@ public class VarcharField extends BaseField {
             if (strVal == null || strVal.isBlank()) {
                 stream.writeBytes(new byte[]{1}, 1, JBBPByteOrder.BIG_ENDIAN);
             } else {
-                stream.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
-                stream.writeString(strVal, JBBPByteOrder.BIG_ENDIAN);
+                if (strVal.startsWith(DELIMIT) && strVal.endsWith(DELIMIT)) {
+                    var substr = strVal.substring(1, strVal.length() - 1);
+                    if (substr.isBlank()) {
+                        stream.writeBytes(new byte[]{1}, 1, JBBPByteOrder.BIG_ENDIAN);
+                    } else {
+                        stream.writeBytes(new byte[]{0}, 1, JBBPByteOrder.BIG_ENDIAN);
+                        stream.writeString(substr, JBBPByteOrder.BIG_ENDIAN);
+                    }
+                } else {
+                    throw new TableConflictException(1);
+                }
             }
 
         } catch (IOException e) {
             // fixme 这个给外面可能也不知道如何处理
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
@@ -182,7 +188,7 @@ public class VarcharField extends BaseField {
 
         } catch (IOException e) {
             // fixme 这个给外面可能也不知道如何处理
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         } catch (ClassCastException e){
             throw new TableConflictException(1);
         }
@@ -255,7 +261,11 @@ public class VarcharField extends BaseField {
 
     @Override
     public Object strToValue(String str) {
-        return str;
+        if (str.startsWith(DELIMIT) && str.endsWith(DELIMIT)) {
+            return str.substring(1, str.length() - 1);
+        } else {
+            return str;
+        }
     }
 
     @Override

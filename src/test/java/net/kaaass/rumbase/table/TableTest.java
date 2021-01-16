@@ -146,12 +146,12 @@ public class TableTest extends TestCase {
         var data = new ArrayList<String>();
         data.add("33");
         data.add("1.2");
-        data.add("test varchar");
+        data.add("'test varchar'");
 
         var data2 = new ArrayList<String>();
         data2.add("1");
         data2.add("-0.4");
-        data2.add("ya test varchar");
+        data2.add("'ya test varchar'");
 
         // 插入记录
         try {
@@ -234,52 +234,52 @@ public class TableTest extends TestCase {
         table.insert(context, new ArrayList<>() {{
             add("1");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("2");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("3");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("3");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("4");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("5");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("6");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("7");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("7");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
         table.insert(context, new ArrayList<>() {{
             add("8");
             add("1.2");
-            add("test varchar");
+            add("'test varchar'");
         }});
     }
 
@@ -475,11 +475,11 @@ public class TableTest extends TestCase {
         var passEntry = new ArrayList<String>();
         passEntry.add("33");
         passEntry.add("1.2");
-        passEntry.add("test varchar");
+        passEntry.add("'test varchar'");
 
         var failEntry = new ArrayList<String>();
         failEntry.add("33");
-        failEntry.add("test varchar");
+        failEntry.add("'test varchar'");
         failEntry.add("1.2");
 
         var fieldList = new ArrayList<BaseField>();
@@ -500,11 +500,11 @@ public class TableTest extends TestCase {
         var passEntry = new ArrayList<String>();
         passEntry.add("33");
         passEntry.add("1.2");
-        passEntry.add("test varchar");
+        passEntry.add("'test varchar'");
 
         var failEntry = new ArrayList<String>();
         failEntry.add("33");
-        failEntry.add("test varchar");
+        failEntry.add("'test varchar'");
         failEntry.add("1.2");
 
         var fieldList = new ArrayList<BaseField>();
