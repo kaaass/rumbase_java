@@ -7,7 +7,6 @@ import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
-import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.ByteArrayInputStream;
@@ -110,7 +109,7 @@ public class TableManager {
      * @param context   事务context
      * @param tableName 表名
      * @param baseFields    表的字段
-     * @throws TableConflictException 该表已存在
+     * @throws TableExistenceException 该表已存在
      */
     public void createTable(
             TransactionContext context,

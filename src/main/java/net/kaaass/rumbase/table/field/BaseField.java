@@ -1,7 +1,6 @@
 package net.kaaass.rumbase.table.field;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPBitNumber;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.*;
 import net.kaaass.rumbase.index.Index;

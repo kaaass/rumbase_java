@@ -551,7 +551,6 @@ public class Table {
      * @return 列
      */
     public BaseField getFirstIndexedField() {
-        BaseField field = null;
         for (var f: fields) {
             if (f.indexed()) {
                 return f;

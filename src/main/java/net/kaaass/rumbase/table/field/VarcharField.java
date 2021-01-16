@@ -130,7 +130,7 @@ public class VarcharField extends BaseField {
                 return isNullable();
             }
 
-            var str = stream.readString(JBBPByteOrder.BIG_ENDIAN);
+            stream.readString(JBBPByteOrder.BIG_ENDIAN);
             return true;
         } catch (IOException e) {
             return false;

@@ -33,15 +33,4 @@ public enum FieldType {
         }
     }
 
-    public FieldType fromString(String value) {
-        var intType = "int";
-        var floatType = "float";
-        if (value.equals(intType)) {
-            return INT;
-        } else if (value.equals(floatType)) {
-            return FLOAT;
-        } else {
-            return VARCHAR;
-        }
-    }
 }
