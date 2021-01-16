@@ -210,7 +210,7 @@ public class ConditionExpression {
             var b = stack.pop();
             var a = stack.pop();
             Comparator cmp = Comparator.naturalOrder();
-            stack.push(cmp.compare(a, b) <= 0 && cmp.compare(b, c) < 0);
+            stack.push(cmp.compare(b, a) <= 0 && cmp.compare(a, c) < 0);
         }
 
         @Override
