@@ -3,6 +3,7 @@ package net.kaaass.rumbase.table;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import lombok.Getter;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.table.field.BaseField;
@@ -37,6 +38,10 @@ public class TableManager {
      * 同样地，创建表、删除表需要维护这个结构
      */
     private final Map<String, Table> tableCache = new HashMap<>();
+
+    @Getter
+    private final List<String > recordPaths = new ArrayList<>();
+
 
     /**
      * 提交一个事务
@@ -80,7 +85,9 @@ public class TableManager {
                 // 加载表
                 if (key.startsWith("tablePath$")) {
                     var tableName = key.split("\\$")[1];
-                    var table = Table.load(RecordManager.fromFile(val));
+                    var record = RecordManager.fromFile(val);
+                    recordPaths.add(val);
+                    var table = Table.load(record);
                     tableCache.put(tableName, table);
                 }
             } catch (IOException e) {
