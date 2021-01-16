@@ -261,4 +261,101 @@ public class TransactionContextTest {
             log.info("tx1 committed");
         }
     }
+
+    @Test
+    public void testDeadlock3() throws IOException, FileException, InterruptedException, StatusException {
+        var manager = new TransactionManagerImpl("test_gen_files/test_deadlock3.log");
+        for (int i = 0; i < 1; i++) {
+            log.info("============= Test times {} =============", i);
+            var tx1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+            var tx2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+            var tx3 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+            String tableName = "test";
+
+            tx1.start();
+            tx2.start();
+            tx3.start();
+
+            AtomicBoolean syncPoint = new AtomicBoolean(false);
+            AtomicBoolean deadlockDetect = new AtomicBoolean(false);
+            var thread2 = new Thread(() -> {
+                try {
+                    while (!syncPoint.get()) {
+                        Thread.sleep(3);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    tx2.exclusiveLock(3, tableName);
+                } catch (DeadlockException e) {
+                    deadlockDetect.set(true);
+                    e.printStackTrace();
+                    try {
+                        log.info("rollback tx2");
+                        tx2.rollback();
+                    } catch (StatusException statusException) {
+                        statusException.printStackTrace();
+                    }
+                } catch (StatusException e) {
+                    e.printStackTrace();
+                }
+                log.info("thread2 alive");
+            });
+            var thread3 = new Thread(() -> {
+                try {
+                    while (!syncPoint.get()) {
+                        Thread.sleep(3);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    tx3.exclusiveLock(1, tableName);
+                } catch (DeadlockException e) {
+                    deadlockDetect.set(true);
+                    e.printStackTrace();
+                    try {
+                        log.info("rollback tx3");
+                        tx3.rollback();
+                    } catch (StatusException statusException) {
+                        statusException.printStackTrace();
+                    }
+                } catch (StatusException e) {
+                    e.printStackTrace();
+                }
+                log.info("thread3 alive");
+            });
+            thread2.start();
+            thread3.start();
+            try {
+                tx1.exclusiveLock(1, tableName);
+                tx2.exclusiveLock(2, tableName);
+                tx3.exclusiveLock(3, tableName);
+                syncPoint.set(true);
+                tx1.exclusiveLock(2, tableName);
+            } catch (DeadlockException e) {
+                deadlockDetect.set(true);
+                e.printStackTrace();
+                log.info("rollback tx1");
+                tx1.rollback();
+            }
+            log.info("thread1 alive");
+            thread2.join();
+            thread3.join();
+            assertTrue("Deadlock should be detected", deadlockDetect.get());
+            if (tx1.getStatus() == TransactionStatus.ACTIVE) {
+                tx1.commit();
+                log.info("tx1 committed");
+            }
+            if (tx2.getStatus() == TransactionStatus.ACTIVE) {
+                tx2.commit();
+                log.info("tx2 committed");
+            }
+            if (tx3.getStatus() == TransactionStatus.ACTIVE) {
+                tx3.commit();
+                log.info("tx3 committed");
+            }
+        }
+    }
 }
