@@ -44,20 +44,27 @@ public class DeleteExecutor implements Executable{
             throw new ArgumentException(2);
         }
 
-        var rows = new ArrayList<List<Object>>();
+        List<List<Object>> rows = new ArrayList<>();
         var iter = table.searchAll(field.getName());
         while(iter.hasNext()) {
             var uuid = iter.next().getUuid();
+            List<List<Object>> finalRows = rows;
             table.read(context, uuid).ifPresent(row -> {
                 row.add(uuid);
-                rows.add(row);
+                finalRows.add(row);
             });
         }
 
-        var conditionExe = new ConditionExecutor(idrs, rows, statement.getWhere());
-        conditionExe.execute();
+        var where = statement.getWhere();
+        if (where != null) {
 
-        for (var row: conditionExe.getResult()) {
+            var conditionExe = new ConditionExecutor(idrs, rows, where);
+            conditionExe.execute();
+            rows = conditionExe.getResult();
+
+        }
+
+        for (var row: rows) {
             try {
                 table.delete(context, (long) row.get(row.size() - 1));
             } catch (ClassCastException e) {

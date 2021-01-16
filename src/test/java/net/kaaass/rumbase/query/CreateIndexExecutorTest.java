@@ -3,7 +3,6 @@ package net.kaaass.rumbase.query;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
-import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
 import net.kaaass.rumbase.parse.stmt.CreateIndexStatement;
@@ -17,13 +16,11 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
-
 @Slf4j
 public class CreateIndexExecutorTest extends TestCase {
 
     public void testParseSingle() throws SqlSyntaxException {
-        var sql = "CREATE INDEX PersonIndex ON Person (LastName) ;";
+        var sql = "CREATE INDEX PersonIndex ON testParseSingle$Person (LastName) ;";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
         assertTrue(stmt instanceof CreateIndexStatement);
@@ -34,13 +31,13 @@ public class CreateIndexExecutorTest extends TestCase {
         var dummy = new Table("testParseSingle.__reserved__", fields);
         fields.add(new VarcharField("LastName", 20, false, dummy));
         try {
-            manager.createTable(context, "Person", fields, "testParseSingle.Person.db");
+            manager.createTable(context, "testParseSingle$Person", fields, "testParseSingle.Person.db");
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
             fail();
         }
         try {
-            var table = manager.getTable("Person");
+            var table = manager.getTable("testParseSingle$Person");
             var field = table.getField("LastName");
             assertTrue(field.isPresent());
             assertFalse(field.get().indexed());
@@ -59,7 +56,7 @@ public class CreateIndexExecutorTest extends TestCase {
     }
 
     public void testParseMulti() throws SqlSyntaxException {
-        var sql = "CREATE INDEX PersonIndex ON Person (LastName, ID) ;";
+        var sql = "CREATE INDEX PersonIndex ON testParseMulti$Person (LastName, ID) ;";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
         assertTrue(stmt instanceof CreateIndexStatement);
@@ -71,13 +68,13 @@ public class CreateIndexExecutorTest extends TestCase {
         fields.add(new VarcharField("LastName", 20, false, dummy));
         fields.add(new IntField("ID", false, dummy));
         try {
-            manager.createTable(context, "Person", fields, "testParseMulti.Person.db");
+            manager.createTable(context, "testParseMulti$Person", fields, "testParseMulti.Person.db");
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
             fail();
         }
         try {
-            var table = manager.getTable("Person");
+            var table = manager.getTable("testParseMulti$Person");
             var field1 = table.getField("LastName");
             var field2 = table.getField("ID");
             assertTrue(field1.isPresent());

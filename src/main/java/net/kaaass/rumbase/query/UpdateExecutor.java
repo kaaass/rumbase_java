@@ -44,44 +44,49 @@ public class UpdateExecutor implements Executable{
             throw new ArgumentException(2);
         }
 
-        var rows = new ArrayList<List<Object>>();
+        List<List<Object>> rows = new ArrayList<>();
         var iter = table.searchAll(indexedField.getName());
         while(iter.hasNext()) {
             var uuid = iter.next().getUuid();
+            List<List<Object>> finalRows = rows;
             table.read(context, uuid).ifPresent(row -> {
                 row.add(uuid);
-                rows.add(row);
+                finalRows.add(row);
             });
         }
 
-        var conditionExe = new ConditionExecutor(idrs, rows, statement.getWhere());
-        conditionExe.execute();
+        var where = statement.getWhere();
+        if (where != null) {
+            var conditionExe = new ConditionExecutor(idrs, rows, where);
+            conditionExe.execute();
+            rows = conditionExe.getResult();
+        }
 
-        var result = conditionExe.getResult();
         var uuids = new ArrayList<Long>();
 
-        for (var row : result) {
+        for (var row : rows) {
             uuids.add((long) row.remove(row.size() - 1));
         }
 
         var fields = table.getFields();
         var len = fields.size();
         var rowLen = rows.size();
+        var updateFieldLen = statement.getColumns().size();
 
         for (int i = 0; i < len; i++) {
-            for (var updateField: statement.getColumns()) {
+            for (int j = 0; j < updateFieldLen; j++) {
                 var field = fields.get(i);
-                if (field.getName().equals(updateField.getFieldName())) {
-                    for (int j = 0; j < rowLen; j++) {
+                if (field.getName().equals(statement.getColumns().get(j).getFieldName())) {
+                    for (var list : rows) {
                         var val = fields.get(i).strToValue(statement.getValues().get(j));
-                        result.get(i).set(j, val);
+                        list.set(i, val);
                     }
                 }
             }
         }
 
         for (int i = 0; i < rowLen; i++) {
-            table.updateObjs(context, uuids.get(i), result.get(i));
+            table.updateObjs(context, uuids.get(i), rows.get(i));
         }
 
     }

@@ -34,10 +34,9 @@ public class CreateTableExecutor implements Executable {
         var tableName = statement.getTableName();
         var baseFields = new ArrayList<BaseField>();
         var dummyTable = new Table(tableName, baseFields);
-        // FIXME: 2021/1/15 fix nullable
-        var nullable = false;
+        boolean nullable;
         for (var def : statement.getColumnDefinitions()) {
-
+            nullable = !def.isNotNull();
             var fieldName = def.getColumnName();
             var fieldType = FieldType.valueOf(def.getColumnType().getTypeName().toUpperCase(Locale.ROOT));
 
