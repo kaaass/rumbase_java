@@ -24,7 +24,6 @@ public class ConditionExpression {
 
     public static double PRECISION = 0.00001;
 
-    @NonNull
     private final Expression expression;
 
     @NonNull
@@ -38,6 +37,9 @@ public class ConditionExpression {
      * @param paramMap 参数列表，其中参数必须是原生类型的装箱对象，如Integer、String
      */
     public boolean evaluate(Map<ColumnIdentifier, Object> paramMap) {
+        if (expression == null) {
+            return true;
+        }
         updateParam();
         var parser = new DeParser(paramMap);
         expression.accept(parser);
@@ -58,6 +60,9 @@ public class ConditionExpression {
      * 获得表达式求值需要的参数
      */
     public List<ColumnIdentifier> getParams() {
+        if (expression == null) {
+            return List.of();
+        }
         updateParam();
         return List.copyOf(paramColumn.values());
     }
