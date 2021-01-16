@@ -56,7 +56,7 @@ public class IRecoveryTest extends TestCase {
     }
 
     public void testInsertFail() throws PageException, LogException, FileException, IOException, UUIDException {
-        String fileName = "testInsert.db";
+        String fileName = "testInsertFailed.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);
         byte[] bytes = new byte[]{1, 2, 3, 4};
         var txContext = TransactionContext.empty();
