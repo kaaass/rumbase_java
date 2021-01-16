@@ -349,13 +349,18 @@ public class ItemStorage implements IItemStorage {
     @Override
     public int getMaxPageId() {
         var page = getPage(0);
-        var header = parseTableHeader(page);
-        return header.tempFreePage;
+        try{
+            var header = parseTableHeader(page);
+            return header.tempFreePage;
+        }finally {
+            releasePage(page);
+        }
     }
 
     @Override
     public void flush(long uuid) throws FileException {
         var page = getPage(uuid);
+        releasePage(page);
         page.flush();
     }
 
@@ -466,6 +471,33 @@ public class ItemStorage implements IItemStorage {
     }
 
     /**
+     * 日志恢复时用，回退对应的insert操作
+     * @param uuid
+     */
+    @Override
+    public void deleteUuid(long uuid) throws IOException, PageException {
+        var page = getPage(uuid);
+        try {
+            var rnd = getRndByUuid(uuid);
+            var header = getPageHeader(page);
+            if (header.isPresent()){
+                var items = header.get().item;
+                for (int i = 0;i < items.length ; i ++){
+                    if (rnd == items[i].uuid){
+                        // 该item对应的起止位置,将其数据项变为-1
+                        int offset = ITEM_OFFSET + i * ITEM_SIZE;
+                        var bytes = JBBPOut.BeginBin().Int(-1).Int(0).End().toByteArray();
+                        page.patchData(offset,bytes);
+                        return;
+                    }
+                }
+            }
+        }finally {
+            releasePage(page);
+        }
+    }
+
+    /**
      * 检查uuid是否存在,若Uuid的页号超过当前可用页，则直接返回False
      *
      * @param uuid
@@ -537,8 +569,12 @@ public class ItemStorage implements IItemStorage {
             if (pageHeaderOp.isPresent()) {
                 var pageHeader = pageHeaderOp.get();
                 for (var item : pageHeader.item) {
-                    var data = parseData(page, item);
-                    bytes.add(data);
+                    if (item.uuid < 0){
+                        continue;
+                    }else {
+                        var data = parseData(page, item);
+                        bytes.add(data);
+                    }
                 }
             }
             return bytes;
@@ -616,10 +652,15 @@ public class ItemStorage implements IItemStorage {
     @Override
     public long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException {
         var page = getPage(0);
-        var header = parseTableHeader(page);
-        var uuid = setMetadataWithoutLog(metadata);
-        recoveryStorage.updateMeta(txContext.getXid(),header.headerUuid,metadata);
-        return uuid;
+        try{
+            var header = parseTableHeader(page);
+            var uuid = setMetadataWithoutLog(metadata);
+            recoveryStorage.updateMeta(txContext.getXid(),header.headerUuid,metadata);
+            return uuid;
+        }finally {
+            releasePage(page);
+        }
+
     }
 
     @Override

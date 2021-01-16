@@ -4,9 +4,11 @@ import lombok.Data;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.IRecoveryStorage;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -168,6 +170,11 @@ public class MockItemStorage implements IItemStorage {
     @Override
     public void removeItems(List<Long> uuids) {
         System.out.println("已经清除文件对应uuid的信息");
+    }
+
+    @Override
+    public void deleteUuid(long uuid) throws IOException, PageException {
+
     }
 
     @Override

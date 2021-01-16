@@ -118,6 +118,12 @@ public interface IItemStorage {
      * @param uuids 数据项UUID的编号列表
      */
     void removeItems(List<Long> uuids);
+
+    /**
+     *  删除对应的uuid
+     * @param uuid
+     */
+    void deleteUuid(long uuid) throws IOException, PageException;
 }
 
 

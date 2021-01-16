@@ -55,6 +55,27 @@ public class IRecoveryTest extends TestCase {
         assertEquals(2,list.size());
     }
 
+    public void testInsertFail() throws PageException, LogException, FileException, IOException, UUIDException {
+        String fileName = "testInsert.db";
+        IItemStorage iItemStorage = ItemManager.fromFile(fileName);
+        byte[] bytes = new byte[]{1, 2, 3, 4};
+        var txContext = TransactionContext.empty();
+        var recoveryStorage = iItemStorage.getRecoveryStorage();
+        var xid = 0;
+        List<Integer> snaps = new ArrayList<>();
+        recoveryStorage.begin(xid,snaps);
+        long uuid = iItemStorage.insertItem(txContext,bytes);
+        recoveryStorage.rollback(xid);
+        recoveryStorage.recovery();
+        try {
+            var item = iItemStorage.queryItemByUuid(uuid);
+            assertFalse(Arrays.equals(bytes,item));
+        }catch (Exception e){
+
+        }
+
+    }
+
     public void testUpdate() throws PageException, LogException, FileException, IOException, UUIDException {
         String fileName = "testUpdate.db";
         IItemStorage iItemStorage = ItemManager.fromFile(fileName);

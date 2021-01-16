@@ -253,6 +253,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
                     itemStorage.insertItemWithUuid(insertLog.item,insertLog.uuid);
                 }else {
                     // 如果事务没有提交，则undo
+                    itemStorage.deleteUuid(insertLog.uuid);
                 }
                 break;
             case UPDATE_FLAG:
