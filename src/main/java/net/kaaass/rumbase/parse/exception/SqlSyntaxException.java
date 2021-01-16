@@ -10,6 +10,7 @@ import java.util.Map;
  * <p>
  * E1001-1 SQL语句语法错误
  * E1001-2 不支持的SQL语句
+ * E1001-3 语句生成错误，请检查服务器日志
  *
  * @author kaaass
  */
@@ -18,6 +19,7 @@ public class SqlSyntaxException extends RumbaseException {
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "SQL语句语法错误");
         put(2, "不支持的SQL语句");
+        put(3, "语句生成错误，请检查服务器日志");
     }};
 
     public SqlSyntaxException(int subId) {

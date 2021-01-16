@@ -59,7 +59,6 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
             return false;
         }
         log.debug("会话 {} 解析SQL语句: {}", sessionId, stmt);
-        say("Parsed: " + stmt.toString() + "\n");
         // 执行SQL
         try {
             return stmt.accept(this);

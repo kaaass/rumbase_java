@@ -3,7 +3,7 @@ package net.kaaass.rumbase.parse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.parse.exception.EvaluationException;
-import net.kaaass.rumbase.parse.parser.ParserUtil;
+import net.kaaass.rumbase.parse.parser.jsqlp.ParserUtil;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;

@@ -1,7 +1,8 @@
-package net.kaaass.rumbase.parse.parser;
+package net.kaaass.rumbase.parse.parser.jsqlp;
 
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.parser.JsqlpStatementParser;
 import net.kaaass.rumbase.parse.stmt.InsertStatement;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsListVisitorAdapter;

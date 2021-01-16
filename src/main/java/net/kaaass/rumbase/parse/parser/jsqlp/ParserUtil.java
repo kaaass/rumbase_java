@@ -1,4 +1,4 @@
-package net.kaaass.rumbase.parse.parser;
+package net.kaaass.rumbase.parse.parser.jsqlp;
 
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.sf.jsqlparser.schema.Column;

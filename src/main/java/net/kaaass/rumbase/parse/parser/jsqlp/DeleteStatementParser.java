@@ -1,7 +1,8 @@
-package net.kaaass.rumbase.parse.parser;
+package net.kaaass.rumbase.parse.parser.jsqlp;
 
 import net.kaaass.rumbase.parse.ConditionExpression;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.parser.JsqlpStatementParser;
 import net.kaaass.rumbase.parse.stmt.DeleteStatement;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
