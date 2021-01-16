@@ -6,6 +6,7 @@ import com.igormaznitsa.jbbp.mapper.Bin;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.ItemManager;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.Page;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.exception.LogException;
@@ -43,9 +44,13 @@ public class RecoveryStorage implements  IRecoveryStorage {
      * @param fileName
      * @return 日志管理器
      */
-    public static IRecoveryStorage ofFile(String fileName) throws FileException, IOException, LogException, PageException {
-        var itemStorage = ItemManager.fromFileWithoutLog(fileName + ".log");
-        return new RecoveryStorage(itemStorage,fileName);
+    public static IRecoveryStorage ofFile(String fileName) throws LogException {
+        try {
+            var itemStorage = ItemManager.fromFileWithoutLog(fileName + ".log");
+            return new RecoveryStorage(itemStorage,fileName);
+        }catch (FileException | PageException e){
+            throw new LogException(10);
+        }
     }
 
     /**
@@ -53,85 +58,114 @@ public class RecoveryStorage implements  IRecoveryStorage {
      * @param fileName 文件名
      * @return
      */
-    public static IRecoveryStorage ofNewFile(String fileName) throws FileException, IOException, PageException, LogException {
-        var metadata = JBBPOut.BeginBin().Int(HEADER).End().toByteArray();
-        var itemStorage = ItemManager.createFileWithoutLog(fileName + ".log",metadata);
-        return new RecoveryStorage(itemStorage,fileName);
-    }
-
-    @Override
-    public void begin(int xid, List<Integer> snapshots) throws IOException, FileException {
-        var jbbp = JBBPOut.BeginBin().
-                Byte(TX_BEGIN).
-                Int(xid).
-                Int(snapshots.size());
-        for ( var i : snapshots){
-            jbbp = jbbp.Int(i);
+    public static IRecoveryStorage ofNewFile(String fileName) throws LogException {
+        try {
+            var metadata = JBBPOut.BeginBin().Int(HEADER).End().toByteArray();
+            var itemStorage = ItemManager.createFileWithoutLog(fileName + ".log",metadata);
+            return new RecoveryStorage(itemStorage,fileName);
+        }catch (IOException | FileException | PageException e) {
+            throw new LogException(9);
         }
-        var bytes = jbbp.End().toByteArray();
-        var uuid = logStorage.insertItemWithoutLog(bytes);
-        logStorage.flush(uuid);
     }
 
     @Override
-    public void rollback(int xid) throws IOException, FileException {
-        var bytes = JBBPOut.BeginBin().
-                Byte(TX_ABORT).
-                Int(xid).
-                End().toByteArray();
-        var uuid = logStorage.insertItemWithoutLog(bytes);
-        logStorage.flush(uuid);
+    public void begin(int xid, List<Integer> snapshots) throws LogException {
+        try {
+            var jbbp = JBBPOut.BeginBin().
+                    Byte(TX_BEGIN).
+                    Int(xid).
+                    Int(snapshots.size());
+            for ( var i : snapshots){
+                jbbp = jbbp.Int(i);
+            }
+            var bytes = jbbp.End().toByteArray();
+            var uuid = logStorage.insertItemWithoutLog(bytes);
+            logStorage.flush(uuid);
+        } catch (IOException  | FileException e) {
+            throw new LogException(3);
+        }
     }
 
     @Override
-    public void commit(int xid) throws IOException, FileException {
-        var bytes = JBBPOut.BeginBin().
-                Byte(TX_COMMIT).
-                Int(xid).
-                End().toByteArray();
-        var uuid = logStorage.insertItemWithoutLog(bytes);
-        logStorage.flush(uuid);
+    public void rollback(int xid) throws LogException {
+        try {
+            var bytes = JBBPOut.BeginBin().
+                    Byte(TX_ABORT).
+                    Int(xid).
+                    End().toByteArray();
+            var uuid = logStorage.insertItemWithoutLog(bytes);
+            logStorage.flush(uuid);
+        }catch (FileException | IOException e){
+            throw new LogException(4);
+        }
     }
 
     @Override
-    public void insert(int xid, long uuid, byte[] item) throws IOException, FileException {
-        var bytes = JBBPOut.BeginBin().
-                Byte(INSERT_FLAG).
-                Int(xid).
-                Long(uuid).
-                Int(item.length).
-                Byte(item).
-                End().toByteArray();
-        var id = logStorage.insertItemWithoutLog(bytes);
-        logStorage.flush(id);
+    public void commit(int xid) throws LogException {
+        try {
+            var bytes = JBBPOut.BeginBin().
+                    Byte(TX_COMMIT).
+                    Int(xid).
+                    End().toByteArray();
+            var uuid = logStorage.insertItemWithoutLog(bytes);
+            logStorage.flush(uuid);
+        }catch (FileException | IOException e){
+            throw new LogException(5);
+        }
+
     }
 
     @Override
-    public void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) throws IOException, FileException {
-        var bytes = JBBPOut.BeginBin().
-                Byte(UPDATE_FLAG).
-                Int(xid).
-                Long(uuid).
-                Int(itemBefore.length).
-                Byte(itemBefore).
-                Int(itemAfter.length).
-                Byte(itemAfter).
-                End().toByteArray();
-        var id = logStorage.insertItemWithoutLog(bytes);
-        logStorage.flush(id);
+    public void insert(int xid, long uuid, byte[] item) throws LogException {
+        try {
+            var bytes = JBBPOut.BeginBin().
+                    Byte(INSERT_FLAG).
+                    Int(xid).
+                    Long(uuid).
+                    Int(item.length).
+                    Byte(item).
+                    End().toByteArray();
+            var id = logStorage.insertItemWithoutLog(bytes);
+            logStorage.flush(id);
+        }catch (FileException | IOException e){
+            throw new LogException(6);
+        }
     }
 
     @Override
-    public void updateMeta(int xid, long beforeUuid,byte[] metadata) throws IOException, FileException {
-        var bytes  =JBBPOut.BeginBin().
-                Byte(METADATA_UPDATE_FLAG).
-                Int(xid).
-                Long(beforeUuid).
-                Int(metadata.length).
-                Byte(metadata).
-                End().toByteArray();
-        var uuid = logStorage.insertItemWithoutLog(bytes);
-        logStorage.flush(uuid);
+    public void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) throws LogException {
+        try{
+            var bytes = JBBPOut.BeginBin().
+                    Byte(UPDATE_FLAG).
+                    Int(xid).
+                    Long(uuid).
+                    Int(itemBefore.length).
+                    Byte(itemBefore).
+                    Int(itemAfter.length).
+                    Byte(itemAfter).
+                    End().toByteArray();
+            var id = logStorage.insertItemWithoutLog(bytes);
+            logStorage.flush(id);
+        }catch (FileException | IOException e){
+            throw new LogException(7);
+        }
+    }
+
+    @Override
+    public void updateMeta(int xid, long beforeUuid,byte[] metadata) throws LogException {
+        try {
+            var bytes  =JBBPOut.BeginBin().
+                    Byte(METADATA_UPDATE_FLAG).
+                    Int(xid).
+                    Long(beforeUuid).
+                    Int(metadata.length).
+                    Byte(metadata).
+                    End().toByteArray();
+            var uuid = logStorage.insertItemWithoutLog(bytes);
+            logStorage.flush(uuid);
+        }catch (FileException | IOException e){
+            throw new LogException(8);
+        }
 
     }
 
@@ -151,24 +185,33 @@ public class RecoveryStorage implements  IRecoveryStorage {
     }
 
     @Override
-    public void recovery() throws IOException, LogException, FileException, PageException {
-        var itemStorage = ItemManager.fromFile(this.fileName);
-        var logs = getContent();
-        var xidMaps = parseXid(logs);
-        for (var log : logs){
-            parseLog(log,itemStorage,xidMaps);
+    public void recovery() throws LogException{
+        try {
+            var itemStorage = ItemManager.fromFile(this.fileName);
+            var logs = getContent();
+            var xidMaps = parseXid(logs);
+            for (var log : logs){
+                parseLog(log,itemStorage,xidMaps);
+            }
+        }catch (FileException | PageException e){
+            throw new LogException(11);
         }
     }
 
     /**
      * 先进行一遍解析，得到所有已完成的事务和未完成的事务，来决定redo还是undo
      */
-    private Map<Character,List<Integer>> parseXid(List<byte[]> logs) throws IOException {
+    private Map<Character,List<Integer>> parseXid(List<byte[]> logs) throws LogException {
         List<Integer> commitXids = new ArrayList<>();
         List<Integer> abortXids = new ArrayList<>();
 
         for (var log : logs){
-            var tx = parseTx(log);
+            Tx tx = null;
+            try {
+                tx = parseTx(log);
+            } catch (IOException e) {
+                throw new LogException(1);
+            }
             switch (tx.type){
                 case TX_COMMIT:
                     // 若是commit 则放入commitXid并将对应的xid移出abort
@@ -242,52 +285,57 @@ public class RecoveryStorage implements  IRecoveryStorage {
             throw new LogException(2);
         }
     }
-    private void parseLog(byte[] log, IItemStorage itemStorage, Map<Character, List<Integer>> xidMaps) throws IOException, LogException, PageException {
-        var type = parseType(log);
-        switch (type){
-            case INSERT_FLAG:
-                System.out.println("正在解析插入");
-                var insertLog = parseInsert(log);
-                if (checkCommit(insertLog.xid,xidMaps)){
-                    // 如果事务已经提交，则redo
-                    itemStorage.insertItemWithUuid(insertLog.item,insertLog.uuid);
-                }else {
-                    // 如果事务没有提交，则undo
-                    itemStorage.deleteUuid(insertLog.uuid);
-                }
-                break;
-            case UPDATE_FLAG:
-                System.out.println("正在解析更新");
-                var updateLog = parseUpdate(log);
-                if (checkCommit(updateLog.xid,xidMaps)){
-                    // 若事务已经提交则redo
-                    try {
-                        itemStorage.updateItemWithoutLog(updateLog.uuid,updateLog.itemAfter);
-                    } catch (UUIDException ignored) {
-                        // uuid不存在说明对应之前的事务没有执行，是正常
-                    }
-                }else {
-                    // 若事务没有提交，则undo,恢复之前的数据
-                    try {
-                        itemStorage.updateItemWithoutLog(updateLog.uuid,updateLog.itemBefore);
-                    } catch (UUIDException ignored) {
 
+    private void parseLog(byte[] log, IItemStorage itemStorage, Map<Character, List<Integer>> xidMaps) throws LogException {
+        try {
+            var type = parseType(log);
+            switch (type){
+                case INSERT_FLAG:
+                    System.out.println("正在解析插入");
+                    var insertLog = parseInsert(log);
+                    if (checkCommit(insertLog.xid,xidMaps)){
+                        // 如果事务已经提交，则redo
+                        itemStorage.insertItemWithUuid(insertLog.item,insertLog.uuid);
+                    }else {
+                        // 如果事务没有提交，则undo
+                        itemStorage.deleteUuid(insertLog.uuid);
                     }
-                }
-                break;
-            case METADATA_UPDATE_FLAG:
-                System.out.println("正在解析头信息更新");
-                var updateMetaLog = parseUpdateMeta(log);
-                if (checkCommit(updateMetaLog.xid,xidMaps)){
-                    // redo
-                    itemStorage.setMetadataWithoutLog(updateMetaLog.metadata);
-                }else {
-                    // undo
-                    itemStorage.setMetaUuid(updateMetaLog.beforeUuid);
-                }
-                break;
-            default:
-                return;
+                    break;
+                case UPDATE_FLAG:
+                    System.out.println("正在解析更新");
+                    var updateLog = parseUpdate(log);
+                    if (checkCommit(updateLog.xid,xidMaps)){
+                        // 若事务已经提交则redo
+                        try {
+                            itemStorage.updateItemWithoutLog(updateLog.uuid,updateLog.itemAfter);
+                        } catch (UUIDException ignored) {
+                            // uuid不存在说明对应之前的事务没有执行，是正常
+                        }
+                    }else {
+                        // 若事务没有提交，则undo,恢复之前的数据
+                        try {
+                            itemStorage.updateItemWithoutLog(updateLog.uuid,updateLog.itemBefore);
+                        } catch (UUIDException ignored) {
+
+                        }
+                    }
+                    break;
+                case METADATA_UPDATE_FLAG:
+                    System.out.println("正在解析头信息更新");
+                    var updateMetaLog = parseUpdateMeta(log);
+                    if (checkCommit(updateMetaLog.xid,xidMaps)){
+                        // redo
+                        itemStorage.setMetadataWithoutLog(updateMetaLog.metadata);
+                    }else {
+                        // undo
+                        itemStorage.setMetaUuid(updateMetaLog.beforeUuid);
+                    }
+                    break;
+                default:
+                    return;
+            }
+        }catch (IOException | PageException e){
+            throw new LogException(1);
         }
     }
 

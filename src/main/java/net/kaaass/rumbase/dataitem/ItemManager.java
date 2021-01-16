@@ -1,6 +1,7 @@
 package net.kaaass.rumbase.dataitem;
 
 
+import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.exception.LogException;
@@ -26,7 +27,7 @@ public class ItemManager {
      * @param fileName 文件名
      * @return 数据项管理器，用于管理数据项
      */
-    public static IItemStorage fromFile(String fileName) throws FileException, IOException, PageException, LogException {
+    public static IItemStorage fromFile(String fileName) throws FileException, PageException, LogException {
         if (maps.containsKey(fileName)) {
             return maps.get(fileName);
         } else {
@@ -36,7 +37,7 @@ public class ItemManager {
         }
     }
 
-    public static IItemStorage fromFileWithoutLog(String fileName) throws FileException, IOException, PageException, LogException {
+    public static IItemStorage fromFileWithoutLog(String fileName) throws FileException,PageException, PageCorruptedException {
         if (maps.containsKey(fileName)) {
             return maps.get(fileName);
         } else {
@@ -56,7 +57,7 @@ public class ItemManager {
      * @return 数据项管理器
      * @throws FileException 想新建的文件已经存在的异常
      */
-    public static IItemStorage createFile(TransactionContext txContext, String fileName, byte[] metadata) throws FileException, IOException, PageException, LogException {
+    public static IItemStorage createFile(TransactionContext txContext, String fileName, byte[] metadata) throws FileException, PageException, LogException {
         // 如果文件已经存在，那么就抛出文件已存在异常
         if (maps.containsKey(fileName)) {
             throw new FileException(1);
@@ -68,7 +69,7 @@ public class ItemManager {
         }
     }
 
-    public static IItemStorage createFileWithoutLog(String fileName, byte[] metadata) throws FileException, IOException, PageException, LogException {
+    public static IItemStorage createFileWithoutLog(String fileName, byte[] metadata) throws FileException,  PageException {
         // 如果文件已经存在，那么就抛出文件已存在异常
         if (maps.containsKey(fileName)) {
             throw new FileException(1);

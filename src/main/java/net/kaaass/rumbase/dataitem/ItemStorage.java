@@ -87,7 +87,7 @@ public class ItemStorage implements IItemStorage {
      * @param header 第一页的Page对象
      * @return 是否是表的第一页
      */
-    private static boolean checkTableHeader(Page header) {
+    private static boolean checkTableHeader(Page header) throws PageCorruptedException{
         var data = header.getData();
         byte[] flag = new byte[4];
         try {
@@ -104,7 +104,7 @@ public class ItemStorage implements IItemStorage {
      * @param fileName 文件名
      * @return 解析或新建得到的数据项管理器对象
      */
-    public static IItemStorage ofFile(String fileName) throws FileException, PageException, IOException, LogException {
+    public static IItemStorage ofFile(String fileName) throws FileException, PageException, LogException {
         var pageStorage = PageManager.fromFile(fileName);
         var header = pageStorage.get(0);
         header.pin();
@@ -137,7 +137,7 @@ public class ItemStorage implements IItemStorage {
     /**
      *  不使用日志打开文件
      */
-    public static IItemStorage ofFileWithoutLog(String fileName) throws FileException, PageException, IOException, LogException {
+    public static IItemStorage ofFileWithoutLog(String fileName) throws FileException, PageException, PageCorruptedException {
         var pageStorage = PageManager.fromFile(fileName);
         var header = pageStorage.get(0);
         header.pin();
@@ -172,7 +172,7 @@ public class ItemStorage implements IItemStorage {
      * @param metadata 表头信息
      * @return 数据项管理器
      */
-    public static IItemStorage ofNewFile(TransactionContext txContext, String fileName, byte[] metadata) throws IOException, FileException, PageException, LogException {
+    public static IItemStorage ofNewFile(TransactionContext txContext, String fileName, byte[] metadata) throws FileException, PageException, LogException {
         var pageStorage = ItemStorage.ofFile(fileName);
         pageStorage.setMetadata(txContext, metadata);
         return pageStorage;
@@ -181,7 +181,7 @@ public class ItemStorage implements IItemStorage {
     /**
      * 不使用日志的创建文件
      */
-    public static IItemStorage ofNewFileWithoutLog(String fileName, byte[] metadata) throws IOException, LogException, FileException, PageException {
+    public static IItemStorage ofNewFileWithoutLog(String fileName, byte[] metadata) throws FileException, PageException {
         var pageStorage = ItemStorage.ofFileWithoutLog(fileName);
         pageStorage.setMetadataWithoutLog(metadata);
         return pageStorage;
@@ -264,7 +264,7 @@ public class ItemStorage implements IItemStorage {
      * @param page 页
      * @return 该页是否已经被初始化
      */
-    private boolean checkPageHeader(Page page) {
+    private boolean checkPageHeader(Page page) throws PageCorruptedException{
         byte[] pageFlag = new byte[4];
         try {
             var n = page.getData().read(pageFlag);
@@ -291,7 +291,7 @@ public class ItemStorage implements IItemStorage {
         return Optional.empty();
     }
 
-    private PageHeader initPage(Page page) {
+    private PageHeader initPage(Page page) throws PageCorruptedException {
         final byte[] bytes;
         try {
             bytes = JBBPOut.BeginBin().
@@ -310,7 +310,7 @@ public class ItemStorage implements IItemStorage {
     /**
      * 修改当前第一个可用页
      */
-    private void addTempFreePage() {
+    private void addTempFreePage() throws PageCorruptedException {
         this.tempFreePage += 1;
         var page = pageStorage.get(0);
         page.pin();
@@ -328,7 +328,7 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void setMetaUuid(long uuid) throws IOException, PageException {
+    public void setMetaUuid(long uuid) throws PageException, IOException {
         var page = getPage(0);
         try {
             var bytes = JBBPOut.BeginBin().
@@ -365,13 +365,13 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public synchronized long insertItem(TransactionContext txContext, byte[] item) throws IOException, FileException {
+    public synchronized long insertItem(TransactionContext txContext, byte[] item) throws LogException,PageCorruptedException {
         long uuid = insertItemWithoutLog(item);
         recoveryStorage.insert(txContext.getXid(),uuid,item);
         return uuid;
     }
     @Override
-    public  synchronized long insertItemWithoutLog(byte[] item) {
+    public  synchronized long insertItemWithoutLog(byte[] item) throws PageCorruptedException{
         var page = getPage(this.tempFreePage);
         try {
             var pageHeaderOp = getPageHeader(page);
@@ -470,12 +470,9 @@ public class ItemStorage implements IItemStorage {
         // 若存在则不需要恢复，直接返回
     }
 
-    /**
-     * 日志恢复时用，回退对应的insert操作
-     * @param uuid
-     */
+
     @Override
-    public void deleteUuid(long uuid) throws IOException, PageException {
+    public void deleteUuid(long uuid) throws PageException, IOException {
         var page = getPage(uuid);
         try {
             var rnd = getRndByUuid(uuid);
@@ -586,7 +583,7 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException, FileException, IOException {
+    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException, LogException {
         var item_before = updateItemWithoutLog(uuid, item);
         recoveryStorage.update(txContext.getXid(),uuid,item_before,item);
     }
@@ -650,7 +647,7 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException {
+    public long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, LogException {
         var page = getPage(0);
         try{
             var header = parseTableHeader(page);

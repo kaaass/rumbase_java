@@ -5,6 +5,7 @@ import net.kaaass.rumbase.dataitem.exception.UUIDException;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.IRecoveryStorage;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public interface IItemStorage {
 
-    void setMetaUuid(long uuid) throws IOException, PageException;
+    void setMetaUuid(long uuid) throws PageException, IOException;
 
     /**
      * 获得日志管理器
@@ -42,7 +43,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @return 返回数据项的UUID
      */
-    long insertItem(TransactionContext txContext, byte[] item) throws IOException, FileException;
+    long insertItem(TransactionContext txContext, byte[] item) throws LogException,PageCorruptedException;
 
     /**
      * 不用日志进行插入，用于日志的管理
@@ -88,7 +89,7 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException, FileException, IOException;
+    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, LogException,PageCorruptedException;
 
     byte[] updateItemWithoutLog(long uuid,byte[] item) throws UUIDException;
 
@@ -104,13 +105,13 @@ public interface IItemStorage {
      *
      * @param metadata 头信息
      */
-    long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, IOException, FileException;
+    long setMetadata(TransactionContext txContext, byte[] metadata) throws LogException;
 
     /**
      *  不使用日志设置元数据
      * @param metadata 头信息
      */
-    long setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException;
+    long setMetadataWithoutLog(byte[] metadata);
 
     /**
      * 清理多余的数据项，空间清理时使用。
@@ -120,10 +121,10 @@ public interface IItemStorage {
     void removeItems(List<Long> uuids);
 
     /**
-     *  删除对应的uuid
+     * 日志恢复时用，回退对应的insert操作，做法是删除对应的uuid
      * @param uuid
      */
-    void deleteUuid(long uuid) throws IOException, PageException;
+    void deleteUuid(long uuid) throws PageException, IOException;
 }
 
 

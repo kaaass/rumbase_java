@@ -19,16 +19,16 @@ public class RecoveryManager {
      * @param fileName 文件名
      * @return 数据库日志管理器
      */
-    public static void recovery(String fileName) throws PageException, LogException, FileException, IOException {
+    public static void recovery(String fileName) throws LogException {
 
         RecoveryStorage.ofFile(fileName).recovery();
     }
 
-    public static IRecoveryStorage getRecoveryStorage(String fileName) throws FileException, IOException, LogException, PageException {
+    public static IRecoveryStorage getRecoveryStorage(String fileName) throws LogException {
         return RecoveryStorage.ofFile(fileName);
     }
 
-    public static IRecoveryStorage createRecoveryStorage(String fileName) throws IOException, FileException, PageException, LogException {
+    public static IRecoveryStorage createRecoveryStorage(String fileName) throws  LogException {
         return RecoveryStorage.ofNewFile(fileName);
     }
 }

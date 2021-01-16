@@ -19,21 +19,21 @@ public interface IRecoveryStorage {
      * @param xid       事务编号
      * @param snapshots 快照集合
      */
-    void begin(int xid, List<Integer> snapshots) throws IOException, FileException;
+    void begin(int xid, List<Integer> snapshots) throws  LogException;
 
     /**
      * 记录事务失败回滚
      *
      * @param xid
      */
-    void rollback(int xid) throws IOException, FileException;
+    void rollback(int xid) throws  LogException;
 
     /**
      * 记录事务完成
      *
      * @param xid
      */
-    void commit(int xid) throws IOException, FileException;
+    void commit(int xid) throws LogException;
 
     /**
      * 插入数据项的日志记录
@@ -42,7 +42,7 @@ public interface IRecoveryStorage {
      * @param uuid 数据项的对应编号
      * @param item 插入的数据内容
      */
-    void insert(int xid, long uuid, byte[] item) throws IOException, FileException;
+    void insert(int xid, long uuid, byte[] item) throws LogException;
 
     /**
      * 更新数据项的日志记录
@@ -50,14 +50,14 @@ public interface IRecoveryStorage {
      * @param xid
      * @param uuid
      */
-    void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) throws IOException, FileException;
+    void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) throws  LogException;
 
     /**
      * 更新数据项的日志头
      *
      * @param xid
      */
-    void updateMeta(int xid, long beforeUuid,byte[] metadata) throws IOException, FileException;
+    void updateMeta(int xid, long beforeUuid,byte[] metadata) throws LogException;
 
     /**
      * 模拟打印日志资料
@@ -67,5 +67,5 @@ public interface IRecoveryStorage {
     /**
      * 恢复数据
      */
-    void recovery() throws IOException, LogException, FileException, PageException;
+    void recovery() throws  LogException;
 }
