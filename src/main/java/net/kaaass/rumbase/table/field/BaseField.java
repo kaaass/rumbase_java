@@ -67,10 +67,16 @@ public abstract class BaseField{
     /**
      * 当前列所属的表
      */
-    @NonNull
     @Getter
     @Setter
     private Table parentTable;
+
+    public BaseField(@NonNull String name, @NonNull FieldType type, boolean nullable, Table parentTable) {
+        this.name = name;
+        this.type = type;
+        this.nullable = nullable;
+        this.parentTable = parentTable;
+    }
 
     /**
      * 向输出流中写入当前字段格式信息
@@ -216,7 +222,7 @@ public abstract class BaseField{
      */
     public void createIndex() throws IndexAlreadyExistException {
         var delimiter = "$";
-        var indexName = parentTable.getPath() + delimiter + name;
+        indexName = parentTable.getPath() + delimiter + name;
 
         index = Index.createEmptyIndex(indexName);
     }

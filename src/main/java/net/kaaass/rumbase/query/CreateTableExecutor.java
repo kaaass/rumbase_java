@@ -33,7 +33,6 @@ public class CreateTableExecutor implements Executable {
     public void execute() throws TableExistenceException, TableConflictException, ArgumentException {
         var tableName = statement.getTableName();
         var baseFields = new ArrayList<BaseField>();
-        var dummyTable = new Table(tableName, baseFields);
         boolean nullable;
         for (var def : statement.getColumnDefinitions()) {
             nullable = !def.isNotNull();
@@ -43,13 +42,13 @@ public class CreateTableExecutor implements Executable {
             try {
                 switch (fieldType) {
                     case INT:
-                        baseFields.add(new IntField(fieldName, nullable, dummyTable));
+                        baseFields.add(new IntField(fieldName, nullable, null));
                         break;
                     case FLOAT:
-                        baseFields.add(new FloatField(fieldName, nullable, dummyTable));
+                        baseFields.add(new FloatField(fieldName, nullable, null));
                         break;
                     case VARCHAR:
-                        baseFields.add(new VarcharField(fieldName, Integer.parseInt(def.getColumnType().getArguments().get(0)), nullable, dummyTable));
+                        baseFields.add(new VarcharField(fieldName, Integer.parseInt(def.getColumnType().getArguments().get(0)), nullable, null));
                         break;
                     default:
                         throw new TableConflictException(1);
