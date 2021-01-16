@@ -12,6 +12,7 @@ import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -25,7 +26,7 @@ public class SortExecutor implements Executable {
 
     @Getter
     @NonNull
-    private final List<List<Object>> data;
+    private List<List<Object>> data;
 
     @NonNull
     private final List<SelectStatement.OrderBy> orderBys;
@@ -62,21 +63,21 @@ public class SortExecutor implements Executable {
 
             final int finalIndex = index;
             if (orderBy.isAscending()) {
-                data.stream().sorted((list1, list2) -> {
+                data = data.stream().sorted((list1, list2) -> {
                     try {
                         return field.compare(list1.get(finalIndex), list2.get(finalIndex));
                     } catch (TableConflictException e) {
                         throw new RuntimeException(e);
                     }
-                });
+                }).collect(Collectors.toList());
             } else {
-                data.stream().sorted((list1, list2) -> {
+                data = data.stream().sorted((list1, list2) -> {
                     try {
                         return field.compare(list2.get(finalIndex), list1.get(finalIndex));
                     } catch (TableConflictException e) {
                         throw new RuntimeException(e);
                     }
-                });
+                }).collect(Collectors.toList());
             }
 
         }

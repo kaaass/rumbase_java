@@ -71,7 +71,8 @@ public class InnerJoinExecutor extends AbstractJoinExecutor{
                                 if (val == null) {
                                     ok = false;
                                 } else {
-                                    paramMap.put(idrs.get(i), val);
+                                    paramMap.put(idr, val);
+                                    ok = true;
                                 }
                                 break;
                             }
@@ -80,13 +81,14 @@ public class InnerJoinExecutor extends AbstractJoinExecutor{
                             break;
                         }
                         for (int i = 0; i < joinLen; i++) {
-                            var idr = idrs.get(i);
+                            var idr = joinIdrs.get(i);
                             if (idr.getTableName().equals(param.getTableName()) && idr.getFieldName().equals(param.getFieldName())) {
                                 var val = joinRow.get(i);
                                 if (val == null) {
                                     ok = false;
                                 } else {
-                                    paramMap.put(joinIdrs.get(i), val);
+                                    paramMap.put(idr, val);
+                                    ok = true;
                                 }
                                 break;
                             }

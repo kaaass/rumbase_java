@@ -42,35 +42,57 @@ public class SelectExecutor implements Executable{
     @Override
     public void execute() throws TableConflictException, ArgumentException, TableExistenceException, IndexAlreadyExistException, RecordNotFoundException {
 
+
         // 连接
-        var joinExe = new InnerJoinExecutor(statement.getFromTable(), statement.getJoins(), manager, context);
+        var joins = statement.getJoins();
+        if (joins == null) {
+            joins = new ArrayList<>();
+        }
+        var joinExe = new InnerJoinExecutor(statement.getFromTable(), joins, manager, context);
         joinExe.execute();
+        resultData = joinExe.resultRows;
+        resultTable = joinExe.resultIdr;
 
         // 选择
-        var conditionExe = new ConditionExecutor(joinExe.resultIdr, joinExe.resultRows, statement.getWhere());
-        conditionExe.execute();
+        var where = statement.getWhere();
+        if (where != null) {
+            var conditionExe = new ConditionExecutor(resultTable, resultData, where);
+            conditionExe.execute();
+            resultData = conditionExe.getResult();
+        }
 
-        var idrs = joinExe.resultIdr;
         // 排序
-        var sortExe = new SortExecutor(idrs, conditionExe.getResult(), statement.getOrderBys(), manager);
-        sortExe.execute();
+        var orderBys = statement.getOrderBys();
+        if (orderBys != null) {
+            var sortExe = new SortExecutor(resultTable, resultData, orderBys, manager);
+            sortExe.execute();
+            resultData = sortExe.getData();
+        }
 
         // 投影
-        var projectExe = new ProjectExecutor(idrs, statement.getSelectColumns(), sortExe.getData());
+        var selectCols = statement.getSelectColumns();
+        if (selectCols != null) {
+            var projectExe = new ProjectExecutor(resultTable, selectCols, resultData);
+            projectExe.execute();
+            resultData = projectExe.getProjectedResult();
+            resultTable = selectCols;
+        }
 
         // 去重
         // FIXME: 2021/1/16 存储过大
         if (statement.isDistinct()) {
-            var len = projectExe.getProjectedResult().size();
+            var len = resultData.size();
             var hashSet = new HashSet<List<Object>>(len);
             var resultList = new ArrayList<List<Object>>(len);
-            projectExe.getProjectedResult().stream().filter(hashSet::add).map(resultList::add);
-            resultData = resultList;
-        } else {
-            resultData = projectExe.getProjectedResult();
-        }
 
-        resultTable = statement.getSelectColumns();
+            for (var item: resultData) {
+                if (hashSet.add(item)) {
+                    resultList.add(item);
+                }
+            }
+
+            resultData = resultList;
+        }
 
     }
 }

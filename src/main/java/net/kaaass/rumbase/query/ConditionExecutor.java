@@ -35,7 +35,7 @@ public class ConditionExecutor implements Executable {
             paramMap.clear();
             ok = true;
             for (var param: params) {
-                for (int i = 0; i < len; i++) {
+                for (int i = 0; i < idrs.size(); i++) {
                     var idr = idrs.get(i);
                     if (idr.getTableName().equals(param.getTableName()) && idr.getFieldName().equals(param.getFieldName())) {
                         var val = row.get(i);
