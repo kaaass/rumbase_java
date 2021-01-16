@@ -55,26 +55,47 @@ public class InnerJoinExecutor extends AbstractJoinExecutor{
             var joinLen = joinIdrs.size();
             var paramMap = new HashMap<ColumnIdentifier, Object>(idrs.size());
             var params = join.getJoinOn().getParams();
+            boolean ok;
 
             for (var row: rows) {
                 for (var joinRow: joinRows) {
                     paramMap.clear();
+                    ok = true;
+
                     for (var param: params) {
 
                         for (int i = 0; i < len; i++) {
                             var idr = idrs.get(i);
                             if (idr.getTableName().equals(param.getTableName()) && idr.getFieldName().equals(param.getFieldName())) {
-                                paramMap.put(idrs.get(i), row.get(i));
+                                var val = row.get(i);
+                                if (val == null) {
+                                    ok = false;
+                                } else {
+                                    paramMap.put(idrs.get(i), val);
+                                }
+                                break;
                             }
+                        }
+                        if (!ok) {
+                            break;
                         }
                         for (int i = 0; i < joinLen; i++) {
                             var idr = idrs.get(i);
                             if (idr.getTableName().equals(param.getTableName()) && idr.getFieldName().equals(param.getFieldName())) {
-                                paramMap.put(joinIdrs.get(i), joinRow.get(i));
+                                var val = joinRow.get(i);
+                                if (val == null) {
+                                    ok = false;
+                                } else {
+                                    paramMap.put(joinIdrs.get(i), val);
+                                }
+                                break;
                             }
                         }
+                        if (!ok) {
+                            break;
+                        }
                     }
-                    if (join.getJoinOn().evaluate(paramMap)) {
+                    if (ok && join.getJoinOn().evaluate(paramMap)) {
                         intermediateRows.add(
                                 Stream
                                         .of(row, joinRow)
