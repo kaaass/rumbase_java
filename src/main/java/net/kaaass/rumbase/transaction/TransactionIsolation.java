@@ -39,4 +39,14 @@ public enum TransactionIsolation {
     TransactionIsolation(int isolationId) {
         this.isolationId = isolationId;
     }
+
+    public static TransactionIsolation getStatusById(byte id) {
+        for (TransactionIsolation value : values()) {
+            if (id == value.isolationId) {
+                return value;
+            }
+        }
+
+        return null;
+    }
 }

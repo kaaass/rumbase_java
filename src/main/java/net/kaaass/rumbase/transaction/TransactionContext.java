@@ -1,6 +1,6 @@
 package net.kaaass.rumbase.transaction;
 
-import net.kaaass.rumbase.transaction.mock.MockTransactionContext;
+import net.kaaass.rumbase.transaction.exception.DeadlockException;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public interface TransactionContext {
      * @return 空事务上下文
      */
     static TransactionContext empty() {
-        return new MockTransactionContext();
+        return new TransactionContextImpl();
     }
 
     /**
@@ -78,14 +78,16 @@ public interface TransactionContext {
      *
      * @param uuid      记录id
      * @param tableName 表字段
+     * @throws DeadlockException 发生死锁异常
      */
-    void sharedLock(long uuid, String tableName);
+    void sharedLock(long uuid, String tableName) throws DeadlockException;
 
     /**
      * 对记录加排他锁
      *
      * @param uuid      记录id
      * @param tableName 表字段
+     * @throws DeadlockException 发生死锁异常
      */
-    void exclusiveLock(long uuid, String tableName);
+    void exclusiveLock(long uuid, String tableName) throws DeadlockException;
 }

@@ -51,7 +51,7 @@ public interface IRecordStorage {
      * @param txContext 事务上下文
      * @param recordId  记录ID
      */
-    void delete(TransactionContext txContext, long recordId);
+    void delete(TransactionContext txContext, long recordId) throws RecordNotFoundException;
 
     /**
      * 获得记录存储的元信息（与单个记录无关）
