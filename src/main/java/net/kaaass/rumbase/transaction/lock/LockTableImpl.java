@@ -246,8 +246,11 @@ public class LockTableImpl implements LockTable {
         // 建图
 
         // 遍历每一个等待队列
-        for (TxList list : lockTable.values()) {
+        var lockTableView = Collections.unmodifiableMap(lockTable);
+        log.debug("Lock table: {}", lockTableView);
+        for (TxList list : lockTableView.values()) {
             List<TxItem> waitingTxs = new ArrayList<>(list.locks);
+            log.debug("locks: {}", list.locks);
             // 对等待队列中建立等待关系
             for (int i = 0; i < waitingTxs.size() - 1; i++) {
                 TxItem frontItem = waitingTxs.get(i);
@@ -261,7 +264,7 @@ public class LockTableImpl implements LockTable {
                             continue;
                         }
 
-                        log.info("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
+                        log.debug("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
 
                         // backItem等待frontItem
                         graph.addEdge(backItem.xid, frontItem.xid);
@@ -272,13 +275,13 @@ public class LockTableImpl implements LockTable {
                     // 邻近的后面的锁等待该锁
                     TxItem backItem = waitingTxs.get(i + 1);
                     // backItem等待frontItem
-                    log.info("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
+                    log.debug("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
                     graph.addEdge(backItem.xid, frontItem.xid);
                 }
             }
         }
 
-        log.info("create graph successful!");
+        log.debug("create graph successful: {}", graph);
         // 图成环，则有死锁
         return graph.hasLoop();
     }

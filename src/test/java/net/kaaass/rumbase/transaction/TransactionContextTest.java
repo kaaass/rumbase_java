@@ -254,5 +254,6 @@ public class TransactionContextTest {
         }
         thread.join();
         assertTrue("Deadlock should be detected", deadlockDetect.get());
+        transaction1.commit();
     }
 }
