@@ -152,4 +152,43 @@ public class PageStorageTest extends TestCase {
         assertArrayEquals(data4, dataFromFile4);
     }
 
+    public void testFlushAll() throws FileException, PageException {
+        PageStorage storage = PageManager.fromFile(filePath);
+        int[] testPage = new int[]{1, 3, 5, 7, 10, 11};
+        // 测试每一页是否能正常读写
+        for (var pageId : testPage) {
+            // 准备标志数据
+            byte[] data = new byte[PageManager.PAGE_SIZE];
+            Arrays.fill(data, (byte) (0xF0 | pageId));
+            // 获取页
+            var page = storage.get(pageId);
+            page.pin();
+            // 写入页
+            try {
+                // 写数据
+                page.patchData(0, data);
+            } finally {
+                page.unpin();
+            }
+        }
+        //将内存中的所有页都写回
+        PageManager.flush();
+        for (var pageId : testPage) {
+            byte[] data = new byte[PageManager.PAGE_SIZE];
+            Arrays.fill(data, (byte) (0xF0 | pageId));
+            // 获取页
+            var page = storage.get(pageId);
+            page.pin();
+            // 写入页
+            try {
+                // 检查页数据
+                var tempStorage = PageManager.fromFile(filePath);
+                var pageData = tempStorage.get(pageId).getDataBytes();
+                assertArrayEquals(data, pageData);
+            } finally {
+                page.unpin();
+            }
+
+        }
+    }
 }
