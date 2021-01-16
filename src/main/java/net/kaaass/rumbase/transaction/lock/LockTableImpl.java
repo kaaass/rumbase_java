@@ -75,13 +75,15 @@ public class LockTableImpl implements LockTable {
             // 判断是否能加锁
             boolean canGrant = list.canGrant(mode);
             log.info("{} can grant {} lock : {}", xid, mode, canGrant);
-            // 虚加锁
-            list.weakInsert(xid, id, mode, canGrant);
-            // 检测死锁
-            if (deadlockCheck()) {
-                log.info("deadlock");
-                list.pop();
-                throw new DeadlockException(1);
+            synchronized (this) {
+                // 虚加锁
+                list.weakInsert(xid, id, mode, canGrant);
+                // 检测死锁
+                if (deadlockCheck()) {
+                    log.info("deadlock");
+                    list.pop();
+                    throw new DeadlockException(1);
+                }
             }
 
             // 可以加锁
