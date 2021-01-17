@@ -1,10 +1,9 @@
 package net.kaaass.rumbase.transaction;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,21 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class TransactionContextTest {
 
-    public static void removeDir(File dir) {
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    removeDir(file);
-                } else {
-                    file.delete();
-                }
-            }
-        }
-
-        dir.delete();
-    }
-
     /**
      * 创建临时文件生成目录
      */
@@ -45,7 +29,7 @@ public class TransactionContextTest {
         if (!dir.exists()) {
             dir.mkdir();
         } else {
-            removeDir(dir);
+            FileUtil.removeDir(dir);
             dir.mkdir();
         }
     }
