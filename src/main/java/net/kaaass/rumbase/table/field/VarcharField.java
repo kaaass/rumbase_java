@@ -191,7 +191,7 @@ public class VarcharField extends BaseField {
 
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (ClassCastException e){
+        } catch (ClassCastException e) {
             throw new TableConflictException(1);
         }
     }

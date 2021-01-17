@@ -1,6 +1,5 @@
 package net.kaaass.rumbase.query;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
@@ -94,17 +93,17 @@ public class SelectExecutorTest {
 
             Assert.assertEquals(3, data.get(0).size());
             Assert.assertEquals(1, (int) data.get(0).get(0));
-            Assert.assertEquals("KevinAxel", (String) data.get(0).get(1));
+            Assert.assertEquals("KevinAxel", data.get(0).get(1));
             Assert.assertEquals(5000f, data.get(0).get(2));
 
             Assert.assertEquals(3, data.get(1).size());
             Assert.assertEquals(2, (int) data.get(1).get(0));
-            Assert.assertEquals("KAAAsS", (String) data.get(1).get(1));
+            Assert.assertEquals("KAAAsS", data.get(1).get(1));
             Assert.assertEquals(8000f, data.get(1).get(2));
 
             Assert.assertEquals(3, data.get(2).size());
             Assert.assertEquals(3, (int) data.get(2).get(0));
-            Assert.assertEquals("kkk", (String) data.get(2).get(1));
+            Assert.assertEquals("kkk", data.get(2).get(1));
             Assert.assertEquals(8000f, data.get(2).get(2));
 
 
@@ -155,15 +154,15 @@ public class SelectExecutorTest {
 
             Assert.assertEquals(2, data.get(0).size());
             Assert.assertEquals(1, (int) data.get(0).get(0));
-            Assert.assertEquals("N", (String) data.get(0).get(1));
+            Assert.assertEquals("N", data.get(0).get(1));
 
             Assert.assertEquals(2, data.get(1).size());
             Assert.assertEquals(2, (int) data.get(1).get(0));
-            Assert.assertEquals("T", (String) data.get(1).get(1));
+            Assert.assertEquals("T", data.get(1).get(1));
 
             Assert.assertEquals(2, data.get(2).size());
             Assert.assertEquals(3, (int) data.get(2).get(0));
-            Assert.assertEquals("T", (String) data.get(2).get(1));
+            Assert.assertEquals("T", data.get(2).get(1));
 
 
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {

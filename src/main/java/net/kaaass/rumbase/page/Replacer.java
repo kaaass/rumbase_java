@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class Replacer {
     private static Replacer instance = null;
+
     private Replacer() {
         this.head = null;
         this.tail = null;
@@ -28,10 +29,10 @@ public class Replacer {
         synchronized (this) {
             if (!this.table.containsKey(value)) {//如果页没在内存中
                 Node tmp = new Node(value, null);
-                if(head==null){
+                if (head == null) {
                     this.head = tmp;
                     this.tail = tmp;
-                }else{
+                } else {
                     this.tail.next = tmp;
                     this.tail = this.tail.next;
                     this.table.put(value, this.tail);
@@ -46,8 +47,9 @@ public class Replacer {
 
     /**
      * 从链表中取出受害者页，若链表为空则返回null
+     *
      * @return 返回受害者页面
-     * @throws BufferException  若链表中所有的页均被钉住，则抛出异常
+     * @throws BufferException 若链表中所有的页均被钉住，则抛出异常
      */
     public RumPage victim() throws BufferException {
         synchronized (this) {
@@ -55,23 +57,23 @@ public class Replacer {
                 return null;
             }
             Node tmp = head;
-            while (tmp != null && tmp.pinned()){
+            while (tmp != null && tmp.pinned()) {
                 tmp = tmp.next;
             }
-            if(tmp == null){
+            if (tmp == null) {
                 throw new BufferException(2);
             }
             Node pre = head;//找tmp上一个节点
-            if(pre!=tmp){
-                while(pre.next != tmp){
+            if (pre != tmp) {
+                while (pre.next != tmp) {
                     pre = pre.next;
                 }
             }
-            if(tmp == head){
+            if (tmp == head) {
                 head = head.next;
                 size--;
                 return tmp.getData();
-            }else{
+            } else {
                 pre.next = tmp.next;
                 size--;
                 return tmp.getData();
@@ -120,11 +122,11 @@ class Node {
         this.next = p;
     }
 
-    public boolean pinned(){
+    public boolean pinned() {
         return data.pinned();
     }
 
-    public RumPage getData(){
+    public RumPage getData() {
         return data;
     }
 }

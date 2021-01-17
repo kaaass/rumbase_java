@@ -30,9 +30,9 @@ package net.kaaass.rumbase.exception;
  */
 public class RumbaseException extends Exception {
 
-    private int mainId;
+    private final int mainId;
 
-    private int subId;
+    private final int subId;
 
     /**
      * 构造Rumbase异常

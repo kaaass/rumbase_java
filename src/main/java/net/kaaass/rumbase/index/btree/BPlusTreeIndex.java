@@ -12,8 +12,6 @@ import net.kaaass.rumbase.page.PageStorage;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 
-import javax.management.loading.MLet;
-import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -22,7 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  */
 @Slf4j
 public class BPlusTreeIndex implements Index {
-//    Page root;
+    //    Page root;
     PageStorage pageStorage;
 
     private enum PageType {  //页类型
@@ -30,7 +28,7 @@ public class BPlusTreeIndex implements Index {
         //树枝节点
         LEAF,
         //树叶节点
-        META;
+        META
         //元信息节点
     }
 
@@ -39,12 +37,12 @@ public class BPlusTreeIndex implements Index {
      */
 
     public static Map<String, BPlusTreeIndex> B_PLUS_TREE_INDEX_MAP = new HashMap<>();
-    public static int MAX_PAGE_ITEM = (4096 - 24)/16;
+    public static int MAX_PAGE_ITEM = (4096 - 24) / 16;
     public static int PAGE_BEGIN_POSTION = 24;
-    public static int PAGE_MID_POSTION = PAGE_BEGIN_POSTION + 16 * (BPlusTreeIndex.MAX_PAGE_ITEM)/2 ;
+    public static int PAGE_MID_POSTION = PAGE_BEGIN_POSTION + 16 * (BPlusTreeIndex.MAX_PAGE_ITEM) / 2;
     private static final int rootNum = 4;
 
-    private Map<Long, ReadWriteLock> RW_LOCKS = new HashMap<>();
+    private final Map<Long, ReadWriteLock> RW_LOCKS = new HashMap<>();
 
     public BPlusTreeIndex(String indexName) {
         try {
@@ -60,15 +58,15 @@ public class BPlusTreeIndex implements Index {
         Page metaPage = this.pageStorage.get(0);
         //pin
         metaPage.pin();
-        setPageType(metaPage,PageType.META);
+        setPageType(metaPage, PageType.META);
         byte[] bs = ByteUtil.long2Bytes(5);
         byte[] indexFlag = ByteUtil.long2Bytes(Long.MAX_VALUE);//作为索引文件的标志
         try {
-            metaPage.patchData(4,bs);
-            metaPage.patchData(12,indexFlag);
+            metaPage.patchData(4, bs);
+            metaPage.patchData(12, indexFlag);
         } catch (PageException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             //flush
             try {
                 metaPage.flush();
@@ -81,7 +79,7 @@ public class BPlusTreeIndex implements Index {
     }
 
     public boolean isIndexedFile() {
-        return Long.MAX_VALUE == ByteUtil.bytes2Long(ByteUtil.subByte(this.pageStorage.get(0).getDataBytes(),12,8));
+        return Long.MAX_VALUE == ByteUtil.bytes2Long(ByteUtil.subByte(this.pageStorage.get(0).getDataBytes(), 12, 8));
     }
 
     @Override
@@ -99,7 +97,7 @@ public class BPlusTreeIndex implements Index {
             long nextPageNum = 0;
 
             try {
-                nextPageNum = queryFirstInternalItem(currentPage,dataHash);
+                nextPageNum = queryFirstInternalItem(currentPage, dataHash);
             } catch (ItemInNextPageException e) {
                 //unpin
                 currentPage.unpin();
@@ -139,7 +137,7 @@ public class BPlusTreeIndex implements Index {
             } catch (PageFullException e) {
                 long splitPageNum = 0;
                 if (pageStack.size() != 0) {
-                     splitPageNum = pageStack.pop();
+                    splitPageNum = pageStack.pop();
                 }
                 long rawPageNum = this.getRawPageNum();
                 Page rawPage = this.pageStorage.get(rawPageNum);
@@ -284,7 +282,7 @@ public class BPlusTreeIndex implements Index {
                         parent.unpin();
                         rawPage = rawPage0;
                         splitPageNum = parentNum;
-                    }  catch (ItemInNextPageException ee) {
+                    } catch (ItemInNextPageException ee) {
                         //unpin
                         parent.unpin();
                         parent = this.pageStorage.get(ee.getNextPageNum());
@@ -327,7 +325,7 @@ public class BPlusTreeIndex implements Index {
                 pos = queryKeyPos(currentPage, keyHash);
                 break;
             } catch (ItemInNextPageException e) {
-                var nextPageNum0 =  getPageNextPage(currentPage);
+                var nextPageNum0 = getPageNextPage(currentPage);
                 //unpin
                 currentPage.unpin();
                 currentPage = this.pageStorage.get(nextPageNum0);
@@ -340,7 +338,7 @@ public class BPlusTreeIndex implements Index {
         while (true) {
             if (pos >= getPageItemNum(currentPage)) {
                 pos = 0;
-                var nextPageNum0 =  getPageNextPage(currentPage);
+                var nextPageNum0 = getPageNextPage(currentPage);
                 //unpin
                 currentPage.unpin();
                 currentPage = this.pageStorage.get(nextPageNum0);
@@ -354,7 +352,7 @@ public class BPlusTreeIndex implements Index {
             } else {
                 break;
             }
-            pos ++;
+            pos++;
         }
         //unpin
         currentPage.unpin();
@@ -398,7 +396,7 @@ public class BPlusTreeIndex implements Index {
                 continue;
             }
         }
-        Iterator res= new BPlusTreeIterator(this,currentPage, position);
+        Iterator res = new BPlusTreeIterator(this, currentPage, position);
         currentPage.unpin();
         return res;
     }
@@ -439,7 +437,7 @@ public class BPlusTreeIndex implements Index {
                 currentPage.pin();
             }
         }
-        Iterator res= new BPlusTreeIterator(this,currentPage, position);
+        Iterator res = new BPlusTreeIterator(this, currentPage, position);
         currentPage.unpin();
         return res;
     }
@@ -458,71 +456,74 @@ public class BPlusTreeIndex implements Index {
             //pin
             currentPage.pin();
         }
-        Iterator res= new BPlusTreeIterator(this,currentPage, 0);
+        Iterator res = new BPlusTreeIterator(this, currentPage, 0);
         currentPage.unpin();
         return res;
     }
 
     /**
      * 用于Internal节点找到最小的儿子，服务于findFirst()
+     *
      * @param page 儿子的页号
      * @return
      */
     private long getMinChild(Page page) {
-        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),BPlusTreeIndex.PAGE_BEGIN_POSTION + 8,8));
+        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + 8, 8));
     }
 
     /**
      * LEAF节点的指定key的最前面的位置，服务于findFirst(dataHash)
+     *
      * @return key的位置
      */
-    private int queryKeyPos(Page page,  long key) throws ItemInNextPageException {
-        if ( key > getMaxKey(page) ) {
+    private int queryKeyPos(Page page, long key) throws ItemInNextPageException {
+        if (key > getMaxKey(page)) {
             throw new ItemInNextPageException(1, getPageNextPage(page));
         }
         int itemNum = getPageItemNum(page);
-        int i = 0,j = itemNum;
-        int temp = (i + j)/2;
+        int i = 0, j = itemNum;
+        int temp = (i + j) / 2;
         while (i < j) {
-            if (getKeyByPosition(page, temp) > key){
+            if (getKeyByPosition(page, temp) > key) {
                 j = temp;
-            }else if (getKeyByPosition(page, temp) < key){
+            } else if (getKeyByPosition(page, temp) < key) {
                 i = temp + 1;
-            }else {
+            } else {
                 break;
             }
-            temp = (i + j ) / 2;
+            temp = (i + j) / 2;
         }
-        while (temp > 0 && getKeyByPosition(page, temp-1) >= key){
+        while (temp > 0 && getKeyByPosition(page, temp - 1) >= key) {
             temp--;
         }
-       return temp;
+        return temp;
     }
 
     /**
      * LEAF节点的指定大于key的最前面的位置，服务于findUpperbound(dataHash)
+     *
      * @param page
      * @param key
      * @return
      */
     private int queryUpperboundKeyPos(Page page, long key) throws ItemInNextPageException {
-        if ( key >= getMaxKey(page) ) {
+        if (key >= getMaxKey(page)) {
             throw new ItemInNextPageException(1, getPageNextPage(page));
         }
         int itemNum = getPageItemNum(page);
-        int i = 0,j = itemNum;
-        int temp = (i + j)/2;
+        int i = 0, j = itemNum;
+        int temp = (i + j) / 2;
         while (i < j) {
-            if (getKeyByPosition(page, temp) > key){
+            if (getKeyByPosition(page, temp) > key) {
                 j = temp;
-            }else if (getKeyByPosition(page, temp) < key){
+            } else if (getKeyByPosition(page, temp) < key) {
                 i = temp + 1;
-            }else {
+            } else {
                 break;
             }
-            temp = (i + j ) / 2;
+            temp = (i + j) / 2;
         }
-        while (temp < itemNum - 1){
+        while (temp < itemNum - 1) {
             if (getKeyByPosition(page, temp) > key) {
                 break;
             }
@@ -533,6 +534,7 @@ public class BPlusTreeIndex implements Index {
 
     /**
      * 获取一个新页，并元页总页数自动加一
+     *
      * @return 新页的页号
      * @throws PageTypeException
      */
@@ -550,22 +552,23 @@ public class BPlusTreeIndex implements Index {
                 throw new RuntimeException();
             }
         }
-        long res = ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),4,8));
+        long res = ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), 4, 8));
         byte[] bs = ByteUtil.long2Bytes(res + 1);
         try {
-            page.patchData(4,bs);
+            page.patchData(4, bs);
         } catch (PageException e) {
             e.printStackTrace();
         } finally {
-          //unpin
-          page.unpin();
+            //unpin
+            page.unpin();
         }
         return res;
     }
 
     /**
      * 将根，从LEAF节点变为INTERNAL节点
-     * @param minKey 通过minKey初始化根节点
+     *
+     * @param minKey     通过minKey初始化根节点
      * @param minPageNum 小于minKey的页的页号
      * @param maxPageNum 大于minKey的页的页号
      */
@@ -579,9 +582,9 @@ public class BPlusTreeIndex implements Index {
         byte[] inserted;
         try {
             inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(minKey), ByteUtil.long2Bytes(minPageNum));
-            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION,inserted);
+            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION, inserted);
             inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(Long.MAX_VALUE), ByteUtil.long2Bytes(maxPageNum));
-            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + 16,inserted);
+            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + 16, inserted);
         } catch (PageException e) {
             e.printStackTrace();
         } finally {
@@ -618,7 +621,7 @@ public class BPlusTreeIndex implements Index {
     }
 
     /**
-     *将internal节点的一个key（如果存在重复的key，指第一个）指向的页面替换成新的子页，同时在该条目前插入新的key.主要服务于于分裂操作
+     * 将internal节点的一个key（如果存在重复的key，指第一个）指向的页面替换成新的子页，同时在该条目前插入新的key.主要服务于于分裂操作
      * 如果满了或要插入的值
      * <pre>
      * oldKey - oldPageNum
@@ -634,29 +637,29 @@ public class BPlusTreeIndex implements Index {
      * @return
      */
     private void insertInternalItem(Page page, long oldKey, long oldPageNum, long replacePageNum, long newKey) throws PageFullException, ItemInNextPageException {
-        if ( oldKey > getMaxKey(page) ) {
+        if (oldKey > getMaxKey(page)) {
             throw new ItemInNextPageException(1, getPageNextPage(page));
         }
         int itemNum = getPageItemNum(page);
-        if ( itemNum >= BPlusTreeIndex.MAX_PAGE_ITEM ) {
+        if (itemNum >= BPlusTreeIndex.MAX_PAGE_ITEM) {
             throw new PageFullException(1);
         }
-        int i = 0,j = itemNum;
-        int temp = (i + j)/2;
+        int i = 0, j = itemNum;
+        int temp = (i + j) / 2;
         while (i < j) {
-            if (getKeyByPosition(page, temp) > oldKey){
+            if (getKeyByPosition(page, temp) > oldKey) {
                 j = temp;
-            }else if (getKeyByPosition(page, temp) < oldKey){
+            } else if (getKeyByPosition(page, temp) < oldKey) {
                 i = temp + 1;
-            }else {
+            } else {
                 break;
             }
-            temp = (i + j ) / 2;
+            temp = (i + j) / 2;
         }
         int low = temp, high = temp + 1;
         boolean isFind = false;
-        while (getKeyByPosition(page, low) == oldKey && low >= 0){
-            if(getValByPosition(page, low) == oldPageNum) {
+        while (getKeyByPosition(page, low) == oldKey && low >= 0) {
+            if (getValByPosition(page, low) == oldPageNum) {
                 temp = low;
                 isFind = true;
                 break;
@@ -664,7 +667,7 @@ public class BPlusTreeIndex implements Index {
             low--;
         }
         while (getKeyByPosition(page, high) == oldKey && !isFind && high <= (BPlusTreeIndex.MAX_PAGE_ITEM - 1)) {
-            if(getValByPosition(page, high) == oldPageNum) {
+            if (getValByPosition(page, high) == oldPageNum) {
                 temp = high;
                 isFind = true;
                 break;
@@ -672,7 +675,7 @@ public class BPlusTreeIndex implements Index {
             high++;
         }
         if (!isFind) {
-            throw new ItemInNextPageException(1,getPageNextPage(page));
+            throw new ItemInNextPageException(1, getPageNextPage(page));
         }
 
         try {
@@ -680,11 +683,11 @@ public class BPlusTreeIndex implements Index {
             page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16 + 8, bytes);
             byte[] bs = new byte[16];
             for (int k = itemNum; k > temp; k--) {
-                System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + (k - 1) * 16 , bs, 0, 16);
-                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16 ,bs);
+                System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + (k - 1) * 16, bs, 0, 16);
+                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
             }
             byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(newKey), ByteUtil.long2Bytes(oldPageNum));
-            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16,inserted);
+            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16, inserted);
         } catch (PageException e) {
             e.printStackTrace();
         }
@@ -692,7 +695,7 @@ public class BPlusTreeIndex implements Index {
     }
 
     /**
-     *将一个满的internal节点的一个key（如果存在重复的key，指第一个）指向的页面替换成新的子页，同时在该条目前插入新的key.主要服务于于分裂操作
+     * 将一个满的internal节点的一个key（如果存在重复的key，指第一个）指向的页面替换成新的子页，同时在该条目前插入新的key.主要服务于于分裂操作
      * <pre>
      * oldKey - oldPageNum
      * >>>
@@ -708,8 +711,8 @@ public class BPlusTreeIndex implements Index {
      * @param newKey 新插入的key
      * @return 为分裂后新的key
      */
-    private long insertFullInternal(Page page,  Page newPage, long newPageNum, long oldKey, long oldPageNum, long replacePageNum, long newKey) {
-        if ( oldKey > getMaxKey(page)) {
+    private long insertFullInternal(Page page, Page newPage, long newPageNum, long oldKey, long oldPageNum, long replacePageNum, long newKey) {
+        if (oldKey > getMaxKey(page)) {
             try {
                 throw new ItemInNextPageException(1, getPageNextPage(page));
             } catch (ItemInNextPageException e) {
@@ -720,22 +723,22 @@ public class BPlusTreeIndex implements Index {
         setMaxKey(newPage, getMaxKey(page));
         setPageNextPage(newPage, getPageNextPage(page));
         setPageNextPage(page, newPageNum);
-        int i = 0,j = BPlusTreeIndex.MAX_PAGE_ITEM;
-        int temp = (i + j)/2;
+        int i = 0, j = BPlusTreeIndex.MAX_PAGE_ITEM;
+        int temp = (i + j) / 2;
         while (i < j) {
-            if (getKeyByPosition(page, temp) > oldKey){
+            if (getKeyByPosition(page, temp) > oldKey) {
                 j = temp;
-            }else if (getKeyByPosition(page, temp) < oldKey){
+            } else if (getKeyByPosition(page, temp) < oldKey) {
                 i = temp + 1;
-            }else {
+            } else {
                 break;
             }
-            temp = (i + j ) / 2;
+            temp = (i + j) / 2;
         }
         int low = temp, high = temp + 1;
         boolean isFind = false;
-        while (getKeyByPosition(page, low) == oldKey && low >= 0){
-            if(getValByPosition(page, low) == oldPageNum) {
+        while (getKeyByPosition(page, low) == oldKey && low >= 0) {
+            if (getValByPosition(page, low) == oldPageNum) {
                 temp = low;
                 isFind = true;
                 break;
@@ -743,7 +746,7 @@ public class BPlusTreeIndex implements Index {
             low--;
         }
         while (getKeyByPosition(page, high) == oldKey && !isFind && high <= (BPlusTreeIndex.MAX_PAGE_ITEM - 1)) {
-            if(getValByPosition(page, high) == oldPageNum) {
+            if (getValByPosition(page, high) == oldPageNum) {
                 temp = high;
                 isFind = true;
                 break;
@@ -760,48 +763,47 @@ public class BPlusTreeIndex implements Index {
         //先对半分
         byte[] bs = new byte[16];
         try {
-            for (int k = 0; k < BPlusTreeIndex.MAX_PAGE_ITEM/2; k++) {
+            for (int k = 0; k < BPlusTreeIndex.MAX_PAGE_ITEM / 2; k++) {
                 System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_MID_POSTION + k * 16, bs, 0, 16);
-                newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,bs);
+                newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
             }
-        }
-        catch (PageException e) {
+        } catch (PageException e) {
             e.printStackTrace();
         }
         //在根据temp的取值情况分别处理
-        if (temp < (BPlusTreeIndex.MAX_PAGE_ITEM)/2) {
+        if (temp < (BPlusTreeIndex.MAX_PAGE_ITEM) / 2) {
             try {
-                for (int k = BPlusTreeIndex.MAX_PAGE_ITEM/2; k > temp; k--) {
+                for (int k = BPlusTreeIndex.MAX_PAGE_ITEM / 2; k > temp; k--) {
                     System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + (k - 1) * 16, bs, 0, 16);
-                    page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,bs);
+                    page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
                 }
-                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + (temp + 1) * 16 + 8,ByteUtil.long2Bytes(replacePageNum));
+                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + (temp + 1) * 16 + 8, ByteUtil.long2Bytes(replacePageNum));
                 byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(newKey), ByteUtil.long2Bytes(oldPageNum));
-                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16,inserted);
+                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16, inserted);
             } catch (PageException e) {
                 e.printStackTrace();
             }
-            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM/2 + 1);
-            setPageItemNum(newPage,BPlusTreeIndex.MAX_PAGE_ITEM/2);
-            long newKey0 = getKeyByPosition(page, BPlusTreeIndex.MAX_PAGE_ITEM/2);
+            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM / 2 + 1);
+            setPageItemNum(newPage, BPlusTreeIndex.MAX_PAGE_ITEM / 2);
+            long newKey0 = getKeyByPosition(page, BPlusTreeIndex.MAX_PAGE_ITEM / 2);
             setMaxKey(page, newKey0);
             return newKey0;
         } else {
-            temp = temp - BPlusTreeIndex.MAX_PAGE_ITEM/2;
+            temp = temp - BPlusTreeIndex.MAX_PAGE_ITEM / 2;
             try {
-                for (int k = BPlusTreeIndex.MAX_PAGE_ITEM/2; k > temp; k--) {
+                for (int k = BPlusTreeIndex.MAX_PAGE_ITEM / 2; k > temp; k--) {
                     System.arraycopy(newPage.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + (k - 1) * 16, bs, 0, 16);
-                    newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,bs);
+                    newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
                 }
-                newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + (temp + 1) * 16 + 8,ByteUtil.long2Bytes(replacePageNum));
+                newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + (temp + 1) * 16 + 8, ByteUtil.long2Bytes(replacePageNum));
                 byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(newKey), ByteUtil.long2Bytes(oldPageNum));
-                newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16,inserted);
+                newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16, inserted);
             } catch (PageException e) {
                 e.printStackTrace();
             }
-            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM/2);
-            setPageItemNum(newPage,BPlusTreeIndex.MAX_PAGE_ITEM/2 + 1);
-            long newKey0 = getKeyByPosition(page, BPlusTreeIndex.MAX_PAGE_ITEM/2 - 1);
+            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM / 2);
+            setPageItemNum(newPage, BPlusTreeIndex.MAX_PAGE_ITEM / 2 + 1);
+            long newKey0 = getKeyByPosition(page, BPlusTreeIndex.MAX_PAGE_ITEM / 2 - 1);
             setMaxKey(page, newKey0);
             return newKey0;
         }
@@ -809,32 +811,33 @@ public class BPlusTreeIndex implements Index {
 
     /**
      * 在internal节点中找到第一个keyHash有关的下一个节点，如果不满maxKey检验，则表明搜索的条目不再此页，抛出异常
+     *
      * @param page
      * @param keyHash
      * @return 相应儿子节点页号
      */
-    private long queryFirstInternalItem(Page page,  long keyHash) throws ItemInNextPageException {
-        if ( keyHash > getMaxKey(page) ) {
-            throw  new ItemInNextPageException(1, getPageNextPage(page));
+    private long queryFirstInternalItem(Page page, long keyHash) throws ItemInNextPageException {
+        if (keyHash > getMaxKey(page)) {
+            throw new ItemInNextPageException(1, getPageNextPage(page));
         }
         int itemNum = getPageItemNum(page);
-        int i = 0,j = itemNum;
-        int temp = (i + j)/2;
+        int i = 0, j = itemNum;
+        int temp = (i + j) / 2;
 //        try {
-            while (i < j ) {
-                if (getKeyByPosition(page, temp) > keyHash){
-                    j = temp;
-                }else if (getKeyByPosition(page, temp) < keyHash){
-                    i = temp + 1;
-                }else {
-                    break;
-                }
-                temp = (i + j ) / 2;
+        while (i < j) {
+            if (getKeyByPosition(page, temp) > keyHash) {
+                j = temp;
+            } else if (getKeyByPosition(page, temp) < keyHash) {
+                i = temp + 1;
+            } else {
+                break;
             }
+            temp = (i + j) / 2;
+        }
 //        }catch (ArrayIndexOutOfBoundsException e) {
 //            System.out.println("werwe");
 //        }
-        while (temp >= 1 && getKeyByPosition(page, temp-1) >= keyHash){
+        while (temp >= 1 && getKeyByPosition(page, temp - 1) >= keyHash) {
             temp--;
         }
         return getValByPosition(page, temp);
@@ -842,28 +845,29 @@ public class BPlusTreeIndex implements Index {
 
     /**
      * 在internal节点中找到大于keyHash有关的下一个节点，如果不满maxKey检验，则表明搜索的条目不再此页，抛出异常
+     *
      * @param page
      * @param keyHash
      * @return 相应儿子节点页号
      */
-    private long queryUpperboundInternal(Page page,  long keyHash) throws ItemInNextPageException {
-        if ( keyHash > getMaxKey(page) ) {
-            throw  new ItemInNextPageException(1, getPageNextPage(page));
+    private long queryUpperboundInternal(Page page, long keyHash) throws ItemInNextPageException {
+        if (keyHash > getMaxKey(page)) {
+            throw new ItemInNextPageException(1, getPageNextPage(page));
         }
         int itemNum = getPageItemNum(page);
-        int i = 0,j = itemNum;
-        int temp = (i + j)/2;
-        while (i < j ) {
-            if (getKeyByPosition(page, temp) > keyHash){
+        int i = 0, j = itemNum;
+        int temp = (i + j) / 2;
+        while (i < j) {
+            if (getKeyByPosition(page, temp) > keyHash) {
                 j = temp;
-            }else if (getKeyByPosition(page, temp) < keyHash){
+            } else if (getKeyByPosition(page, temp) < keyHash) {
                 i = temp + 1;
-            }else {
+            } else {
                 break;
             }
-            temp = (i + j ) / 2;
+            temp = (i + j) / 2;
         }
-        while (temp < itemNum && getKeyByPosition(page, temp) <= keyHash){
+        while (temp < itemNum && getKeyByPosition(page, temp) <= keyHash) {
             temp++;
         }
         return getValByPosition(page, temp);
@@ -871,42 +875,43 @@ public class BPlusTreeIndex implements Index {
 
     /**
      * 对树叶节点插入item,相应会抛出页满，条目不在相应页的异常
+     *
      * @param page
      * @param keyHash
      * @param uuid
      * @return
      */
     private void insertLeafItem(Page page, long keyHash, long uuid) throws ItemInNextPageException, PageFullException {
-        if ( keyHash > getMaxKey(page)) {
+        if (keyHash > getMaxKey(page)) {
             throw new ItemInNextPageException(1, getPageNextPage(page));
         }
         int itemNum = getPageItemNum(page);
-        if ( itemNum >= BPlusTreeIndex.MAX_PAGE_ITEM ) {
+        if (itemNum >= BPlusTreeIndex.MAX_PAGE_ITEM) {
             throw new PageFullException(1);
         }
-        int i = 0,j = itemNum;
-        int temp = (i + j)/2;
-        while (i < j ) {
+        int i = 0, j = itemNum;
+        int temp = (i + j) / 2;
+        while (i < j) {
             long cmp = getKeyByPosition(page, temp);
 //            long cmp0 = getKeyByPosition(page, temp - 1);
 //            long cmp1 = getKeyByPosition(page, temp - 2);
-            if (cmp > keyHash){
+            if (cmp > keyHash) {
                 j = temp;
-            }else if (cmp < keyHash){
+            } else if (cmp < keyHash) {
                 i = temp + 1;
-            }else {
+            } else {
                 break;
             }
-            temp = (i + j ) / 2;
+            temp = (i + j) / 2;
         }
         try {
             byte[] bs = new byte[16];
             for (int k = itemNum; k > temp; k--) {
                 System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + (k - 1) * 16, bs, 0, 16);
-                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,bs);
+                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
             }
             byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(keyHash), ByteUtil.long2Bytes(uuid));
-            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16,inserted);
+            page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16, inserted);
         } catch (PageException e) {
             e.printStackTrace();
         }
@@ -914,16 +919,17 @@ public class BPlusTreeIndex implements Index {
     }
 
     /**
-     *对一个已经满了的叶插入item
-     * @param page 待分裂已满的页
-     * @param newPage 一个未用过的新的页，用于分裂
+     * 对一个已经满了的叶插入item
+     *
+     * @param page       待分裂已满的页
+     * @param newPage    一个未用过的新的页，用于分裂
      * @param newPageNum 新页的页号
-     * @param keyHash 分裂时顺便插入的条目的键
-     * @param uuid 分裂时顺便插入的条目的值
+     * @param keyHash    分裂时顺便插入的条目的键
+     * @param uuid       分裂时顺便插入的条目的值
      * @return 为分裂后新的key
      */
     private long insertFullLeaf(Page page, Page newPage, long newPageNum, long keyHash, long uuid) {
-        if ( keyHash > getMaxKey(page)) {
+        if (keyHash > getMaxKey(page)) {
             try {
                 throw new ItemInNextPageException(1, getPageNextPage(page));
             } catch (ItemInNextPageException e) {
@@ -935,72 +941,70 @@ public class BPlusTreeIndex implements Index {
         setMaxKey(newPage, getMaxKey(page));
         setPageNextPage(newPage, getPageNextPage(page));
         setPageNextPage(page, newPageNum);
-        int i = 0,j = BPlusTreeIndex.MAX_PAGE_ITEM;
-        int temp = (i + j)/2;
+        int i = 0, j = BPlusTreeIndex.MAX_PAGE_ITEM;
+        int temp = (i + j) / 2;
         while (i < j) {
-            if (getKeyByPosition(page, temp) > keyHash){
+            if (getKeyByPosition(page, temp) > keyHash) {
                 j = temp;
-            }else if (getKeyByPosition(page, temp) < keyHash){
+            } else if (getKeyByPosition(page, temp) < keyHash) {
                 i = temp + 1;
-            }else {
+            } else {
                 break;
             }
-            temp = (i + j ) / 2;
+            temp = (i + j) / 2;
         }
-        if (temp < (BPlusTreeIndex.MAX_PAGE_ITEM)/2) {
+        if (temp < (BPlusTreeIndex.MAX_PAGE_ITEM) / 2) {
             byte[] bs = new byte[16];
             try {
-                for (int k = 0; k < BPlusTreeIndex.MAX_PAGE_ITEM/2; k++) {
+                for (int k = 0; k < BPlusTreeIndex.MAX_PAGE_ITEM / 2; k++) {
                     System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_MID_POSTION + k * 16, bs, 0, 16);
                     newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
                 }
-            }
-            catch (PageException e) {
-                e.printStackTrace();
-            }
-            try {
-                for (int k = BPlusTreeIndex.MAX_PAGE_ITEM/2; k > temp; k--) {
-                    System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + (k - 1) * 16, bs, 0, 16);
-                    page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,bs);
-                }
-                byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(keyHash), ByteUtil.long2Bytes(uuid));
-                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16,inserted);
             } catch (PageException e) {
                 e.printStackTrace();
             }
-            setPageItemNum(newPage,BPlusTreeIndex.MAX_PAGE_ITEM/2);
-            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM/2 + 1);
-            long newKey = ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), BPlusTreeIndex.PAGE_MID_POSTION,8));
+            try {
+                for (int k = BPlusTreeIndex.MAX_PAGE_ITEM / 2; k > temp; k--) {
+                    System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_BEGIN_POSTION + (k - 1) * 16, bs, 0, 16);
+                    page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
+                }
+                byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(keyHash), ByteUtil.long2Bytes(uuid));
+                page.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + temp * 16, inserted);
+            } catch (PageException e) {
+                e.printStackTrace();
+            }
+            setPageItemNum(newPage, BPlusTreeIndex.MAX_PAGE_ITEM / 2);
+            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM / 2 + 1);
+            long newKey = ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), BPlusTreeIndex.PAGE_MID_POSTION, 8));
             setMaxKey(page, newKey);
             return newKey;
         } else {
             byte[] bs = new byte[16];
             try {
                 boolean isInsert = false;
-                for (int k = 0; k < BPlusTreeIndex.MAX_PAGE_ITEM/2; k++) {
+                for (int k = 0; k < BPlusTreeIndex.MAX_PAGE_ITEM / 2; k++) {
                     System.arraycopy(page.getDataBytes(), BPlusTreeIndex.PAGE_MID_POSTION + k * 16, bs, 0, 16);
                     if (keyHash < ByteUtil.bytes2Long(ByteUtil.subByte(bs, 0, 8)) && !isInsert) {
                         byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(keyHash), ByteUtil.long2Bytes(uuid));
-                        newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,inserted);
+                        newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, inserted);
                         isInsert = true;
                     }
                     if (isInsert) {
-                        newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + ( k + 1 ) * 16,bs);
+                        newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + (k + 1) * 16, bs);
                     } else {
-                        newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16,bs);
+                        newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + k * 16, bs);
                     }
                 }
                 if (!isInsert) {
                     byte[] inserted = ByteUtil.byteMerger(ByteUtil.long2Bytes(keyHash), ByteUtil.long2Bytes(uuid));
-                    newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + BPlusTreeIndex.MAX_PAGE_ITEM/2 * 16,inserted);
+                    newPage.patchData(BPlusTreeIndex.PAGE_BEGIN_POSTION + BPlusTreeIndex.MAX_PAGE_ITEM / 2 * 16, inserted);
                 }
-            }
-            catch (PageException e) {
+            } catch (PageException e) {
                 e.printStackTrace();
             }
-            setPageItemNum(newPage,BPlusTreeIndex.MAX_PAGE_ITEM/2 + 1);
-            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM/2);
-            long newKey = ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),BPlusTreeIndex.PAGE_MID_POSTION - 16,8));
+            setPageItemNum(newPage, BPlusTreeIndex.MAX_PAGE_ITEM / 2 + 1);
+            setPageItemNum(page, BPlusTreeIndex.MAX_PAGE_ITEM / 2);
+            long newKey = ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), BPlusTreeIndex.PAGE_MID_POSTION - 16, 8));
             setMaxKey(page, newKey);
             return newKey;
         }
@@ -1008,29 +1012,31 @@ public class BPlusTreeIndex implements Index {
 
     /**
      * 通过位置获得key
+     *
      * @param page
      * @param position
      * @return
      */
     private long getKeyByPosition(Page page, int position) {
-        int pos = BPlusTreeIndex.PAGE_BEGIN_POSTION + 16*position;
-        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),pos,8));
+        int pos = BPlusTreeIndex.PAGE_BEGIN_POSTION + 16 * position;
+        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), pos, 8));
     }
 
     private long getValByPosition(Page page, int position) {
-        int pos = BPlusTreeIndex.PAGE_BEGIN_POSTION + 16*position + 8;
-        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),pos,8));
+        int pos = BPlusTreeIndex.PAGE_BEGIN_POSTION + 16 * position + 8;
+        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), pos, 8));
     }
 
     /**
      * 设置页的最大key字段
+     *
      * @param page
      * @param maxKey
      */
     private void setMaxKey(Page page, long maxKey) {
         byte[] bs = ByteUtil.long2Bytes(maxKey);
         try {
-            page.patchData(16,bs);
+            page.patchData(16, bs);
         } catch (PageException e) {
             e.printStackTrace();
         }
@@ -1038,22 +1044,24 @@ public class BPlusTreeIndex implements Index {
 
     /**
      * 读取页的最大key字段
+     *
      * @param page
      * @return
      */
     private long getMaxKey(Page page) {
-        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),16,8));
+        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), 16, 8));
     }
 
     /**
      * 设置某页的项目数量
+     *
      * @param page
      * @param itemNum
      */
     private void setPageItemNum(Page page, int itemNum) {
         byte[] bs = ByteUtil.int2Bytes(itemNum);
         try {
-            page.patchData(4,bs);
+            page.patchData(4, bs);
         } catch (PageException e) {
             e.printStackTrace();
         }
@@ -1061,62 +1069,61 @@ public class BPlusTreeIndex implements Index {
 
     /**
      * 获得某页的项目数量
+     *
      * @param page
      * @return
      */
     private int getPageItemNum(Page page) {
-        return ByteUtil.bytes2Int(ByteUtil.subByte(page.getDataBytes(),4,4));
+        return ByteUtil.bytes2Int(ByteUtil.subByte(page.getDataBytes(), 4, 4));
     }
 
     /**
      * 设置某页的下一页的页码
+     *
      * @param page
      * @param pageNum
      */
     private void setPageNextPage(Page page, long pageNum) {
         byte[] bs = ByteUtil.long2Bytes(pageNum);
         try {
-            page.patchData(8,bs);
+            page.patchData(8, bs);
         } catch (PageException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     *
      * @param page
      * @return 返回下一页的页码
      */
     private long getPageNextPage(Page page) {
-        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(),8,8));
+        return ByteUtil.bytes2Long(ByteUtil.subByte(page.getDataBytes(), 8, 8));
     }
 
     /**
-     *
-     * @param page 页
+     * @param page     页
      * @param pageType 设置页的类型
      */
     private void setPageType(Page page, PageType pageType) {
         int temp = pageType.ordinal();
         byte[] bs = ByteUtil.int2Bytes(temp);
         try {
-            page.patchData(0,bs);
+            page.patchData(0, bs);
         } catch (PageException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     *
-     * @param page  页
+     * @param page 页
      * @return 页的类型，如果不存在对应页类型，则抛出异常
      */
     public PageType getPageType(Page page) {
-        int typeNum = ByteUtil.bytes2Int(ByteUtil.subByte(page.getDataBytes(),0,4));
+        int typeNum = ByteUtil.bytes2Int(ByteUtil.subByte(page.getDataBytes(), 0, 4));
         if (typeNum == PageType.INTERNAL.ordinal()) {
-            return  PageType.INTERNAL;
+            return PageType.INTERNAL;
         } else if (typeNum == PageType.LEAF.ordinal()) {
-            return  PageType.LEAF;
+            return PageType.LEAF;
         } else if (typeNum == PageType.META.ordinal()) {
             return PageType.META;
         }
@@ -1150,11 +1157,7 @@ public class BPlusTreeIndex implements Index {
                 if (currentPageItemNum > currentPosition) {
                     return true;
                 } else {
-                    if (!isEnd && getPageNextPage(currentPage) != 0) {
-                        return true;
-                    } else{
-                        return false;
-                    }
+                    return !isEnd && getPageNextPage(currentPage) != 0;
                 }
             }
         }
@@ -1162,12 +1165,11 @@ public class BPlusTreeIndex implements Index {
         @Override
         public Pair next() {
             synchronized (bPlusTreeIndex) {
-                if ( currentPageItemNum > currentPosition ) {
-                    Pair res = new Pair(getKeyByPosition(currentPage,currentPosition), getValByPosition(currentPage,currentPosition));
+                if (currentPageItemNum > currentPosition) {
+                    Pair res = new Pair(getKeyByPosition(currentPage, currentPosition), getValByPosition(currentPage, currentPosition));
                     currentPosition++;
                     return res;
-                }
-                else {
+                } else {
                     long nextPageNum = getPageNextPage(currentPage);
                     if (nextPageNum == 0) {
                         if (isEnd) {
@@ -1185,7 +1187,7 @@ public class BPlusTreeIndex implements Index {
                         currentPage.pin();
                         currentPageItemNum = getPageItemNum(currentPage);
                         currentPosition = 0;
-                        Pair res = new Pair(getKeyByPosition(currentPage,currentPosition), getValByPosition(currentPage,currentPosition));
+                        Pair res = new Pair(getKeyByPosition(currentPage, currentPosition), getValByPosition(currentPage, currentPosition));
                         currentPosition++;
                         return res;
                     }

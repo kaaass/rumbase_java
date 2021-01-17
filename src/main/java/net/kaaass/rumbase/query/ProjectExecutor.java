@@ -13,11 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public class ProjectExecutor implements Executable{
+public class ProjectExecutor implements Executable {
 
     @NonNull
     private final List<ColumnIdentifier> idrs;

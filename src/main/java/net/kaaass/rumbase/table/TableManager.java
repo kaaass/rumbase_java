@@ -7,13 +7,16 @@ import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
-import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
+import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 表管理器
@@ -47,7 +50,7 @@ public class TableManager {
     private final Map<String, Table> tableCache = new HashMap<>();
 
     @Getter
-    private final List<String > recordPaths = new ArrayList<>();
+    private final List<String> recordPaths = new ArrayList<>();
 
 
     /**
@@ -93,7 +96,7 @@ public class TableManager {
 
             metaTable = new Table("metadata", fields, "data/metadata.db");
 
-            for (var f: fields) {
+            for (var f : fields) {
                 f.setParentTable(metaTable);
             }
 
@@ -107,14 +110,14 @@ public class TableManager {
         data.forEach(row -> map.put((String) row.get(0), (String) row.get(1)));
 
         if (!map.containsKey("table_num")) {
-            metaTable.insert(context, new ArrayList<>(){{
+            metaTable.insert(context, new ArrayList<>() {{
                 add("'table_num'");
                 add("'0'");
             }});
             map.put("table_num", "0");
         }
 
-        for (var item: map.entrySet()) {
+        for (var item : map.entrySet()) {
             if (item.getKey().startsWith("tablePath$")) {
                 var tableName = item.getKey().split("\\$")[1];
                 var record = RecordManager.fromFile(item.getValue());
@@ -143,9 +146,9 @@ public class TableManager {
     /**
      * 创建一个表
      *
-     * @param context   事务context
-     * @param tableName 表名
-     * @param baseFields    表的字段
+     * @param context    事务context
+     * @param tableName  表名
+     * @param baseFields 表的字段
      * @throws TableExistenceException 该表已存在
      */
     public void createTable(
@@ -165,7 +168,7 @@ public class TableManager {
 
         var table = new Table(tableName, baseFields, path);
 
-        for (var f: baseFields) {
+        for (var f : baseFields) {
             f.setParentTable(table);
         }
 
@@ -177,7 +180,7 @@ public class TableManager {
 
         int cnt = -1;
         long cntUuid = -1;
-        for (var uuid: uuids) {
+        for (var uuid : uuids) {
             var res = metaTable.read(TransactionContext.empty(), uuid);
             if (res.isPresent()) {
                 cnt = Integer.parseInt((String) res.get().get(1));
@@ -186,14 +189,14 @@ public class TableManager {
             }
         }
 
-        if (cnt == -1 || cntUuid == -1 ) {
+        if (cnt == -1 || cntUuid == -1) {
             throw new RuntimeException();
         }
 
         cnt = cnt + 1;
         var newCntEntry = new ArrayList<String>();
         newCntEntry.add("'table_num'");
-        newCntEntry.add("'" + Integer.toString(cnt) + "'");
+        newCntEntry.add("'" + cnt + "'");
         metaTable.update(TransactionContext.empty(), cntUuid, newCntEntry);
 
         var newTableData = new ArrayList<String>();

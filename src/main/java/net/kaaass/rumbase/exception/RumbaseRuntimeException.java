@@ -1,4 +1,5 @@
 package net.kaaass.rumbase.exception;
+
 /**
  * 运行时错误基类
  * <p>
@@ -8,9 +9,9 @@ package net.kaaass.rumbase.exception;
  */
 public class RumbaseRuntimeException extends RuntimeException {
 
-    private int mainId;
+    private final int mainId;
 
-    private int subId;
+    private final int subId;
 
     /**
      * 构造Rumbase运行时异常

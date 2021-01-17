@@ -15,7 +15,7 @@ import java.util.Map;
  * @author @KveinAxel
  */
 public class ArgumentException extends RumbaseException {
-    public static final Map<Integer, String> REASONS = new HashMap<>(){{
+    public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "列参数异常");
         put(2, "请求不包含索引列");
     }};
@@ -23,7 +23,7 @@ public class ArgumentException extends RumbaseException {
     /**
      * 类型不匹配异常
      *
-     * @param subId  子错误号
+     * @param subId 子错误号
      */
     public ArgumentException(int subId) {
         super(2001, subId, REASONS.get(subId));

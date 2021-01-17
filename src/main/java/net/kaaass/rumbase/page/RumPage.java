@@ -11,6 +11,7 @@ import java.io.RandomAccessFile;
  * <p>
  * 页持有的是整个缓冲区的指针和偏移。页在patchData时本身并不加锁，如果防止冲突需要在上层加锁。
  * </p>
+ *
  * @author XuanLaoYee
  */
 public class RumPage implements Page {
@@ -24,6 +25,7 @@ public class RumPage implements Page {
 
     /**
      * 得到的是数据的副本，而非缓冲区的指针。
+     *
      * @return clone后的数据
      */
     @Override
@@ -36,7 +38,6 @@ public class RumPage implements Page {
     }
 
     /**
-     *
      * @param offset 页内偏移值，以字节为单位 ，该过程不加锁
      * @param data   待写入数据
      * @throws PageException 回写数据偏移与大小之和超过规定，则抛出异常
@@ -55,6 +56,7 @@ public class RumPage implements Page {
 
     /**
      * 还未实现double write
+     *
      * @throws FileException
      */
     @Override
@@ -64,13 +66,13 @@ public class RumPage implements Page {
             try {
                 RandomAccessFile out = new RandomAccessFile(file, "rw");
                 try {
-                    out.seek((PageManager.FILE_HEAD_SIZE + this.pageId) * (long)PageManager.PAGE_SIZE);
+                    out.seek((PageManager.FILE_HEAD_SIZE + this.pageId) * (long) PageManager.PAGE_SIZE);
                 } catch (Exception e) {
                     throw new FileException(4);
                 }
                 try {
                     byte[] data = new byte[PageManager.PAGE_SIZE];
-                    System.arraycopy(this.data,this.offset*PageManager.PAGE_SIZE,data,0,data.length);
+                    System.arraycopy(this.data, this.offset * PageManager.PAGE_SIZE, data, 0, data.length);
                     out.write(data);
                 } catch (Exception e) {
                     throw new FileException(2);
@@ -116,7 +118,7 @@ public class RumPage implements Page {
         return dirty;
     }
 
-    public Long pageId(){
+    public Long pageId() {
         return this.pageId;
     }
 

@@ -48,8 +48,8 @@ public class MockPageStorage implements PageStorage {
     public void flush() {
     }
 
-    private Map<Integer, Page> pageMap;
+    private final Map<Integer, Page> pageMap;
 
-    private String filepath;
-    private byte[] fakeFile;
+    private final String filepath;
+    private final byte[] fakeFile;
 }

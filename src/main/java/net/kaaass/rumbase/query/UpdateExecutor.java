@@ -16,12 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- *
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public class UpdateExecutor implements Executable{
+public class UpdateExecutor implements Executable {
 
     @NonNull
     private final UpdateStatement statement;
@@ -46,7 +44,7 @@ public class UpdateExecutor implements Executable{
 
         List<List<Object>> rows = new ArrayList<>();
         var iter = table.searchAll(indexedField.getName());
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             var uuid = iter.next().getUuid();
             List<List<Object>> finalRows = rows;
             table.read(context, uuid).ifPresent(row -> {

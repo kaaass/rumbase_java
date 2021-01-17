@@ -41,7 +41,7 @@ import java.util.Random;
 @Slf4j
 public class ItemStorage implements IItemStorage {
 
-    private String fileName;
+    private final String fileName;
     /**
      * 当前第一个空闲的页，用于插入时作为起始页来进行操作。
      */
@@ -49,11 +49,11 @@ public class ItemStorage implements IItemStorage {
     /**
      * 表信息头对应的UUID
      */
-    private long headerUuid;
+    private final long headerUuid;
     /**
      * 内部维护一个对应该文件的页管理器
      */
-    private PageStorage pageStorage;
+    private final PageStorage pageStorage;
     /**
      * 维护一个日志管理器
      */

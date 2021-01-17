@@ -16,12 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- *
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public class DeleteExecutor implements Executable{
+public class DeleteExecutor implements Executable {
 
     @NonNull
     private final DeleteStatement statement;
@@ -46,7 +44,7 @@ public class DeleteExecutor implements Executable{
 
         List<List<Object>> rows = new ArrayList<>();
         var iter = table.searchAll(field.getName());
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             var uuid = iter.next().getUuid();
             List<List<Object>> finalRows = rows;
             table.read(context, uuid).ifPresent(row -> {
@@ -64,7 +62,7 @@ public class DeleteExecutor implements Executable{
 
         }
 
-        for (var row: rows) {
+        for (var row : rows) {
             try {
                 table.delete(context, (long) row.get(row.size() - 1));
             } catch (ClassCastException e) {

@@ -7,6 +7,7 @@ import java.util.Map;
 
 /**
  * 页已经满了，无法进行原先的插入操作
+ *
  * @author 无索魏
  */
 public class PageFullException extends RumbaseException {

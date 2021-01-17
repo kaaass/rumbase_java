@@ -20,11 +20,10 @@ import java.util.Map;
  * <p>
  * E3001-6 索引不存在
  *
- *
  * @author @KveinAxel
  */
 public class TableExistenceException extends RumbaseException {
-    public static final Map<Integer, String> REASONS = new HashMap<>(){{
+    public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "关系不存在");
         put(2, "字段不存在");
         put(3, "视图不存在");
@@ -36,7 +35,7 @@ public class TableExistenceException extends RumbaseException {
     /**
      * 关系不存在异常
      *
-     * @param subId  子错误号
+     * @param subId 子错误号
      */
     public TableExistenceException(int subId) {
         super(3001, subId, REASONS.get(subId));

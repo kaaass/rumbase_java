@@ -3,16 +3,19 @@ package net.kaaass.rumbase.table;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.kaaass.rumbase.index.Pair;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
-import net.kaaass.rumbase.table.field.BaseField;
-import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
+import net.kaaass.rumbase.table.exception.TableExistenceException;
+import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 import java.io.ByteArrayInputStream;
@@ -115,7 +118,6 @@ public class Table {
     }
 
 
-
     /**
      * 将当前表结构信息持久化到外存中
      */
@@ -129,7 +131,7 @@ public class Table {
             out.writeString(status.toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
             out.writeLong(next, JBBPByteOrder.BIG_ENDIAN);
             out.writeInt(fields.size(), JBBPByteOrder.BIG_ENDIAN);
-            for (var f: fields) {
+            for (var f : fields) {
                 f.persist(byteOutStream);
             }
         } catch (IOException e) {
@@ -177,13 +179,13 @@ public class Table {
     /**
      * 更新元组
      *
-     * @param context  事务context
-     * @param uuid     元组的uuid
-     * @param entry    新的行的字符串值列表
+     * @param context 事务context
+     * @param uuid    元组的uuid
+     * @param entry   新的行的字符串值列表
      */
     public void update(TransactionContext context, long uuid, List<String> entry) throws TableConflictException, TableExistenceException, RecordNotFoundException {
 
-        if(!checkStringEntry(entry)) {
+        if (!checkStringEntry(entry)) {
             throw new TableConflictException(3);
         }
 
@@ -205,9 +207,9 @@ public class Table {
     /**
      * 更新元组
      *
-     * @param context  事务context
-     * @param uuid     元组的uuid
-     * @param entry    新的行的值列表
+     * @param context 事务context
+     * @param uuid    元组的uuid
+     * @param entry   新的行的值列表
      */
     public void updateObjs(TransactionContext context, long uuid, List<Object> entry) throws TableConflictException, TableExistenceException, RecordNotFoundException {
 
@@ -224,8 +226,6 @@ public class Table {
             }
         }
     }
-
-
 
 
     /**
@@ -279,8 +279,8 @@ public class Table {
      * @param context 事务context
      * @param uuid    元组的uuid
      * @return 元组
-     * @throws TableExistenceException         要查询的表不存在
-     * @throws TableConflictException 查询到的entry和当前表冲突
+     * @throws TableExistenceException 要查询的表不存在
+     * @throws TableConflictException  查询到的entry和当前表冲突
      */
     public Optional<List<Object>> read(TransactionContext context, long uuid) throws TableExistenceException, TableConflictException, RecordNotFoundException {
 
@@ -314,7 +314,7 @@ public class Table {
 
         var rows = new ArrayList<List<Object>>();
         var iter = searchAll(field.getName());
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             var uuid = iter.next().getUuid();
             read(context, uuid).ifPresent(rows::add);
         }
@@ -324,8 +324,8 @@ public class Table {
     /**
      * 向表插入元组
      *
-     * @param context  事务context
-     * @param entry 新的元组
+     * @param context 事务context
+     * @param entry   新的元组
      * @throws TableConflictException 插入的元组不满足表约束
      */
     public void insert(TransactionContext context, List<String> entry) throws TableConflictException, TableExistenceException, ArgumentException {
@@ -350,7 +350,7 @@ public class Table {
     }
 
     /**
-     * @param fieldName 字段名
+     * @param fieldName  字段名
      * @param fieldValue 字段值
      * @return 查询到的uuid列表
      * @throws TableExistenceException 要查询的表不存在
@@ -358,7 +358,7 @@ public class Table {
     public List<Long> search(String fieldName, String fieldValue) throws TableExistenceException, TableConflictException {
         BaseField field = null;
 
-        for (var f: fields) {
+        for (var f : fields) {
             if (f.getName().equals(fieldName)) {
                 field = f;
             }
@@ -372,7 +372,7 @@ public class Table {
     }
 
     /**
-     * @param fieldName 字段名
+     * @param fieldName  字段名
      * @param fieldValue 字段值
      * @return 查询到的uuid列表
      * @throws TableExistenceException 要查询的表不存在
@@ -380,7 +380,7 @@ public class Table {
     public List<Long> search(String fieldName, Object fieldValue) throws TableExistenceException, TableConflictException {
         BaseField field = null;
 
-        for (var f: fields) {
+        for (var f : fields) {
             if (f.getName().equals(fieldName)) {
                 field = f;
             }
@@ -392,7 +392,6 @@ public class Table {
 
         return field.queryIndex(fieldValue);
     }
-
 
 
     /**
@@ -409,7 +408,7 @@ public class Table {
     public Iterator<Pair> searchAll(String fieldName) throws TableExistenceException {
         BaseField field = null;
 
-        for (var f: fields) {
+        for (var f : fields) {
             if (f.getName().equals(fieldName)) {
                 field = f;
             }
@@ -431,15 +430,15 @@ public class Table {
      * 返回的uuid不保证可见
      *
      * @param fieldName 字段名
-     * @param key 字段值
+     * @param key       字段值
      * @return (字段值, 记录uuid)形式的第一个迭代器
      * @throws TableExistenceException 字段不存在(2), 索引不存在(6)
-     * @throws TableConflictException 字段类型不匹配
+     * @throws TableConflictException  字段类型不匹配
      */
     public Iterator<Pair> searchFirst(String fieldName, String key) throws TableExistenceException, TableConflictException {
         BaseField field = null;
 
-        for (var f: fields) {
+        for (var f : fields) {
             if (f.getName().equals(fieldName)) {
                 field = f;
             }
@@ -466,7 +465,7 @@ public class Table {
     public Iterator<Pair> searchFirstNotEqual(String fieldName, String key) throws TableExistenceException, TableConflictException {
         BaseField field = null;
 
-        for (var f: fields) {
+        for (var f : fields) {
             if (f.getName().equals(fieldName)) {
                 field = f;
             }
@@ -525,7 +524,6 @@ public class Table {
     }
 
 
-
     /**
      * 将字节数组转换成entry
      *
@@ -553,7 +551,7 @@ public class Table {
      * @return 列
      */
     public BaseField getFirstIndexedField() {
-        for (var f: fields) {
+        for (var f : fields) {
             if (f.indexed()) {
                 return f;
             }

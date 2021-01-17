@@ -14,12 +14,10 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import java.util.ArrayList;
 
 /**
- *
- *
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public class InsertExecutor implements Executable{
+public class InsertExecutor implements Executable {
 
     @NonNull
     private final InsertStatement statement;

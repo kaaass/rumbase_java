@@ -10,7 +10,7 @@ import java.util.Map;
  * @author 无索魏
  */
 public class MockIterator implements Iterator<Pair> {
-    private Iterator<Map.Entry<Long, List<Long>>> indexIterator;
+    private final Iterator<Map.Entry<Long, List<Long>>> indexIterator;
     private Iterator<Long> tempIterator;
     private long tempKey;
     private boolean state = true;

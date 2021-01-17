@@ -2,11 +2,9 @@ package net.kaaass.rumbase.table;
 
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
-import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
@@ -20,7 +18,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -207,11 +204,11 @@ public class TableTest {
 
             Assert.assertEquals(1, (int) res1.get().get(0));
             Assert.assertEquals(-0.4f, res1.get().get(1));
-            Assert.assertEquals("ya test varchar", (String) res1.get().get(2));
+            Assert.assertEquals("ya test varchar", res1.get().get(2));
 
             Assert.assertEquals(33, (int) res2.get().get(0));
             Assert.assertEquals(1.2f, res2.get().get(1));
-            Assert.assertEquals("test varchar", (String) res2.get().get(2));
+            Assert.assertEquals("test varchar", res2.get().get(2));
 
             // 测试删除记录
             table.delete(context, pair2.getUuid());
@@ -246,7 +243,7 @@ public class TableTest {
             // 测试记录是否被更新
             Assert.assertEquals(33, (int) res4.get().get(0));
             Assert.assertEquals(1.2f, res4.get().get(1));
-            Assert.assertEquals("test varchar", (String) res4.get().get(2));
+            Assert.assertEquals("test varchar", res4.get().get(2));
 
 
         } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
@@ -337,11 +334,11 @@ public class TableTest {
             }
             Assert.assertEquals(7, (int) resList.get(0).get(0));
             Assert.assertEquals(1.2f, resList.get(0).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(0).get(2));
+            Assert.assertEquals("test varchar", resList.get(0).get(2));
 
             Assert.assertEquals(7, (int) resList.get(1).get(0));
             Assert.assertEquals(1.2f, resList.get(1).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(1).get(2));
+            Assert.assertEquals("test varchar", resList.get(1).get(2));
 
         } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
@@ -379,43 +376,43 @@ public class TableTest {
 
             Assert.assertEquals(1, (int) resList.get(0).get(0));
             Assert.assertEquals(1.2f, resList.get(0).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(0).get(2));
+            Assert.assertEquals("test varchar", resList.get(0).get(2));
 
             Assert.assertEquals(2, (int) resList.get(1).get(0));
             Assert.assertEquals(1.2f, resList.get(1).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(1).get(2));
+            Assert.assertEquals("test varchar", resList.get(1).get(2));
 
             Assert.assertEquals(3, (int) resList.get(2).get(0));
             Assert.assertEquals(1.2f, resList.get(2).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(2).get(2));
+            Assert.assertEquals("test varchar", resList.get(2).get(2));
 
             Assert.assertEquals(3, (int) resList.get(3).get(0));
             Assert.assertEquals(1.2f, resList.get(3).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(3).get(2));
+            Assert.assertEquals("test varchar", resList.get(3).get(2));
 
             Assert.assertEquals(4, (int) resList.get(4).get(0));
             Assert.assertEquals(1.2f, resList.get(4).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(4).get(2));
+            Assert.assertEquals("test varchar", resList.get(4).get(2));
 
             Assert.assertEquals(5, (int) resList.get(5).get(0));
             Assert.assertEquals(1.2f, resList.get(5).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(5).get(2));
+            Assert.assertEquals("test varchar", resList.get(5).get(2));
 
             Assert.assertEquals(6, (int) resList.get(6).get(0));
             Assert.assertEquals(1.2f, resList.get(6).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(6).get(2));
+            Assert.assertEquals("test varchar", resList.get(6).get(2));
 
             Assert.assertEquals(7, (int) resList.get(7).get(0));
             Assert.assertEquals(1.2f, resList.get(7).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(7).get(2));
+            Assert.assertEquals("test varchar", resList.get(7).get(2));
 
             Assert.assertEquals(7, (int) resList.get(8).get(0));
             Assert.assertEquals(1.2f, resList.get(8).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(8).get(2));
+            Assert.assertEquals("test varchar", resList.get(8).get(2));
 
             Assert.assertEquals(8, (int) resList.get(9).get(0));
             Assert.assertEquals(1.2f, resList.get(9).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(9).get(2));
+            Assert.assertEquals("test varchar", resList.get(9).get(2));
 
 
         } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
@@ -450,15 +447,15 @@ public class TableTest {
 
             Assert.assertEquals(3, (int) resList.get(0).get(0));
             Assert.assertEquals(1.2f, resList.get(0).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(0).get(2));
+            Assert.assertEquals("test varchar", resList.get(0).get(2));
 
             Assert.assertEquals(3, (int) resList.get(1).get(0));
             Assert.assertEquals(1.2f, resList.get(1).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(1).get(2));
+            Assert.assertEquals("test varchar", resList.get(1).get(2));
 
             Assert.assertEquals(4, (int) resList.get(2).get(0));
             Assert.assertEquals(1.2f, resList.get(2).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(2).get(2));
+            Assert.assertEquals("test varchar", resList.get(2).get(2));
 
         } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
@@ -493,7 +490,7 @@ public class TableTest {
 
             Assert.assertEquals(4, (int) resList.get(0).get(0));
             Assert.assertEquals(1.2f, resList.get(0).get(1));
-            Assert.assertEquals("test varchar", (String) resList.get(0).get(2));
+            Assert.assertEquals("test varchar", resList.get(0).get(2));
 
         } catch (TableExistenceException | TableConflictException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
@@ -614,7 +611,7 @@ public class TableTest {
             var list = table.parseEntry(passEntry);
             Assert.assertEquals(33, (int) list.get(0));
             Assert.assertEquals(1.2f, list.get(1));
-            Assert.assertEquals("test varchar", (String) list.get(2));
+            Assert.assertEquals("test varchar", list.get(2));
         } catch (TableConflictException | IOException e) {
             log.error("Exception expected: ", e);
             Assert.fail();

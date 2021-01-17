@@ -40,7 +40,7 @@ public class RumPageStorage implements PageStorage {
                 while (in.available() < (pageId + 1 + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
                     FileWriter fw = new FileWriter(file, true);
                     char[] blank = new char[PageManager.PAGE_SIZE * (in.available() / PageManager.PAGE_SIZE)];
-                    Arrays.fill(blank, (char)0);
+                    Arrays.fill(blank, (char) 0);
                     fw.write(blank);
                     fw.close();
                 }

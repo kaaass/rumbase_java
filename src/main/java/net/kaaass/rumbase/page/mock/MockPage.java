@@ -6,7 +6,7 @@ import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 
 public class MockPage implements Page {
-    private byte[] data;
+    private final byte[] data;
     long pageId;
     boolean dirty;
     int pinned = 0;

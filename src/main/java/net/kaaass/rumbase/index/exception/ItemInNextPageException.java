@@ -8,6 +8,7 @@ import java.util.Map;
 
 /**
  * 要找的条目不在本页，而下一页
+ *
  * @author 无索魏
  */
 public class ItemInNextPageException extends RumbaseException {

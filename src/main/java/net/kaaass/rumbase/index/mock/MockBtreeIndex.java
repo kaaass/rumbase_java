@@ -18,7 +18,7 @@ public class MockBtreeIndex implements Index {
     public static Map<String, MockBtreeIndex> MOCK_BTREE_INDEX_MAP = new HashMap<>();
 
     @Getter
-    private HashMap<Long, List<Long>> hashMap = new HashMap<>();
+    private final HashMap<Long, List<Long>> hashMap = new HashMap<>();
 
     @Override
     public void replace(Map<Long, Long> uuidMap) {

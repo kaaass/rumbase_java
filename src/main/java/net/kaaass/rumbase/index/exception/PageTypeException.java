@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * @author 无索魏
  */
 public class PageTypeException extends RumbaseException {

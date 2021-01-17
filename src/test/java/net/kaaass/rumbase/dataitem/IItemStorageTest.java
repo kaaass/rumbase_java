@@ -1,6 +1,5 @@
 package net.kaaass.rumbase.dataitem;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
@@ -9,7 +8,6 @@ import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

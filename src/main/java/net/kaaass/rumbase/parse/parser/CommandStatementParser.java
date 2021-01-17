@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 
 /**
  * 字符串指令解析器
+ *
  * @author kaaass
  */
 @Slf4j

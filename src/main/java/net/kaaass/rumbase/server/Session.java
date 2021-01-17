@@ -55,6 +55,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
 
     /**
      * 执行SQL语句并输出相关结果
+     *
      * @return 是否退出
      */
     public boolean executeSql(String sql) {
@@ -208,15 +209,16 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
 
     /**
      * 以表格格式输出选择语句的结果
+     *
      * @param executor 结果集
      */
     private void saySelectResult(SelectExecutor executor, String defaultTable) {
         var columns =
                 executor.getResultTable().stream()
-                    .map(column -> column.getTableName().equals(defaultTable) ?
-                            column.getFieldName() :
-                            column.getTableName() + "." + column.getFieldName())
-                    .collect(Collectors.toList());
+                        .map(column -> column.getTableName().equals(defaultTable) ?
+                                column.getFieldName() :
+                                column.getTableName() + "." + column.getFieldName())
+                        .collect(Collectors.toList());
         var rows = executor.getResultData();
         log.debug("查询结果 {}, {}", columns, rows);
         // 格式化为表格
@@ -377,6 +379,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
 
     /**
      * 执行后尝试自动提交
+     *
      * @param rollback 是否需要回滚
      */
     private void checkAutoCommitAfter(boolean rollback) {

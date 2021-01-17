@@ -1,6 +1,5 @@
 package net.kaaass.rumbase.record;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
@@ -10,7 +9,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;

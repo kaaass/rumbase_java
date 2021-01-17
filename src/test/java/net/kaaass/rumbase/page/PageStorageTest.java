@@ -1,6 +1,5 @@
 package net.kaaass.rumbase.page;
 
-import junit.framework.TestCase;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
@@ -80,7 +79,7 @@ public class PageStorageTest {
         PageStorage storage = PageManager.fromFile(filePath);
         int[] testPage = new int[]{1, 3, 5, 7, 10, 11};
         // 测试每一页是否能正常读写
-        for (var pageId: testPage) {
+        for (var pageId : testPage) {
             // 准备标志数据
             byte[] data = new byte[PageManager.PAGE_SIZE];
             Arrays.fill(data, (byte) (0xF0 | pageId));

@@ -3,7 +3,6 @@ package net.kaaass.rumbase.record;
 import lombok.SneakyThrows;
 import net.kaaass.rumbase.dataitem.ItemManager;
 
-import java.io.File;
 import java.nio.file.Paths;
 
 /**

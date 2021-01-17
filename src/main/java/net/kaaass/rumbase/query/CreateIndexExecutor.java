@@ -10,12 +10,10 @@ import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
 /**
- *
- *
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public class CreateIndexExecutor implements Executable{
+public class CreateIndexExecutor implements Executable {
 
     @NonNull
     private final CreateIndexStatement statement;
@@ -32,9 +30,9 @@ public class CreateIndexExecutor implements Executable{
         BaseField field = null;
 
         boolean ok;
-        for (var tableField: table.getFields()) {
+        for (var tableField : table.getFields()) {
             ok = false;
-            for (var column: statement.getColumns()) {
+            for (var column : statement.getColumns()) {
                 if (tableField.getName().equals(column.getFieldName())) {
                     field = tableField;
                     field.setIndexName(statement.getIndexName());

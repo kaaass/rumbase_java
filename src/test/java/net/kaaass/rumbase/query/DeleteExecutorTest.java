@@ -1,6 +1,5 @@
 package net.kaaass.rumbase.query;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
@@ -80,11 +79,11 @@ public class DeleteExecutorTest {
             Assert.assertEquals(2, data.size());
 
             Assert.assertEquals(2, data.get(0).size());
-            Assert.assertEquals("KevinAxel", (String) data.get(0).get(0));
+            Assert.assertEquals("KevinAxel", data.get(0).get(0));
             Assert.assertEquals(1, (int) data.get(0).get(1));
 
             Assert.assertEquals(2, data.get(1).size());
-            Assert.assertEquals("KAAAsS", (String) data.get(1).get(0));
+            Assert.assertEquals("KAAAsS", data.get(1).get(0));
             Assert.assertEquals(2, (int) data.get(1).get(1));
 
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {
@@ -107,7 +106,7 @@ public class DeleteExecutorTest {
             Assert.assertEquals(1, data.size());
 
             Assert.assertEquals(2, data.get(0).size());
-            Assert.assertEquals("KAAAsS", (String) data.get(0).get(0));
+            Assert.assertEquals("KAAAsS", data.get(0).get(0));
             Assert.assertEquals(2, (int) data.get(0).get(1));
 
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {
@@ -161,11 +160,11 @@ public class DeleteExecutorTest {
             Assert.assertEquals(2, data.size());
 
             Assert.assertEquals(2, data.get(0).size());
-            Assert.assertEquals("KevinAxel", (String) data.get(0).get(0));
+            Assert.assertEquals("KevinAxel", data.get(0).get(0));
             Assert.assertEquals(1, (int) data.get(0).get(1));
 
             Assert.assertEquals(2, data.get(1).size());
-            Assert.assertEquals("KAAAsS", (String) data.get(1).get(0));
+            Assert.assertEquals("KAAAsS", data.get(1).get(0));
             Assert.assertEquals(2, (int) data.get(1).get(1));
 
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {

@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
-
 import net.kaaass.rumbase.parse.stmt.SelectStatement;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.transaction.TransactionContext;
@@ -12,11 +11,10 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import java.util.List;
 
 /**
- *
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public abstract class AbstractJoinExecutor implements Executable{
+public abstract class AbstractJoinExecutor implements Executable {
 
     @NonNull
     protected final String fromTable;

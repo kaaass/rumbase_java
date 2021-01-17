@@ -1,6 +1,5 @@
 package net.kaaass.rumbase.record.exception;
 
-import net.kaaass.rumbase.exception.RumbaseException;
 import net.kaaass.rumbase.exception.RumbaseRuntimeException;
 
 import java.util.HashMap;

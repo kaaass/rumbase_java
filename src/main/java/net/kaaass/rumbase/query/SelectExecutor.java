@@ -18,11 +18,10 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- *
  * @author @KveinAxel
  */
 @RequiredArgsConstructor
-public class SelectExecutor implements Executable{
+public class SelectExecutor implements Executable {
 
     @NonNull
     private final SelectStatement statement;
@@ -85,7 +84,7 @@ public class SelectExecutor implements Executable{
             var hashSet = new HashSet<List<Object>>(len);
             var resultList = new ArrayList<List<Object>>(len);
 
-            for (var item: resultData) {
+            for (var item : resultData) {
                 if (hashSet.add(item)) {
                     resultList.add(item);
                 }

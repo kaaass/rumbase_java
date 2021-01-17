@@ -3,15 +3,8 @@ package net.kaaass.rumbase.index;
 import net.kaaass.rumbase.index.btree.BPlusTreeIndex;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
-import net.kaaass.rumbase.index.mock.MockBtreeIndex;
-import net.kaaass.rumbase.page.Page;
-import net.kaaass.rumbase.page.PageManager;
-import net.kaaass.rumbase.page.PageStorage;
-import net.kaaass.rumbase.page.exception.FileException;
 
-import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +24,16 @@ public interface Index extends Iterable<Pair> {
      * @throws IndexNotFoundException
      */
     static Index getIndex(String indexFileName) throws IndexNotFoundException {
-            if (BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName) != null) {
-                return BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName);
-            } else {
-                BPlusTreeIndex bPlusTreeIndex = new BPlusTreeIndex(indexFileName);
-                if (!bPlusTreeIndex.isIndexedFile()) {
-                    throw new IndexNotFoundException(1);
-                }
-                BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.put(indexFileName, bPlusTreeIndex);
-                return bPlusTreeIndex;
+        if (BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName) != null) {
+            return BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.get(indexFileName);
+        } else {
+            BPlusTreeIndex bPlusTreeIndex = new BPlusTreeIndex(indexFileName);
+            if (!bPlusTreeIndex.isIndexedFile()) {
+                throw new IndexNotFoundException(1);
             }
+            BPlusTreeIndex.B_PLUS_TREE_INDEX_MAP.put(indexFileName, bPlusTreeIndex);
+            return bPlusTreeIndex;
+        }
     }
 
     /**
