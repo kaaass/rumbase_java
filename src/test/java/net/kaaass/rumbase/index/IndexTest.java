@@ -2,11 +2,18 @@ package net.kaaass.rumbase.index;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -16,41 +23,29 @@ import java.util.Random;
  * @see net.kaaass.rumbase.index.Index
  */
 @Slf4j
-public class IndexTest extends TestCase {
-    /**
-     * 测试索引对象管理与拿取
-     */
-    public void testIndexManagement() {
-        // 测试索引是否存在，表示student表的id字段索引，table_name$field_name
-        assertFalse("don't exists such a index", Index.exists("student$id"));
+public class IndexTest {
+    public static final String fileDir = FileUtil.TEST_PATH;
 
-        // 创建一个空索引，如果已经存在，则抛出异常
-        try {
-            Index.createEmptyIndex("student$id");
-            Index.createEmptyIndex("student$name");
-            Index.createEmptyIndex("student$score");
-            Index.createEmptyIndex("student$score");
-        } catch (IndexAlreadyExistException e) {
-            log.error("Exception Error :", e);
-        }
+    @BeforeClass
+    public static void createDataFolder() {
+        FileUtil.prepare();
+    }
 
-        // 拿到这个索引,若没有则抛出异常
-        try {
-            Index.getIndex("student$id");
-            Index.getIndex("employee$id");
-        } catch (IndexNotFoundException e) {
-            log.error("Exception Error :", e);
-        }
+    @AfterClass
+    public static void clearDataFolder() {
+        FileUtil.clear();
     }
 
     /**
      * 测试索引的插入与第一个迭代器功能
      */
+    @Test
     public void testInsert() {
         Index testIndex = null;
         var standardRand = new ArrayList<Long>();
         try {
-            testIndex = Index.createEmptyIndex("testInsert$id");
+            new File(fileDir + "testInsert$id").deleteOnExit();
+            testIndex = Index.createEmptyIndex(fileDir + "testInsert$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
@@ -61,15 +56,12 @@ public class IndexTest extends TestCase {
             standardRand.add(rand);
             assert testIndex != null;
             testIndex.insert(i, rand);
-
-            standardRand.add(rand = new Random().nextLong());
-            testIndex.insert(i, rand);
         }
 
         // 测试数据是否符合预期
         int cnt = 0;
         for (var pair : testIndex) {
-            assertEquals(standardRand.get(cnt).longValue(),
+            Assert.assertEquals(standardRand.get(cnt).longValue(),
                     pair.getUuid());
             cnt++;
         }
@@ -78,12 +70,14 @@ public class IndexTest extends TestCase {
     /**
      * 测试索引的查询功能
      */
+    @Test
     public void testQuery() {
         Index testIndex = null;
         var standardRand = new ArrayList<Long>();
 
         try {
-            testIndex = Index.createEmptyIndex("testQuery$id");
+            new File(fileDir + "testQuery$id").deleteOnExit();
+            testIndex = Index.createEmptyIndex(fileDir + "testQuery$id");
         } catch (IndexAlreadyExistException e) {
             log.error("Exception Error :", e);
         }
@@ -108,20 +102,28 @@ public class IndexTest extends TestCase {
         // 测试 findFirst 方法
         // keyHash在内的迭代器 1122->334455
         Iterator<Pair> it1 = testIndex.findFirst(3);
-        assertTrue(it1.hasNext());
-        assertEquals(standardRand.get(2 * 2).longValue(), it1.next().getUuid());
-        assertEquals(standardRand.get(2 * 2 + 1).longValue(), it1.next().getUuid());
+        Assert.assertTrue(it1.hasNext());
+        var expected = List.of(
+                standardRand.get(2 * 2),
+                standardRand.get(2 * 2 + 1)
+        );
+        Assert.assertTrue(expected.contains(it1.next().getUuid()));
+        Assert.assertTrue(expected.contains(it1.next().getUuid()));
 
         // 测试 findUpperbound 方法
         // 不包括keyHash在内的迭代器 112233->4455
         Iterator<Pair> it2 = testIndex.findUpperbound(3);
-        assertTrue(it2.hasNext());
-        assertEquals(standardRand.get(2).longValue(), it2.next().getUuid());
-        assertEquals(standardRand.get(2 + 1).longValue(), it2.next().getUuid());
+        Assert.assertTrue(it2.hasNext());
+        expected = List.of(
+                standardRand.get(2),
+                standardRand.get(2 + 1)
+        );
+        Assert.assertTrue(expected.contains(it2.next().getUuid()));
+        Assert.assertTrue(expected.contains(it2.next().getUuid()));
 
         // 测试 query 方法
         var results = testIndex.query(4);
-        assertTrue(results.contains(standardRand.get(2)));
-        assertTrue(results.contains(standardRand.get(2 + 1)));
+        Assert.assertTrue(results.contains(standardRand.get(2)));
+        Assert.assertTrue(results.contains(standardRand.get(2 + 1)));
     }
 }

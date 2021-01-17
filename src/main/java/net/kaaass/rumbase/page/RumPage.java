@@ -76,6 +76,8 @@ public class RumPage implements Page {
                     throw new FileException(2);
                 }
                 out.close();
+            } catch (FileException e) {
+                throw e;
             } catch (Exception e) {
                 e.printStackTrace();
             }

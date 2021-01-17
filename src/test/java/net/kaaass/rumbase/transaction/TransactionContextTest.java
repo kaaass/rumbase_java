@@ -1,19 +1,17 @@
 package net.kaaass.rumbase.transaction;
 
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
-import net.kaaass.rumbase.transaction.exception.StatusException;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static junit.framework.TestCase.assertTrue;
 
 /**
  * 测试事务上下文
@@ -23,32 +21,16 @@ import static junit.framework.TestCase.assertTrue;
 @Slf4j
 public class TransactionContextTest {
 
-    public static void removeDir(File dir) {
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    removeDir(file);
-                } else {
-                    file.delete();
-                }
-            }
-        }
-
-        dir.delete();
+    @BeforeClass
+    public static void createDataFolder() {
+        log.info("创建测试文件夹...");
+        FileUtil.createDir(FileUtil.TEST_PATH);
     }
 
-    /**
-     * 创建临时文件生成目录
-     */
-    @BeforeClass
-    public static void createTmpDir() {
-        File dir = new File("test_gen_files");
-        if (dir.exists()) {
-            removeDir(dir);
-        }
-        dir.mkdir();
-        new File("build/xid.log").deleteOnExit();
+    @AfterClass
+    public static void clearDataFolder() {
+        log.info("清除测试文件夹...");
+        FileUtil.removeDir(FileUtil.TEST_PATH);
     }
 
     /**
@@ -75,7 +57,7 @@ public class TransactionContextTest {
      * 测试事务变化
      */
     @Test
-    public void testChangeStatus() throws IOException, FileException, StatusException {
+    public void testChangeStatus() throws IOException, FileException {
         var manager = new TransactionManagerImpl("test_gen_files/test_change.log");
         var committedTransaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         // 事务初始状态
@@ -100,7 +82,7 @@ public class TransactionContextTest {
      * 测试事务持久化
      */
     @Test
-    public void testTransactionPersistence() throws IOException, FileException, StatusException {
+    public void testTransactionPersistence() throws IOException, FileException {
         var manager = new TransactionManagerImpl("test_gen_files/test_persistence.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -133,7 +115,7 @@ public class TransactionContextTest {
      * 测试事务状态复原
      */
     @Test
-    public void testTransactionRecovery() throws IOException, FileException, StatusException {
+    public void testTransactionRecovery() throws IOException, FileException {
         var manager = new TransactionManagerImpl("test_gen_files/test_recovery.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -154,16 +136,14 @@ public class TransactionContextTest {
      * 测试事务上锁
      */
     @Test
-    public void testAddLock() throws IOException, FileException, StatusException {
+    public void testAddLock() throws IOException, FileException {
         var manager = new TransactionManagerImpl("test_gen_files/test_add_lock.log");
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
-        transaction1.start();
-        transaction2.start();
+
 
         // 互斥锁
-        TransactionContext finalTransaction = transaction2;
         new Thread(() -> {
             try {
                 Thread.sleep(100);
@@ -171,15 +151,11 @@ public class TransactionContextTest {
                 e.printStackTrace();
             }
             log.info("transaction2 commit");
-            try {
-                finalTransaction.commit();
-            } catch (StatusException e) {
-                e.printStackTrace();
-            }
+            transaction2.commit();
         }).start();
         try {
             transaction1.exclusiveLock(1, tableName);
-            finalTransaction.exclusiveLock(2, tableName);
+            transaction2.exclusiveLock(2, tableName);
             transaction1.exclusiveLock(2, tableName);
             log.info("transaction1 got exclusiveLock on 2");
         } catch (DeadlockException e) {
@@ -187,12 +163,6 @@ public class TransactionContextTest {
         }
         transaction1.commit();
 
-
-        transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-        transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-
-        transaction1.start();
-        transaction2.start();
         try {
             transaction1.sharedLock(1, tableName);
             transaction2.sharedLock(1, tableName);
@@ -201,7 +171,7 @@ public class TransactionContextTest {
 
             transaction1.commit();
             transaction2.rollback();
-        } catch (DeadlockException | StatusException e) {
+        } catch (DeadlockException e) {
             e.printStackTrace();
         }
     }
@@ -210,155 +180,37 @@ public class TransactionContextTest {
      * 测试死锁
      */
     @Test
-    public void testDeadlock() throws IOException, FileException, InterruptedException, StatusException {
+    public void testDeadlock() throws IOException, FileException, InterruptedException {
         var manager = new TransactionManagerImpl("test_gen_files/test_deadlock.log");
-        for (int i = 0; i < 50; i++) {
-            log.info("============= Test times {} =============", i);
-            var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-            var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-            String tableName = "test";
+        var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+        var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
+        String tableName = "test";
 
-            transaction1.start();
-            transaction2.start();
-
-            AtomicBoolean syncPoint = new AtomicBoolean(false);
-            AtomicBoolean deadlockDetect = new AtomicBoolean(false);
-            Thread thread = new Thread(() -> {
-                try {
-                    while (!syncPoint.get()) {
-                        Thread.sleep(3);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    transaction2.exclusiveLock(1, tableName);
-                } catch (DeadlockException e) {
-                    deadlockDetect.set(true);
-                    e.printStackTrace();
-                    try {
-                        transaction2.rollback();
-                    } catch (StatusException statusException) {
-                        statusException.printStackTrace();
-                    }
-                } catch (StatusException e) {
-                    e.printStackTrace();
-                }
-            });
-            thread.start();
+        AtomicBoolean deadlockDetect = new AtomicBoolean(false);
+        new Thread(() -> {
             try {
-                transaction1.exclusiveLock(1, tableName);
-                transaction2.exclusiveLock(2, tableName);
-                syncPoint.set(true);
-                transaction1.exclusiveLock(2, tableName);
+                Thread.sleep(3);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            try {
+                transaction2.exclusiveLock(1, tableName);
             } catch (DeadlockException e) {
                 deadlockDetect.set(true);
-                e.printStackTrace();
-                log.info("rollback tx2");
                 transaction2.rollback();
-            }
-            thread.join();
-            assertTrue("Deadlock should be detected", deadlockDetect.get());
-            transaction1.commit();
-            log.info("tx1 committed");
-        }
-    }
-
-    @Ignore
-    public void testDeadlock3() throws IOException, FileException, InterruptedException, StatusException {
-        // FIXME 三线程死锁问题仍不能解决
-        var manager = new TransactionManagerImpl("test_gen_files/test_deadlock3.log");
-        for (int i = 0; i < 1; i++) {
-            log.info("============= Test times {} =============", i);
-            var tx1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-            var tx2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-            var tx3 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
-            String tableName = "test";
-
-            tx1.start();
-            tx2.start();
-            tx3.start();
-
-            AtomicBoolean syncPoint = new AtomicBoolean(false);
-            AtomicBoolean deadlockDetect = new AtomicBoolean(false);
-            var thread2 = new Thread(() -> {
-                try {
-                    while (!syncPoint.get()) {
-                        Thread.sleep(3);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    tx2.exclusiveLock(3, tableName);
-                } catch (DeadlockException e) {
-                    deadlockDetect.set(true);
-                    e.printStackTrace();
-                    try {
-                        log.info("rollback tx2");
-                        tx2.rollback();
-                    } catch (StatusException statusException) {
-                        statusException.printStackTrace();
-                    }
-                } catch (StatusException e) {
-                    e.printStackTrace();
-                }
-                log.info("thread2 alive");
-            });
-            var thread3 = new Thread(() -> {
-                try {
-                    while (!syncPoint.get()) {
-                        Thread.sleep(3);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    tx3.exclusiveLock(1, tableName);
-                } catch (DeadlockException e) {
-                    deadlockDetect.set(true);
-                    e.printStackTrace();
-                    try {
-                        log.info("rollback tx3");
-                        tx3.rollback();
-                    } catch (StatusException statusException) {
-                        statusException.printStackTrace();
-                    }
-                } catch (StatusException e) {
-                    e.printStackTrace();
-                }
-                log.info("thread3 alive");
-            });
-            thread2.start();
-            thread3.start();
-            try {
-                tx1.exclusiveLock(1, tableName);
-                tx2.exclusiveLock(2, tableName);
-                tx3.exclusiveLock(3, tableName);
-                syncPoint.set(true);
-                tx1.exclusiveLock(2, tableName);
-            } catch (DeadlockException e) {
-                deadlockDetect.set(true);
                 e.printStackTrace();
-                log.info("rollback tx1");
-                tx1.rollback();
             }
-            log.info("thread1 alive");
-            thread2.join();
-            thread3.join();
-            assertTrue("Deadlock should be detected", deadlockDetect.get());
-            if (tx1.getStatus() == TransactionStatus.ACTIVE) {
-                tx1.commit();
-                log.info("tx1 committed");
-            }
-            if (tx2.getStatus() == TransactionStatus.ACTIVE) {
-                tx2.commit();
-                log.info("tx2 committed");
-            }
-            if (tx3.getStatus() == TransactionStatus.ACTIVE) {
-                tx3.commit();
-                log.info("tx3 committed");
-            }
+        }).start();
+        try {
+            transaction1.exclusiveLock(1, tableName);
+            transaction2.exclusiveLock(2, tableName);
+            transaction1.exclusiveLock(2, tableName);
+        } catch (DeadlockException e) {
+            deadlockDetect.set(true);
+            transaction2.rollback();
+            e.printStackTrace();
         }
+        Thread.sleep(10);
+        Assert.assertTrue("Deadlock should be detected", deadlockDetect.get());
     }
 }
