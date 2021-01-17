@@ -12,7 +12,6 @@ import java.util.Map;
  *
  * @author criki
  */
-@Deprecated
 public class LockTableManager {
     /**
      * 表名与锁表的映射

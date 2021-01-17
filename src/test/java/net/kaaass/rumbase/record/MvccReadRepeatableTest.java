@@ -10,7 +10,6 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionManager;
 import net.kaaass.rumbase.transaction.TransactionManagerImpl;
-import net.kaaass.rumbase.transaction.exception.StatusException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -53,7 +52,7 @@ public class MvccReadRepeatableTest {
     }
 
     @Test
-    public void testReadOther() throws RecordNotFoundException, StatusException {
+    public void testReadOther() throws RecordNotFoundException {
         var storage = RecordManager.fromFile(PATH + "testReadOther");
         var manager = new FakeTxManager(TransactionIsolation.REPEATABLE_READ);
         // 创建事务12
@@ -81,7 +80,7 @@ public class MvccReadRepeatableTest {
     }
 
     @Test
-    public void testDelete() throws RecordNotFoundException, StatusException {
+    public void testDelete() throws RecordNotFoundException {
         var storage = RecordManager.fromFile(PATH + "testDelete");
         var manager = new FakeTxManager(TransactionIsolation.REPEATABLE_READ);
         // 创建事务1、记录a1a2
@@ -107,7 +106,7 @@ public class MvccReadRepeatableTest {
     }
 
     @Test
-    public void testVersionSkip() throws RecordNotFoundException, NeedRollbackException, StatusException {
+    public void testVersionSkip() throws RecordNotFoundException, NeedRollbackException {
         var storage = RecordManager.fromFile(PATH + "testDelete");
         var manager = new FakeTxManager(TransactionIsolation.REPEATABLE_READ);
         // 创建公共版本
@@ -129,7 +128,7 @@ public class MvccReadRepeatableTest {
     }
 
     @Test
-    public void testReadSelfReal() throws RecordNotFoundException, IOException, FileException, StatusException {
+    public void testReadSelfReal() throws RecordNotFoundException, IOException, FileException {
         var storage = RecordManager.fromFile(PATH + "testReadSelfReal");
         var manager = new TransactionManagerImpl();
         // 创建事务1
@@ -153,7 +152,7 @@ public class MvccReadRepeatableTest {
     }
 
     @Test
-    public void testReadOtherReal() throws RecordNotFoundException, IOException, FileException, StatusException {
+    public void testReadOtherReal() throws RecordNotFoundException, IOException, FileException {
         var storage = RecordManager.fromFile(PATH + "testReadOtherReal");
         var manager = new TransactionManagerImpl();
         // 创建事务12
@@ -186,7 +185,7 @@ public class MvccReadRepeatableTest {
     }
 
     @Test
-    public void testDeleteReal() throws RecordNotFoundException, IOException, FileException, StatusException {
+    public void testDeleteReal() throws RecordNotFoundException, IOException, FileException {
         var storage = RecordManager.fromFile(PATH + "testDeleteReal");
         var manager = new TransactionManagerImpl();
         // 创建事务1、记录a1a2
@@ -217,7 +216,7 @@ public class MvccReadRepeatableTest {
     }
 
     @Test
-    public void testVersionSkipReal() throws RecordNotFoundException, NeedRollbackException, IOException, FileException, StatusException {
+    public void testVersionSkipReal() throws RecordNotFoundException, NeedRollbackException, IOException, FileException {
         var storage = RecordManager.fromFile(PATH + "testDeleteReal");
         var manager = new TransactionManagerImpl();
         // 创建公共版本

@@ -131,11 +131,4 @@ public class TxList {
         // 加入等待队列
         locks.add(item);
     }
-
-    @Override
-    public String toString() {
-        return "TxList{" +
-                "locks=" + locks +
-                '}';
-    }
 }
