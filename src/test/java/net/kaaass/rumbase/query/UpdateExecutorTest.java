@@ -1,6 +1,5 @@
 package net.kaaass.rumbase.query;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
@@ -53,7 +52,7 @@ public class UpdateExecutorTest {
         fields.add(new VarcharField("Address", 20, false, dummy));
         Table table = null;
         try {
-            manager.createTable(context, "testUpdateWithCondition$Person", fields, FileUtil.PATH + "testUpdateWithCondition.Person.db");
+            manager.createTable(context, "testUpdateWithCondition$Person", fields, FileUtil.TABLE_PATH + "testUpdateWithCondition.Person.db");
             lastName.createIndex();
             table = manager.getTable("testUpdateWithCondition$Person");
         } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
@@ -147,7 +146,7 @@ public class UpdateExecutorTest {
         fields.add(new VarcharField("Address", 20, false, null));
         Table table = null;
         try {
-            manager.createTable(context, "testUpdateWithoutCondition$Person", fields, "testUpdateWithoutCondition.Person.db");
+            manager.createTable(context, "testUpdateWithoutCondition$Person", fields, FileUtil.TABLE_PATH + "testUpdateWithoutCondition.Person.db");
             lastName.createIndex();
             table = manager.getTable("testUpdateWithoutCondition$Person");
         } catch (TableExistenceException | IndexAlreadyExistException e) {

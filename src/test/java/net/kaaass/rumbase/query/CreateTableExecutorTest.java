@@ -2,6 +2,7 @@ package net.kaaass.rumbase.query;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
@@ -15,12 +16,24 @@ import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.FieldType;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 
 @Slf4j
-public class CreateTableExecutorTest extends TestCase {
+public class CreateTableExecutorTest {
 
+    @BeforeClass
+    @AfterClass
+    public static void clearDataFolder() {
+        log.info("清除数据文件夹...");
+        FileUtil.removeDir(new File(FileUtil.DATA_PATH));
+    }
+
+    @Test
     public void testCreate() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "CREATE TABLE testCreate$Persons\n" +
                 "(\n" +
@@ -30,7 +43,7 @@ public class CreateTableExecutorTest extends TestCase {
                 ")";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
-        assertTrue(stmt instanceof CreateTableStatement);
+        Assert.assertTrue(stmt instanceof CreateTableStatement);
         // 执行
         var manager = new TableManager();
         var context = TransactionContext.empty();
@@ -39,7 +52,7 @@ public class CreateTableExecutorTest extends TestCase {
             exe.execute();
         } catch (TableExistenceException | TableConflictException | ArgumentException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
         // 确认结果
         Table table = null;
@@ -47,30 +60,26 @@ public class CreateTableExecutorTest extends TestCase {
             table = manager.getTable("testCreate$Persons");
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
-        assertNotNull(table);
+        Assert.assertNotNull(table);
         var fields = table.getFields();
-        assertEquals(3, fields.size());
+        Assert.assertEquals(3, fields.size());
 
-        assertEquals("Id_P", fields.get(0).getName());
-        assertEquals(FieldType.INT, fields.get(0).getType());
-        assertFalse(fields.get(0).isNullable());
-
-
-        assertEquals("LastName", fields.get(1).getName());
-        assertEquals(FieldType.VARCHAR, fields.get(1).getType());
-        assertEquals(255, ((VarcharField)fields.get(1)).getLimit());
-        assertTrue(fields.get(1).isNullable());
+        Assert.assertEquals("Id_P", fields.get(0).getName());
+        Assert.assertEquals(FieldType.INT, fields.get(0).getType());
+        Assert.assertFalse(fields.get(0).isNullable());
 
 
-        assertEquals("FirstName", fields.get(2).getName());
-        assertEquals(FieldType.VARCHAR, fields.get(2).getType());
-        assertEquals(255, ((VarcharField)fields.get(1)).getLimit());
-        assertFalse(fields.get(2).isNullable());
+        Assert.assertEquals("LastName", fields.get(1).getName());
+        Assert.assertEquals(FieldType.VARCHAR, fields.get(1).getType());
+        Assert.assertEquals(255, ((VarcharField) fields.get(1)).getLimit());
+        Assert.assertTrue(fields.get(1).isNullable());
 
-        new File("data/metadata.db").deleteOnExit();
-        new File("data/metadata$key").deleteOnExit();
 
+        Assert.assertEquals("FirstName", fields.get(2).getName());
+        Assert.assertEquals(FieldType.VARCHAR, fields.get(2).getType());
+        Assert.assertEquals(255, ((VarcharField) fields.get(1)).getLimit());
+        Assert.assertFalse(fields.get(2).isNullable());
     }
 }

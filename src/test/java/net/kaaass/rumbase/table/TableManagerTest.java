@@ -53,7 +53,7 @@ public class TableManagerTest {
         fieldList.add(varcharField);
 
         try {
-            tbm.createTable(TransactionContext.empty(), prefix + "Table", fieldList, FileUtil.PATH + prefix + ".db");
+            tbm.createTable(TransactionContext.empty(), prefix + "Table", fieldList, FileUtil.TABLE_PATH + prefix + ".db");
         } catch (TableExistenceException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             e.printStackTrace();
             Assert.fail();
@@ -81,7 +81,7 @@ public class TableManagerTest {
         fieldList.add(varcharField);
 
         try {
-            tbm.createTable(TransactionContext.empty(), prefix + "Table", fieldList, FileUtil.PATH + prefix + ".db");
+            tbm.createTable(TransactionContext.empty(), prefix + "Table", fieldList, FileUtil.TABLE_PATH + prefix + ".db");
         } catch (TableExistenceException e) {
             e.printStackTrace();
             Assert.fail();
@@ -105,7 +105,7 @@ public class TableManagerTest {
         fieldList.add(varcharField);
 
         try {
-            tbm.createTable(TransactionContext.empty(), prefix + "Table", fieldList, FileUtil.PATH + prefix + ".db");
+            tbm.createTable(TransactionContext.empty(), prefix + "Table", fieldList, FileUtil.TABLE_PATH + prefix + ".db");
         } catch (TableExistenceException e) {
             e.printStackTrace();
             Assert.fail();
