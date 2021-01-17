@@ -94,4 +94,11 @@ public class Graph {
         visited.put(u, 1);
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "Graph{" +
+                "waitGraph=" + waitGraph +
+                '}';
+    }
 }
