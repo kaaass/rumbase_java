@@ -188,7 +188,7 @@ public class TransactionContextTest {
     @Test
     public void testDeadlock() throws IOException, FileException, InterruptedException, StatusException {
         var manager = new TransactionManagerImpl("test_gen_files/test_deadlock.log");
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 5; i++) {
             log.info("============= Test times {} =============", i);
             var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
             var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -202,7 +202,7 @@ public class TransactionContextTest {
             Thread thread = new Thread(() -> {
                 try {
                     while (!syncPoint.get()) {
-                        Thread.sleep(3);
+                        Thread.sleep(10);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
