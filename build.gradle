@@ -2,10 +2,6 @@ plugins {
     id 'java'
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
-
 group 'net.kaaass'
 version '1.0-SNAPSHOT'
 
@@ -14,33 +10,5 @@ repositories {
 }
 
 dependencies {
-    // java-binary-block-parser
-    compile 'com.igormaznitsa:jbbp:2.0.2'
-    // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.16'
-    annotationProcessor 'org.projectlombok:lombok:1.18.16'
-    testCompileOnly 'org.projectlombok:lombok:1.18.16'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
-    // Slf4j
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
-    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
-    // JSQLParser
-    compile 'com.github.jsqlparser:jsqlparser:4.0'
-    // JUnit
     testCompile group: 'junit', name: 'junit', version: '4.12'
-}
-
-// Agree --scan ToS
-if (hasProperty('buildScan')) {
-    buildScan {
-        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-        termsOfServiceAgree = 'yes'
-    }
-}
-
-test {
-    testLogging {
-        events "passed", "skipped", "failed"
-        exceptionFormat "full"
-    }
 }

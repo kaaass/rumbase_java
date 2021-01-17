@@ -1,7 +1,0 @@
-language: java
-jdk: oraclejdk11
-dist: trusty
-group: edge
-
-script:
-  - ./gradlew build --scan -s
