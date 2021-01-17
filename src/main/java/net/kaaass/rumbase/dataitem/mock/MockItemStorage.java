@@ -178,6 +178,10 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
+    public void flush() {
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

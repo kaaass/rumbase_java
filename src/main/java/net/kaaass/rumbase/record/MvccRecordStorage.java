@@ -11,6 +11,7 @@ import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.record.exception.NeedRollbackException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.record.exception.StorageCorruptedException;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionStatus;
@@ -49,13 +50,7 @@ public class MvccRecordStorage implements IRecordStorage {
         writePayload(data, rawData);
         // 不用检查版本跳跃的原因是，插入本身不用；更新操作必定先删除，而删除检查
         // 插入记录
-        try {
-            return storage.insertItem(txContext, data);
-        } catch (IOException | FileException e) {
-            e.printStackTrace();
-            // FIXME
-            return -1;
-        }
+        return storage.insertItem(txContext, data);
     }
 
     @Override
@@ -122,9 +117,6 @@ public class MvccRecordStorage implements IRecordStorage {
             storage.updateItemByUuid(txContext, recordId, data);
         } catch (UUIDException e) {
             throw new RecordNotFoundException(1, e);
-        } catch (IOException | FileException e) {
-            e.printStackTrace();
-            // FIXME
         }
     }
 
@@ -244,12 +236,7 @@ public class MvccRecordStorage implements IRecordStorage {
             var newMetadata = new byte[oldMetadata.length + 8];
             System.arraycopy(oldMetadata, 0, newMetadata, 8, oldMetadata.length);
             MvccUtil.writeLong(newMetadata, 0, newId);
-            try {
-                storage.setMetadata(txContext, newMetadata);
-            } catch (IOException | FileException e) {
-                e.printStackTrace();
-                // FIXME
-            }
+            storage.setMetadata(txContext, newMetadata);
             // 缓存取消
             this.metadataCache = null;
         }

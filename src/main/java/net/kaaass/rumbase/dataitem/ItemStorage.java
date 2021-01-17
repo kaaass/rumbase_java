@@ -368,9 +368,14 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public synchronized long insertItem(TransactionContext txContext, byte[] item) throws LogException,PageCorruptedException {
+    public synchronized long insertItem(TransactionContext txContext, byte[] item) throws PageCorruptedException {
         long uuid = insertItemWithoutLog(item);
-        recoveryStorage.insert(txContext.getXid(),uuid,item);
+        try {
+            recoveryStorage.insert(txContext.getXid(),uuid,item);
+        } catch (LogException e) {
+            log.warn("文件 {} 日志写入出现故障，触发回写", this.fileName, e);
+            flush();
+        }
         return uuid;
     }
     @Override
@@ -497,6 +502,11 @@ public class ItemStorage implements IItemStorage {
         }
     }
 
+    @Override
+    public void flush() {
+        pageStorage.flush();
+    }
+
     /**
      * 检查uuid是否存在,若Uuid的页号超过当前可用页，则直接返回False
      *
@@ -586,9 +596,14 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException, LogException {
+    public void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException {
         var item_before = updateItemWithoutLog(uuid, item);
-        recoveryStorage.update(txContext.getXid(),uuid,item_before,item);
+        try {
+            recoveryStorage.update(txContext.getXid(),uuid,item_before,item);
+        } catch (LogException e) {
+            log.warn("文件 {} 日志写入出现故障，触发回写", this.fileName, e);
+            flush();
+        }
     }
 
     @Override
@@ -650,12 +665,17 @@ public class ItemStorage implements IItemStorage {
     }
 
     @Override
-    public long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException, LogException {
+    public long setMetadata(TransactionContext txContext, byte[] metadata) throws PageCorruptedException {
         var page = getPage(0);
         try{
             var header = parseTableHeader(page);
             var uuid = setMetadataWithoutLog(metadata);
-            recoveryStorage.updateMeta(txContext.getXid(),header.headerUuid,metadata);
+            try {
+                recoveryStorage.updateMeta(txContext.getXid(),header.headerUuid,metadata);
+            } catch (LogException e) {
+                log.warn("文件 {} 日志写入出现故障，触发回写", this.fileName, e);
+                flush();
+            }
             return uuid;
         }finally {
             releasePage(page);

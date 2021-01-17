@@ -22,31 +22,35 @@ public interface IItemStorage {
 
     /**
      * 获得日志管理器
+     *
      * @return
      */
     IRecoveryStorage getRecoveryStorage();
 
     /**
      * 获取表的tempFreePage
+     *
      * @return
      */
     public int getMaxPageId();
 
     /**
-     *  将uuid对应的页强制写回
+     * 将uuid对应的页强制写回
      */
     public void flush(long uuid) throws FileException;
+
     /**
      * 插入数据项
      *
      * @param txContext 事务上下文
-     * @param item 数据项
+     * @param item      数据项
      * @return 返回数据项的UUID
      */
-    long insertItem(TransactionContext txContext, byte[] item) throws LogException,PageCorruptedException;
+    long insertItem(TransactionContext txContext, byte[] item) throws PageCorruptedException;
 
     /**
      * 不用日志进行插入，用于日志的管理
+     *
      * @param item 数据项
      * @return uuid
      */
@@ -89,9 +93,9 @@ public interface IItemStorage {
      * @param item 数据项
      * @throws UUIDException 没有找到对应UUID的异常
      */
-    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, LogException,PageCorruptedException;
+    void updateItemByUuid(TransactionContext txContext, long uuid, byte[] item) throws UUIDException, PageCorruptedException;
 
-    byte[] updateItemWithoutLog(long uuid,byte[] item) throws UUIDException;
+    byte[] updateItemWithoutLog(long uuid, byte[] item) throws UUIDException;
 
     /**
      * 获得数据项存储的元数据（可以用于头）
@@ -105,10 +109,11 @@ public interface IItemStorage {
      *
      * @param metadata 头信息
      */
-    long setMetadata(TransactionContext txContext, byte[] metadata) throws LogException;
+    long setMetadata(TransactionContext txContext, byte[] metadata);
 
     /**
-     *  不使用日志设置元数据
+     * 不使用日志设置元数据
+     *
      * @param metadata 头信息
      */
     long setMetadataWithoutLog(byte[] metadata);
@@ -122,9 +127,15 @@ public interface IItemStorage {
 
     /**
      * 日志恢复时用，回退对应的insert操作，做法是删除对应的uuid
+     *
      * @param uuid
      */
     void deleteUuid(long uuid) throws PageException, IOException;
+
+    /**
+     * 建议存储进行一次回写
+     */
+    void flush();
 }
 
 

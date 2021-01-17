@@ -1,21 +1,22 @@
 package net.kaaass.rumbase.page;
 
+import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.page.exception.BufferException;
 import net.kaaass.rumbase.page.exception.FileException;
 
 import java.io.*;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author 11158
  */
+@Slf4j
 public class RumPageStorage implements PageStorage {
-    public RumPageStorage(String filepath) throws FileException {
+    public RumPageStorage(String filepath) {
         this.filepath = filepath;
-        pageMap = new HashMap<>();
+        pageMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -40,7 +41,7 @@ public class RumPageStorage implements PageStorage {
                 while (in.available() < (pageId + 1 + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE) {
                     FileWriter fw = new FileWriter(file, true);
                     char[] blank = new char[PageManager.PAGE_SIZE * (in.available() / PageManager.PAGE_SIZE)];
-                    Arrays.fill(blank, (char)0);
+                    Arrays.fill(blank, (char) 0);
                     fw.write(blank);
                     fw.close();
                 }
@@ -59,7 +60,8 @@ public class RumPageStorage implements PageStorage {
             }
             int offset = -1;
             while (offset < 0) {
-                synchronized (RumBuffer.getInstance()) {//并非区间锁，而是将整个内存全部锁住
+                //并非区间锁，而是将整个内存全部锁住
+                synchronized (RumBuffer.getInstance()) {
                     try {
                         offset = RumBuffer.getInstance().getFreeOffset();
                         RumBuffer.getInstance().put(offset, data);
@@ -86,12 +88,15 @@ public class RumPageStorage implements PageStorage {
 
     @Override
     public void flush() {
-        Set<Map.Entry<Long, Page>> entrySet = this.pageMap.entrySet();
-        for (Map.Entry<Long, Page> entry : entrySet) {
+        var entrySet = this.pageMap.entrySet();
+        for (var entry : entrySet) {
+            var page = entry.getValue();
             try {
-                entry.getValue().flush();
+                if (page instanceof RumPage && ((RumPage) page).dirty()) {
+                    page.flush();
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("回写页面 {} 发生异常", entry.getKey());
             }
         }
     }

@@ -69,9 +69,6 @@ public class MockRecoveryStorage implements IRecoveryStorage {
     }
 
     @Override
-    public void recovery() throws IOException {
-
+    public void recovery() {
     }
-
-
 }
