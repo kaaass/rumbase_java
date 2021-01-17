@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 
 import java.util.List;
 
@@ -30,4 +31,9 @@ public class InsertStatement implements ISqlStatement {
      * 插入的数据，以字符串表示
      */
     private List<String> values;
+
+    @Override
+    public <T> T accept(ISqlStatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

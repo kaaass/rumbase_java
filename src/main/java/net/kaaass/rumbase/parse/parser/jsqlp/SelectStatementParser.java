@@ -1,9 +1,11 @@
-package net.kaaass.rumbase.parse.parser;
+package net.kaaass.rumbase.parse.parser.jsqlp;
 
 import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ConditionExpression;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
+import net.kaaass.rumbase.parse.parser.JsqlpStatementParser;
 import net.kaaass.rumbase.parse.stmt.SelectStatement;
 import net.sf.jsqlparser.expression.ExpressionVisitorAdapter;
 import net.sf.jsqlparser.schema.Column;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SelectStatementParser implements JsqlpStatementParser {
     @Override
-    public ISqlStatement parse(Statement input) {
+    public ISqlStatement parse(Statement input) throws SqlSyntaxException {
         final PlainSelect[] selectStmtArr = {null};
         ((Select) input).getSelectBody().accept(new SelectVisitorAdapter() {
             @Override
@@ -35,6 +37,9 @@ public class SelectStatementParser implements JsqlpStatementParser {
         // 解析distinct
         var distinct = stmt.getDistinct() != null;
         // 解析表名
+        if (stmt.getFromItem() == null) {
+            throw new SqlSyntaxException(1, "选择的目标表不能为空");
+        }
         var tableName = getTableFromItem(stmt.getFromItem());
         // 解析列
         List<ColumnIdentifier> columns = new ArrayList<>();
@@ -58,28 +63,28 @@ public class SelectStatementParser implements JsqlpStatementParser {
             }
         }));
         // 解析join
-        var joins = stmt.getJoins().stream()
-                .map(join -> {
-                    ConditionExpression joinOn = null;
-                    if (join.getOnExpression() != null) {
-                        joinOn = new ConditionExpression(join.getOnExpression(), tableName);
-                    }
-                    var table = getTableFromItem(join.getRightItem());
-                    var result = new SelectStatement.JoinTable(table, joinOn);
-                    result.setOuter(join.isOuter());
-                    result.setRight(join.isRight());
-                    result.setLeft(join.isLeft());
-                    result.setNatural(join.isNatural());
-                    result.setFull(join.isFull());
-                    result.setInner(join.isInner());
-                    result.setSimple(join.isSimple());
-                    return result;
-                })
-                .collect(Collectors.toList());
+        List<SelectStatement.JoinTable> joins = null;
+        if (stmt.getJoins() != null) {
+            joins = stmt.getJoins().stream()
+                    .map(join -> {
+                        ConditionExpression joinOn = joinOn = new ConditionExpression(join.getOnExpression(), tableName);
+                        var table = getTableFromItem(join.getRightItem());
+                        var result = new SelectStatement.JoinTable(table, joinOn);
+                        result.setOuter(join.isOuter());
+                        result.setRight(join.isRight());
+                        result.setLeft(join.isLeft());
+                        result.setNatural(join.isNatural());
+                        result.setFull(join.isFull());
+                        result.setInner(join.isInner());
+                        result.setSimple(join.isSimple());
+                        return result;
+                    })
+                    .collect(Collectors.toList());
+        }
         // 解析where
         ConditionExpression where = null;
         if (stmt.getWhere() != null) {
-            where = new ConditionExpression(stmt.getWhere(), "");
+            where = new ConditionExpression(stmt.getWhere(), tableName);
         }
         // 解析orderBy
         ColumnIdentifier[] columnIdentifiers = new ColumnIdentifier[1];
@@ -87,15 +92,18 @@ public class SelectStatementParser implements JsqlpStatementParser {
 
             @Override
             public void visit(Column column) {
-                columnIdentifiers[0] = new ColumnIdentifier(column.getTable().getName(), column.getColumnName());
+                columnIdentifiers[0] = ParserUtil.mapColumn(column, tableName);
             }
         };
-        var orderBys = stmt.getOrderByElements().stream()
-                .map(orderByElement -> {
-                    orderByElement.getExpression().accept(orderVisitor);
-                    return new SelectStatement.OrderBy(columnIdentifiers[0], orderByElement.isAsc());
-                })
-                .collect(Collectors.toList());
+        List<SelectStatement.OrderBy> orderBys = null;
+        if (stmt.getOrderByElements() != null) {
+            orderBys = stmt.getOrderByElements().stream()
+                    .map(orderByElement -> {
+                        orderByElement.getExpression().accept(orderVisitor);
+                        return new SelectStatement.OrderBy(columnIdentifiers[0], orderByElement.isAsc());
+                    })
+                    .collect(Collectors.toList());
+        }
         // 拼接结果
         return new SelectStatement(distinct, columns, tableName, joins, where, orderBys);
     }

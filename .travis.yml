@@ -4,5 +4,4 @@ dist: trusty
 group: edge
 
 script:
-  - ./gradlew check
   - ./gradlew build --scan -s

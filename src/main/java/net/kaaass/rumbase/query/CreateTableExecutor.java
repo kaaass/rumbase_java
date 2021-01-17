@@ -4,7 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.parse.stmt.CreateTableStatement;
 import net.kaaass.rumbase.query.exception.ArgumentException;
-import net.kaaass.rumbase.table.Table;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -30,10 +30,9 @@ public class CreateTableExecutor implements Executable {
     private final TransactionContext context;
 
     @Override
-    public void execute() throws TableExistenceException, TableConflictException, ArgumentException {
+    public void execute() throws TableExistenceException, TableConflictException, ArgumentException, RecordNotFoundException {
         var tableName = statement.getTableName();
         var baseFields = new ArrayList<BaseField>();
-        var dummyTable = new Table(tableName, baseFields);
         boolean nullable;
         for (var def : statement.getColumnDefinitions()) {
             nullable = !def.isNotNull();
@@ -43,13 +42,13 @@ public class CreateTableExecutor implements Executable {
             try {
                 switch (fieldType) {
                     case INT:
-                        baseFields.add(new IntField(fieldName, nullable, dummyTable));
+                        baseFields.add(new IntField(fieldName, nullable, null));
                         break;
                     case FLOAT:
-                        baseFields.add(new FloatField(fieldName, nullable, dummyTable));
+                        baseFields.add(new FloatField(fieldName, nullable, null));
                         break;
                     case VARCHAR:
-                        baseFields.add(new VarcharField(fieldName, Integer.parseInt(def.getColumnType().getArguments().get(0)), nullable, dummyTable));
+                        baseFields.add(new VarcharField(fieldName, Integer.parseInt(def.getColumnType().getArguments().get(0)), nullable, null));
                         break;
                     default:
                         throw new TableConflictException(1);
@@ -60,6 +59,6 @@ public class CreateTableExecutor implements Executable {
 
         }
 
-        manager.createTable(context, tableName, baseFields, tableName + ".db");
+        manager.createTable(context, tableName, baseFields, "data/table/" + tableName + ".db");
     }
 }

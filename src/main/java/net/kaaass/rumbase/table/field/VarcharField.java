@@ -33,7 +33,7 @@ public class VarcharField extends BaseField {
 
     private static final String DELIMIT = "'";
 
-    public VarcharField(@NonNull String name, int limit, boolean nullable, @NonNull Table parentTable) {
+    public VarcharField(@NonNull String name, int limit, boolean nullable, Table parentTable) {
         super(name, FieldType.VARCHAR, nullable, parentTable);
         this.limit = limit;
     }
@@ -46,7 +46,7 @@ public class VarcharField extends BaseField {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
             out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
             var flags = new byte[]{0};
-            flags[0] |= indexed() ? 1 : 0;
+            flags[0] |= isNullable() ? 1 : 0;
             if (indexed()) {
                 flags[0] |= 2;
                 out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
@@ -55,7 +55,6 @@ public class VarcharField extends BaseField {
                 out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
             }
             out.writeInt(limit, JBBPByteOrder.BIG_ENDIAN);
-            // todo （字段约束）
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -75,6 +74,11 @@ public class VarcharField extends BaseField {
         // 空值的哈希固定为0
         if (str == null || str.isBlank()) {
             return 0;
+        }
+
+        if (str.startsWith(DELIMIT) && str.endsWith(DELIMIT)) {
+            var substr = str.substring(1, str.length() - 1);
+            return substr.hashCode();
         }
 
         return str.hashCode();
@@ -164,7 +168,6 @@ public class VarcharField extends BaseField {
             }
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
             throw new RuntimeException(e);
         }
     }
@@ -187,7 +190,6 @@ public class VarcharField extends BaseField {
             }
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
             throw new RuntimeException(e);
         } catch (ClassCastException e){
             throw new TableConflictException(1);

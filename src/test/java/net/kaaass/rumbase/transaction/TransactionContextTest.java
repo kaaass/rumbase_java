@@ -1,7 +1,7 @@
 package net.kaaass.rumbase.transaction;
 
-import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
 import org.junit.AfterClass;
@@ -21,33 +21,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class TransactionContextTest {
 
-    public static void removeDir(File dir) {
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    removeDir(file);
-                } else {
-                    file.delete();
-                }
-            }
-        }
-
-        dir.delete();
+    @BeforeClass
+    public static void createDataFolder() {
+        log.info("创建测试文件夹...");
+        FileUtil.createDir(FileUtil.TEST_PATH);
     }
 
-    /**
-     * 创建临时文件生成目录
-     */
-    @BeforeClass
-    public static void createTmpDir() {
-        File dir = new File("test_gen_files");
-        if (!dir.exists()) {
-            dir.mkdir();
-        } else {
-            removeDir(dir);
-            dir.mkdir();
-        }
+    @AfterClass
+    public static void clearDataFolder() {
+        log.info("清除测试文件夹...");
+        FileUtil.removeDir(FileUtil.TEST_PATH);
     }
 
     /**
@@ -75,7 +58,6 @@ public class TransactionContextTest {
      */
     @Test
     public void testChangeStatus() throws IOException, FileException {
-        // TODO 将Mock类改成实现类
         var manager = new TransactionManagerImpl("test_gen_files/test_change.log");
         var committedTransaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         // 事务初始状态
@@ -101,7 +83,6 @@ public class TransactionContextTest {
      */
     @Test
     public void testTransactionPersistence() throws IOException, FileException {
-        // TODO 将Mock类改成实现类
         var manager = new TransactionManagerImpl("test_gen_files/test_persistence.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -156,7 +137,6 @@ public class TransactionContextTest {
      */
     @Test
     public void testAddLock() throws IOException, FileException {
-        // TODO 将Mock类改成实现类
         var manager = new TransactionManagerImpl("test_gen_files/test_add_lock.log");
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
