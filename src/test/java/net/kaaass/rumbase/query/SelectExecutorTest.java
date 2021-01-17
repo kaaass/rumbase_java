@@ -2,6 +2,7 @@ package net.kaaass.rumbase.query;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
@@ -17,16 +18,26 @@ import net.kaaass.rumbase.table.field.FloatField;
 import net.kaaass.rumbase.table.field.IntField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 
 @Slf4j
-public class SelectExecutorTest extends TestCase {
+public class SelectExecutorTest {
 
-    private static final String PATH = "build/";
+    @BeforeClass
+    @AfterClass
+    public static void clearDataFolder() {
+        log.info("清除数据文件夹...");
+        FileUtil.removeDir(new File(FileUtil.DATA_PATH));
+    }
 
-    public void testSelect() throws SqlSyntaxException {
+    @Test
+    public void testSelect() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "SELECT distinct name, testSelect$account.ID, testSelect$account.balance \n" +
                 "from testSelect$account join testSelect$payment on testSelect$account.ID = testSelect$payment.ID\n" +
                 "WHERE testSelect$account.ID > 1 and (testSelect$payment.type = 'N' or testSelect$payment.type = 'T') \n" +
@@ -40,22 +51,20 @@ public class SelectExecutorTest extends TestCase {
 
         // 创建account表
         var accountFields = new ArrayList<BaseField>();
-        var accountDummy = new Table("testSelect.__reserved__", accountFields);
-        var id = new IntField("ID", false, accountDummy);
+        var id = new IntField("ID", false, null);
         accountFields.add(id);
-        accountFields.add(new VarcharField("name", 20, false, accountDummy));
-        accountFields.add(new FloatField("balance", false, accountDummy));
+        accountFields.add(new VarcharField("name", 20, false, null));
+        accountFields.add(new FloatField("balance", false, null));
         Table account = null;
         try {
-            manager.createTable(context, "testSelect$account", accountFields, PATH + "testSelect.account.db");
+            manager.createTable(context, "testSelect$account", accountFields, FileUtil.TABLE_PATH + "testSelect.account.db");
             id.createIndex();
             account = manager.getTable("testSelect$account");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
-
-        assertNotNull(account);
+        Assert.assertNotNull(account);
         try {
             account.insert(context, new ArrayList<>() {{
                 add(0, "1");
@@ -75,52 +84,51 @@ public class SelectExecutorTest extends TestCase {
 
         } catch (TableConflictException | TableExistenceException | ArgumentException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         // 测试插入结果
         try {
             var data = account.readAll(context);
-            assertEquals(3, data.size());
+            Assert.assertEquals(3, data.size());
 
-            assertEquals(3, data.get(0).size());
-            assertEquals(1, (int) data.get(0).get(0));
-            assertEquals("KevinAxel", (String) data.get(0).get(1));
-            assertEquals(5000f, data.get(0).get(2));
+            Assert.assertEquals(3, data.get(0).size());
+            Assert.assertEquals(1, (int) data.get(0).get(0));
+            Assert.assertEquals("KevinAxel", (String) data.get(0).get(1));
+            Assert.assertEquals(5000f, data.get(0).get(2));
 
-            assertEquals(3, data.get(1).size());
-            assertEquals(2, (int) data.get(1).get(0));
-            assertEquals("KAAAsS", (String) data.get(1).get(1));
-            assertEquals(8000f, data.get(1).get(2));
+            Assert.assertEquals(3, data.get(1).size());
+            Assert.assertEquals(2, (int) data.get(1).get(0));
+            Assert.assertEquals("KAAAsS", (String) data.get(1).get(1));
+            Assert.assertEquals(8000f, data.get(1).get(2));
 
-            assertEquals(3, data.get(2).size());
-            assertEquals(3, (int) data.get(2).get(0));
-            assertEquals("kkk", (String) data.get(2).get(1));
-            assertEquals(8000f, data.get(2).get(2));
+            Assert.assertEquals(3, data.get(2).size());
+            Assert.assertEquals(3, (int) data.get(2).get(0));
+            Assert.assertEquals("kkk", (String) data.get(2).get(1));
+            Assert.assertEquals(8000f, data.get(2).get(2));
 
 
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         // 创建payment表
         var paymentFields = new ArrayList<BaseField>();
-        var paymentDummy = new Table("testSelect.__reserved__", paymentFields);
-        var paymentId = new IntField("ID", false, paymentDummy);
+        var paymentId = new IntField("ID", false, null);
         paymentFields.add(paymentId);
-        paymentFields.add(new VarcharField("type", 1, false, paymentDummy));
+        paymentFields.add(new VarcharField("type", 1, false, null));
         Table payment = null;
         try {
-            manager.createTable(context, "testSelect$payment", paymentFields, PATH + "testSelect.payment.db");
+            manager.createTable(context, "testSelect$payment", paymentFields, FileUtil.TABLE_PATH + "testSelect.payment.db");
             paymentId.createIndex();
             payment = manager.getTable("testSelect$payment");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
-        assertNotNull(payment);
+        Assert.assertNotNull(payment);
         try {
             payment.insert(context, new ArrayList<>() {{
                 add(0, "1");
@@ -137,30 +145,30 @@ public class SelectExecutorTest extends TestCase {
 
         } catch (TableConflictException | TableExistenceException | ArgumentException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         // 测试插入结果
         try {
             var data = payment.readAll(context);
-            assertEquals(3, data.size());
+            Assert.assertEquals(3, data.size());
 
-            assertEquals(2, data.get(0).size());
-            assertEquals(1, (int) data.get(0).get(0));
-            assertEquals("N", (String) data.get(0).get(1));
+            Assert.assertEquals(2, data.get(0).size());
+            Assert.assertEquals(1, (int) data.get(0).get(0));
+            Assert.assertEquals("N", (String) data.get(0).get(1));
 
-            assertEquals(2, data.get(1).size());
-            assertEquals(2, (int) data.get(1).get(0));
-            assertEquals("T", (String) data.get(1).get(1));
+            Assert.assertEquals(2, data.get(1).size());
+            Assert.assertEquals(2, (int) data.get(1).get(0));
+            Assert.assertEquals("T", (String) data.get(1).get(1));
 
-            assertEquals(2, data.get(2).size());
-            assertEquals(3, (int) data.get(2).get(0));
-            assertEquals("T", (String) data.get(2).get(1));
+            Assert.assertEquals(2, data.get(2).size());
+            Assert.assertEquals(3, (int) data.get(2).get(0));
+            Assert.assertEquals("T", (String) data.get(2).get(1));
 
 
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         // 执行语句
@@ -169,33 +177,29 @@ public class SelectExecutorTest extends TestCase {
             exe.execute();
         } catch (TableConflictException | ArgumentException | TableExistenceException | IndexAlreadyExistException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
         var cols = exe.getResultTable();
         var data = exe.getResultData();
 
-        assertEquals(3, cols.size());
-        assertEquals("testSelect$account", cols.get(0).getTableName());
-        assertEquals("name", cols.get(0).getFieldName());
-        assertEquals("testSelect$account", cols.get(1).getTableName());
-        assertEquals("ID", cols.get(1).getFieldName());
-        assertEquals("testSelect$account", cols.get(2).getTableName());
-        assertEquals("balance", cols.get(2).getFieldName());
+        Assert.assertEquals(3, cols.size());
+        Assert.assertEquals("testSelect$account", cols.get(0).getTableName());
+        Assert.assertEquals("name", cols.get(0).getFieldName());
+        Assert.assertEquals("testSelect$account", cols.get(1).getTableName());
+        Assert.assertEquals("ID", cols.get(1).getFieldName());
+        Assert.assertEquals("testSelect$account", cols.get(2).getTableName());
+        Assert.assertEquals("balance", cols.get(2).getFieldName());
 
-        assertEquals(2, data.size());
+        Assert.assertEquals(2, data.size());
 
-        assertEquals(3, data.get(0).size());
-        assertEquals(3, data.get(0).get(0));
-        assertEquals("kkk", data.get(0).get(1));
-        assertEquals(8000f, data.get(0).get(2));
+        Assert.assertEquals(3, data.get(0).size());
+        Assert.assertEquals(3, data.get(0).get(0));
+        Assert.assertEquals("kkk", data.get(0).get(1));
+        Assert.assertEquals(8000f, data.get(0).get(2));
 
-        assertEquals(3, data.get(0).size());
-        assertEquals(2, data.get(1).get(0));
-        assertEquals("KAAAsS", data.get(1).get(1));
-        assertEquals(8000f, data.get(1).get(2));
-
-
-        new File("metadata.db").deleteOnExit();
-
+        Assert.assertEquals(3, data.get(0).size());
+        Assert.assertEquals(2, data.get(1).get(0));
+        Assert.assertEquals("KAAAsS", data.get(1).get(1));
+        Assert.assertEquals(8000f, data.get(1).get(2));
     }
 }

@@ -2,10 +2,16 @@ package net.kaaass.rumbase.table;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.index.exception.IndexNotFoundException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,37 +26,40 @@ import static org.junit.Assert.assertArrayEquals;
  * @see BaseField
  */
 @Slf4j
-public class BaseFieldTest extends TestCase {
+public class BaseFieldTest {
 
-    private static final String PATH = "build/";
+    @BeforeClass
+    @AfterClass
+    public static void clearDataFolder() {
+        log.info("清除数据文件夹...");
+        FileUtil.removeDir(FileUtil.DATA_PATH);
+    }
 
+    @Test
     public void testCheckStr() {
 
-        var dummy = new Table(PATH + "testCheckStrTable", new ArrayList<>());
-
         // test int
-        var intField = new IntField("testCheckStrInt", false, dummy);
-        assertTrue(intField.checkStr("1"));
-        assertFalse(intField.checkStr("1.2"));
-        assertFalse(intField.checkStr("1aa"));
+        var intField = new IntField("testCheckStrInt", false, null);
+        Assert.assertTrue(intField.checkStr("1"));
+        Assert.assertFalse(intField.checkStr("1.2"));
+        Assert.assertFalse(intField.checkStr("1aa"));
 
         // test float
-        var floatField = new FloatField("testCheckStrFloat", false, dummy);
-        assertTrue(floatField.checkStr("1"));
-        assertTrue(floatField.checkStr("1.2"));
-        assertFalse(floatField.checkStr("1aa"));
+        var floatField = new FloatField("testCheckStrFloat", false, null);
+        Assert.assertTrue(floatField.checkStr("1"));
+        Assert.assertTrue(floatField.checkStr("1.2"));
+        Assert.assertFalse(floatField.checkStr("1aa"));
 
         // test varchar
-        var varcharField = new VarcharField("testCheckStrVarchar", 20, false, dummy);
-        assertTrue(varcharField.checkStr("'aaaa'"));
-        assertFalse(varcharField.checkStr("'aaaa aaaa aaaa aaaa aaaa'"));
+        var varcharField = new VarcharField("testCheckStrVarchar", 20, false, null);
+        Assert.assertTrue(varcharField.checkStr("'aaaa'"));
+        Assert.assertFalse(varcharField.checkStr("'aaaa aaaa aaaa aaaa aaaa'"));
 
     }
 
+    @Test
     public void testDeserialize() {
 
-        var dummy = new Table(PATH + "testDeserializeTable", new ArrayList<>());
-
         // 测试数据
         var bytes = new byte[]{
                 0,
@@ -65,39 +74,38 @@ public class BaseFieldTest extends TestCase {
         };
         var inputStream = new ByteArrayInputStream(bytes);
 
-        var intField = new IntField("testDeserializeInt", false, dummy);
+        var intField = new IntField("testDeserializeInt", false, null);
         try {
             var intRes = (int) intField.deserialize(inputStream);
-            assertEquals(33, intRes);
+            Assert.assertEquals(33, intRes);
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail("proper format should not fail to parse");
+            Assert.fail("proper format should not fail to parse");
         }
 
-        var floatField = new FloatField("testDeserializeFloat", false, dummy);
+        var floatField = new FloatField("testDeserializeFloat", false, null);
         try {
             var floatRes = (float) floatField.deserialize(inputStream);
-            assertEquals(1.2f, floatRes);
+            Assert.assertTrue(1.2f - floatRes < 0.0001);
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail("proper format should not fail to parse");
+            Assert.fail("proper format should not fail to parse");
         }
 
-        var varcharField = new VarcharField("testDeserializeVarchar", 20, false, dummy);
+        var varcharField = new VarcharField("testDeserializeVarchar", 20, false, null);
         try {
             var varcharRes = (String) varcharField.deserialize(inputStream);
-            assertEquals("test varchar", varcharRes);
+            Assert.assertEquals("test varchar", varcharRes);
         } catch (TableConflictException e) {
-            fail("proper format should not fail to parse");
+            Assert.fail("proper format should not fail to parse");
         }
 
-        assertEquals(0, inputStream.available());
+        Assert.assertEquals(0, inputStream.available());
 
     }
 
+    @Test
     public void testCheckInputStream() {
-
-        var dummy = new Table(PATH + "testCheckInputStreamTable", new ArrayList<>());
 
         // 测试数据
         var bytes = new byte[]{
@@ -113,23 +121,23 @@ public class BaseFieldTest extends TestCase {
         };
         var inputStream = new ByteArrayInputStream(bytes);
 
-        var intField = new IntField("testCheckInputStreamInt", false, dummy);
-        assertTrue(intField.checkInputStream(inputStream));
+        var intField = new IntField("testCheckInputStreamInt", false, null);
+        Assert.assertTrue(intField.checkInputStream(inputStream));
 
-        var floatField = new FloatField("testCheckInputStreamFloat", false, dummy);
-        assertTrue(floatField.checkInputStream(inputStream));
+        var floatField = new FloatField("testCheckInputStreamFloat", false, null);
+        Assert.assertTrue(floatField.checkInputStream(inputStream));
 
-        var varcharField = new VarcharField("testCheckInputStreamVarchar", 20, false, dummy);
-        assertTrue(varcharField.checkInputStream(inputStream));
+        var varcharField = new VarcharField("testCheckInputStreamVarchar", 20, false, null);
+        Assert.assertTrue(varcharField.checkInputStream(inputStream));
 
-        assertEquals(0, inputStream.available());
+        Assert.assertEquals(0, inputStream.available());
     }
 
+    @Test
     public void testSerialize() {
-        var dummy = new Table(PATH + "testSerialize", new ArrayList<>());
 
 
-        var intField = new IntField("testSerializeInt", false, dummy);
+        var intField = new IntField("testSerializeInt", false, null);
         var intBos1 = new ByteArrayOutputStream();
         var intBos2 = new ByteArrayOutputStream();
 
@@ -142,17 +150,17 @@ public class BaseFieldTest extends TestCase {
             assertArrayEquals(expected, intBos1.toByteArray());
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             intField.serialize(intBos2, "'xx'");
-            fail();
+            Assert.fail();
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
         }
 
-        var floatField = new FloatField("testSerializeFloat", false, dummy);
+        var floatField = new FloatField("testSerializeFloat", false, null);
         var floatBos1 = new ByteArrayOutputStream();
         var floatBos2 = new ByteArrayOutputStream();
 
@@ -165,17 +173,17 @@ public class BaseFieldTest extends TestCase {
             assertArrayEquals(expected, floatBos1.toByteArray());
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             floatField.serialize(floatBos2, "'xx'");
-            fail();
+            Assert.fail();
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
         }
 
-        var varcharField = new VarcharField("testSerializeVarchar", 20, false, dummy);
+        var varcharField = new VarcharField("testSerializeVarchar", 20, false, null);
         var varcharBos1 = new ByteArrayOutputStream();
         var varcharBos2 = new ByteArrayOutputStream();
 
@@ -191,45 +199,47 @@ public class BaseFieldTest extends TestCase {
             assertArrayEquals(expected, varcharBos1.toByteArray());
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             varcharField.serialize(varcharBos2, "'test varchar too looooooooooooong'");
-            fail();
+            Assert.fail();
         } catch (TableConflictException e) {
             log.error("Exception expected: ", e);
         }
 
     }
 
+    @Test
     public void testDoubleCreateIndex() {
-        var dummy = new Table(PATH + "testCreateIndexTable", new ArrayList<>());
+        var dummy = new Table("testCreateIndexTable", new ArrayList<>());
 
         BaseField field = new IntField("testCreateIndexField", false, dummy);
         try {
             field.createIndex();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             field.createIndex();
-            fail();
+            Assert.fail();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
         }
     }
 
+    @Test
     public void testInsertIndex() {
-        var dummy = new Table(PATH + "testInsertIndexTable", new ArrayList<>());
+        var dummy = new Table("testInsertIndexTable", new ArrayList<>());
 
         var intField = new IntField("testInsertIndexInt", false, dummy);
 
         try {
             intField.insertIndex("1", 1);
-            fail();
+            Assert.fail();
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
         }
@@ -238,7 +248,7 @@ public class BaseFieldTest extends TestCase {
             intField.createIndex();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
@@ -246,12 +256,12 @@ public class BaseFieldTest extends TestCase {
             intField.insertIndex("1", 1);
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             intField.insertIndex("1xx", 1);
-            fail();
+            Assert.fail();
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
         }
@@ -260,7 +270,7 @@ public class BaseFieldTest extends TestCase {
 
         try {
             floatField.insertIndex("1.2", 1);
-            fail();
+            Assert.fail();
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
         }
@@ -269,7 +279,7 @@ public class BaseFieldTest extends TestCase {
             floatField.createIndex();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
@@ -277,12 +287,12 @@ public class BaseFieldTest extends TestCase {
             floatField.insertIndex("1.2", 1);
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             floatField.insertIndex("1xx", 1);
-            fail();
+            Assert.fail();
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
         }
@@ -292,7 +302,7 @@ public class BaseFieldTest extends TestCase {
 
         try {
             varcharField.insertIndex("xxx", 1);
-            fail();
+            Assert.fail();
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
         }
@@ -301,7 +311,7 @@ public class BaseFieldTest extends TestCase {
             varcharField.createIndex();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
@@ -309,13 +319,15 @@ public class BaseFieldTest extends TestCase {
             varcharField.insertIndex("xxx", 1);
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
     }
 
+    @Test
     public void testQueryIndex() {
-        var dummy = new Table(PATH + "testQueryIndexTable", new ArrayList<>());
+
+        var dummy = new Table("testQueryIndexTable", new ArrayList<>());
 
         var intField = new IntField("testQueryIndexInt", false, dummy);
 
@@ -323,7 +335,7 @@ public class BaseFieldTest extends TestCase {
             intField.createIndex();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
@@ -331,24 +343,24 @@ public class BaseFieldTest extends TestCase {
             intField.insertIndex("1", 1);
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             var uuid = intField.queryIndex("1");
-            assertEquals(1, uuid.get(0).longValue());
-            assertEquals(1, uuid.get(1).longValue());
+            Assert.assertEquals(1, uuid.get(0).longValue());
+            Assert.assertEquals(1, uuid.get(1).longValue());
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             var uuid = intField.queryIndex("2");
-            assertTrue(uuid.isEmpty());
+            Assert.assertTrue(uuid.isEmpty());
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         var floatField = new FloatField("testQueryIndexFloat", false, dummy);
@@ -357,7 +369,7 @@ public class BaseFieldTest extends TestCase {
             floatField.createIndex();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
@@ -365,24 +377,24 @@ public class BaseFieldTest extends TestCase {
             floatField.insertIndex("1.2", 1);
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             var uuid = floatField.queryIndex("1.2");
-            assertEquals(1, uuid.get(0).longValue());
-            assertEquals(1, uuid.get(1).longValue());
+            Assert.assertEquals(1, uuid.get(0).longValue());
+            Assert.assertEquals(1, uuid.get(1).longValue());
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             var uuid = floatField.queryIndex("2.2");
-            assertTrue(uuid.isEmpty());
+            Assert.assertTrue(uuid.isEmpty());
         } catch (TableExistenceException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         var varcharField = new VarcharField("testQueryIndexVarchar", 20, false, dummy);
@@ -391,7 +403,7 @@ public class BaseFieldTest extends TestCase {
             varcharField.createIndex();
         } catch (IndexAlreadyExistException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
@@ -399,28 +411,29 @@ public class BaseFieldTest extends TestCase {
             varcharField.insertIndex("xxx", 1);
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             var uuid = varcharField.queryIndex("xxx");
-            assertEquals(1, uuid.get(0).longValue());
-            assertEquals(1, uuid.get(1).longValue());
+            Assert.assertEquals(1, uuid.get(0).longValue());
+            Assert.assertEquals(1, uuid.get(1).longValue());
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         try {
             var uuid = varcharField.queryIndex("x");
-            assertTrue(uuid.isEmpty());
+            Assert.assertTrue(uuid.isEmpty());
         } catch (TableExistenceException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
     }
 
-    public void testLoad() {
+    @Test
+    public void testLoad() throws IndexNotFoundException {
         var bytes = new byte[]{
                 // testLoadInt
                 11,
@@ -466,33 +479,32 @@ public class BaseFieldTest extends TestCase {
 
         };
         var stream = new ByteArrayInputStream(bytes);
-        var dummy = new Table(PATH + "testLoadTable", new ArrayList<>());
 
-        var intField = BaseField.load(stream, dummy);
-        assertNotNull(intField);
-        assertEquals("testLoadInt", intField.getName());
-        assertEquals(FieldType.INT, intField.getType());
+        var intField = BaseField.load(stream, null);
+        Assert.assertNotNull(intField);
+        Assert.assertEquals("testLoadInt", intField.getName());
+        Assert.assertEquals(FieldType.INT, intField.getType());
 
-        var floatField = BaseField.load(stream, dummy);
-        assertNotNull(floatField);
-        assertEquals("testLoadFloat", floatField.getName());
-        assertEquals(FieldType.FLOAT, floatField.getType());
+        var floatField = BaseField.load(stream, null);
+        Assert.assertNotNull(floatField);
+        Assert.assertEquals("testLoadFloat", floatField.getName());
+        Assert.assertEquals(FieldType.FLOAT, floatField.getType());
 
-        var varcharField = BaseField.load(stream, dummy);
-        assertNotNull(varcharField);
-        assertEquals("testLoadVarchar", varcharField.getName());
-        assertEquals(FieldType.VARCHAR, varcharField.getType());
-        assertEquals(12, ((VarcharField) varcharField).getLimit());
+        var varcharField = BaseField.load(stream, null);
+        Assert.assertNotNull(varcharField);
+        Assert.assertEquals("testLoadVarchar", varcharField.getName());
+        Assert.assertEquals(FieldType.VARCHAR, varcharField.getType());
+        Assert.assertEquals(12, ((VarcharField) varcharField).getLimit());
 
     }
 
+    @Test
     public void testPersist() {
-        var dummy = new Table(PATH + "testLoadTable", new ArrayList<>());
         var out = new ByteArrayOutputStream();
 
-        var intField = new IntField("testPersistInt", false, dummy);
-        var floatField = new FloatField("testPersistFloat", false, dummy);
-        var varcharField = new VarcharField("testPersistVarchar", 12, false, dummy);
+        var intField = new IntField("testPersistInt", false, null);
+        var floatField = new FloatField("testPersistFloat", false, null);
+        var varcharField = new VarcharField("testPersistVarchar", 12, false, null);
 
         intField.persist(out);
         floatField.persist(out);

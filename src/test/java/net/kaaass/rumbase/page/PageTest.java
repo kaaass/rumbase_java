@@ -1,9 +1,13 @@
 package net.kaaass.rumbase.page;
 
 import junit.framework.TestCase;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,8 +22,20 @@ import static org.junit.Assert.assertArrayEquals;
  * @author XuanLaoYee
  * @see net.kaaass.rumbase.page.Page
  */
-public class PageTest extends TestCase {
-    public static String filePath = "build/pageTest.db";
+public class PageTest {
+    public static String filePath = FileUtil.TEST_PATH + "pageTest.db";
+
+    @BeforeClass
+    public static void createDataFolder() {
+        FileUtil.prepare();
+    }
+
+    @AfterClass
+    public static void clearDataFolder() {
+        FileUtil.clear();
+    }
+
+    @Test
     public void testPatchData() {
         int offset = 99;
         byte[] data = new byte[PageManager.PAGE_SIZE - offset];
@@ -41,6 +57,7 @@ public class PageTest extends TestCase {
         }
     }
 
+    @Test
     public void testPatchOffset() throws FileException, PageException {
         var storage = PageManager.fromFile(filePath);
         var rand = new Random();
@@ -62,7 +79,7 @@ public class PageTest extends TestCase {
                 // 检查写入效果
                 var pageData = page.getDataBytes();
                 for (int j = st; j < ed; j++) {
-                    assertEquals((byte) st, pageData[j]);
+                    Assert.assertEquals((byte) st, pageData[j]);
                 }
             }
         } finally {

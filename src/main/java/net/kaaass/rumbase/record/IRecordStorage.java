@@ -66,4 +66,6 @@ public interface IRecordStorage {
      * @param metadata 元信息数据
      */
     void setMetadata(TransactionContext txContext, byte[] metadata);
+
+    String getIdentifiedName();
 }

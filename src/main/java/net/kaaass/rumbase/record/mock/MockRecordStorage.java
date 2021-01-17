@@ -73,6 +73,11 @@ public class MockRecordStorage implements IRecordStorage {
         this.metadata = metadata;
     }
 
+    @Override
+    public String getIdentifiedName() {
+        return this.toString();
+    }
+
     public static MockRecordStorage ofFile(String filepath) {
         var mockId = "file" + filepath;
         if (MOCK_STORAGES.containsKey(mockId)) {

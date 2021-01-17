@@ -2,6 +2,7 @@ package net.kaaass.rumbase.query;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.parse.SqlParser;
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
@@ -16,39 +17,48 @@ import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.field.IntField;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 
 @Slf4j
-public class InsertExecutorTest extends TestCase {
+public class InsertExecutorTest {
 
-    private static final String PATH = "build/";
+    @BeforeClass
+    @AfterClass
+    public static void clearDataFolder() {
+        log.info("清除数据文件夹...");
+        FileUtil.removeDir(new File(FileUtil.DATA_PATH));
+    }
 
-    public void testInsertColumnValue() throws SqlSyntaxException {
+    @Test
+    public void testInsertColumnValue() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "INSERT INTO Persons (Persons.LastName, Address) VALUES ('Wilson', 'Champs-Elysees')";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
-        assertTrue(stmt instanceof InsertStatement);
+        Assert.assertTrue(stmt instanceof InsertStatement);
 
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testInsertColumnValue.__reserved__", fields);
-        var lastName = new VarcharField("LastName", 20, false, dummy);
+        var lastName = new VarcharField("LastName", 20, false, null);
         fields.add(lastName);
-        fields.add(new VarcharField("Address", 255, false, dummy));
+        fields.add(new VarcharField("Address", 255, false, null));
         Table table = null;
         try {
-            manager.createTable(context, "Persons", fields, PATH + "testInsertColumnValue.Persons.db");
+            manager.createTable(context, "Persons", fields, FileUtil.TABLE_PATH + "testInsertColumnValue.Persons.db");
             lastName.createIndex();
             table = manager.getTable("Persons");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
-        assertNotNull(table);
+        Assert.assertNotNull(table);
 
         // 执行
         var exe = new InsertExecutor((InsertStatement) stmt, manager, context);
@@ -56,49 +66,44 @@ public class InsertExecutorTest extends TestCase {
             exe.execute();
         } catch (TableExistenceException | TableConflictException | ArgumentException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
         // 确认结果
         try {
             var data = table.readAll(context);
-            assertEquals(1, data.size());
-            assertEquals("Wilson", data.get(0).get(0));
-            assertEquals("Champs-Elysees", data.get(0).get(1));
+            Assert.assertEquals(1, data.size());
+            Assert.assertEquals("Wilson", data.get(0).get(0));
+            Assert.assertEquals("Champs-Elysees", data.get(0).get(1));
         } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
-
-        new File("metadata.db").deleteOnExit();
-
     }
 
-    public void testInsertValue() throws SqlSyntaxException {
+    @Test
+    public void testInsertValue() throws SqlSyntaxException, IndexAlreadyExistException, TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         var sql = "INSERT INTO stu VALUES (20200101, 'KAAAsS', true, 3.9)";
         // 解析
         var stmt = SqlParser.parseStatement(sql);
-        assertTrue(stmt instanceof InsertStatement);
+        Assert.assertTrue(stmt instanceof InsertStatement);
 
         var manager = new TableManager();
         var context = TransactionContext.empty();
         var fields = new ArrayList<BaseField>();
-        var dummy = new Table("testInsertValue.__reserved__", fields);
-        var id = new IntField("ID", false, dummy);
-        fields.add(new VarcharField("LastName", 20, false, dummy));
+        var id = new IntField("ID", false, null);
+        fields.add(new VarcharField("LastName", 20, false, null));
         fields.add(id);
         Table table = null;
         try {
-            manager.createTable(context, "Person", fields, PATH + "testInsertValue.Person.db");
+            manager.createTable(context, "Person", fields, FileUtil.TABLE_PATH + "testInsertValue.Person.db");
             id.createIndex();
             table = manager.getTable("Person");
-        } catch (TableExistenceException | IndexAlreadyExistException e) {
+        } catch (TableExistenceException | IndexAlreadyExistException | RecordNotFoundException | ArgumentException | TableConflictException e) {
             log.error("Exception expected: ", e);
-            fail();
+            Assert.fail();
         }
 
-        assertNotNull(table);
-        new File("metadata.db").deleteOnExit();
-
+        Assert.assertNotNull(table);
     }
 }

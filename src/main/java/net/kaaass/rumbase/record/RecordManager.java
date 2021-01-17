@@ -3,6 +3,9 @@ package net.kaaass.rumbase.record;
 import lombok.SneakyThrows;
 import net.kaaass.rumbase.dataitem.ItemManager;
 
+import java.io.File;
+import java.nio.file.Paths;
+
 /**
  * 记录管理类
  *
@@ -22,5 +25,10 @@ public class RecordManager {
         var itemStorage = ItemManager.fromFile(filepath);
         var identifier = "TBL_" + filepath;
         return new MvccRecordStorage(itemStorage, identifier);
+    }
+
+    @SneakyThrows
+    public static IRecordStorage fromFile(String directory, String filename) {
+        return fromFile(Paths.get(directory, filename).toString());
     }
 }

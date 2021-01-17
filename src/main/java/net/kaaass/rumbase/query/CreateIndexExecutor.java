@@ -7,6 +7,7 @@ import net.kaaass.rumbase.parse.stmt.CreateIndexStatement;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.BaseField;
+import net.kaaass.rumbase.transaction.TransactionContext;
 
 /**
  *
@@ -21,6 +22,9 @@ public class CreateIndexExecutor implements Executable{
 
     @NonNull
     private final TableManager manager;
+
+    @NonNull
+    private final TransactionContext context;
 
     @Override
     public void execute() throws TableExistenceException, IndexAlreadyExistException {
@@ -45,6 +49,7 @@ public class CreateIndexExecutor implements Executable{
 
         if (field != null) {
             field.createIndex();
+            table.persist(context);
         } else {
             throw new TableExistenceException(2);
         }

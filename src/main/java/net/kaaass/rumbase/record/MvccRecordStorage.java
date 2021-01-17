@@ -1,5 +1,6 @@
 package net.kaaass.rumbase.record;
 
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -31,6 +32,7 @@ public class MvccRecordStorage implements IRecordStorage {
     private final IItemStorage storage;
 
     @NonNull
+    @Getter
     private final String identifiedName;
 
     /**

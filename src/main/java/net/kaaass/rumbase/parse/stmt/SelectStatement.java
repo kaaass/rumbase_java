@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import net.kaaass.rumbase.parse.ColumnIdentifier;
 import net.kaaass.rumbase.parse.ConditionExpression;
 import net.kaaass.rumbase.parse.ISqlStatement;
+import net.kaaass.rumbase.parse.ISqlStatementVisitor;
 
 import java.util.List;
 
@@ -49,6 +50,11 @@ public class SelectStatement implements ISqlStatement {
      * 选择后结果排序的规则，为null代表不排序
      */
     private List<OrderBy> orderBys;
+
+    @Override
+    public <T> T accept(ISqlStatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 
     /**
      * SQL语法树：Join表

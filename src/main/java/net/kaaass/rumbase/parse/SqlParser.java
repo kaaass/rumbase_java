@@ -1,7 +1,11 @@
 package net.kaaass.rumbase.parse;
 
 import net.kaaass.rumbase.parse.exception.SqlSyntaxException;
-import net.kaaass.rumbase.parse.parser.*;
+import net.kaaass.rumbase.parse.parser.CommandStatementParser;
+import net.kaaass.rumbase.parse.parser.JsqlpStatementParser;
+import net.kaaass.rumbase.parse.parser.command.ExecStatementParser;
+import net.kaaass.rumbase.parse.parser.jsqlp.*;
+import net.kaaass.rumbase.parse.stmt.*;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -16,7 +20,17 @@ import java.util.List;
  */
 public class SqlParser {
 
-    private static List<JsqlpStatementParser> jsqlpStatementParsers = new ArrayList<>() {{
+    private static final List<StatementParser<String>> STRING_STATEMENT_PARSERS = new ArrayList<>() {{
+        add(new CommandStatementParser(StartTransactionStatement.class, "start transaction"));
+        add(new CommandStatementParser(CommitStatement.class, "commit"));
+        add(new CommandStatementParser(RollbackStatement.class, "rollback"));
+        add(new CommandStatementParser(ExitStatement.class, "exit"));
+        add(new CommandStatementParser(ShutdownStatement.class, "shutdown"));
+        add(new CommandStatementParser(FlushStatement.class, "flush"));
+        add(new ExecStatementParser());
+    }};
+
+    private static final List<JsqlpStatementParser> JSQLP_STATEMENT_PARSERS = new ArrayList<>() {{
         add(new SelectStatementParser());
         add(new InsertStatementParser());
         add(new UpdateStatementParser());
@@ -29,7 +43,12 @@ public class SqlParser {
      * 将语句解析为SQL语法树
      */
     public static ISqlStatement parseStatement(String sql) throws SqlSyntaxException {
-        // TODO
+        // 尝试字符串解析器解析
+        for (var parser : STRING_STATEMENT_PARSERS) {
+            if (parser.checkStatement(sql)) {
+                return parser.parse(sql);
+            }
+        }
         // 尝试 JSqlParser 解析
         Statement stmt;
         try {
@@ -37,7 +56,7 @@ public class SqlParser {
         } catch (JSQLParserException e) {
             throw new SqlSyntaxException(1, e);
         }
-        for (var parser : jsqlpStatementParsers) {
+        for (var parser : JSQLP_STATEMENT_PARSERS) {
             if (parser.checkStatement(stmt)) {
                 return parser.parse(stmt);
             }

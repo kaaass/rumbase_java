@@ -71,7 +71,7 @@ public class SelectExecutor implements Executable{
 
         // 投影
         var selectCols = statement.getSelectColumns();
-        if (selectCols != null) {
+        if (selectCols != null && !selectCols.isEmpty()) {
             var projectExe = new ProjectExecutor(resultTable, selectCols, resultData);
             projectExe.execute();
             resultData = projectExe.getProjectedResult();

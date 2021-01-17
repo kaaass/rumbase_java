@@ -1,18 +1,18 @@
 package net.kaaass.rumbase.table;
 
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
-import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import lombok.Getter;
+import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
+import net.kaaass.rumbase.record.exception.RecordNotFoundException;
+import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
+import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -28,7 +28,14 @@ import java.util.*;
 
 public class TableManager {
 
-    private final IRecordStorage metaRecord = RecordManager.fromFile("metadata.db");
+    static {
+        var dataDir = new File("data/");
+        if (!dataDir.exists() && !dataDir.isDirectory()) {
+            dataDir.mkdirs();
+        }
+    }
+
+    private final IRecordStorage metaRecord = RecordManager.fromFile("data/metadata.db");
 
     /**
      * 对所有的表结构的缓存
@@ -61,39 +68,62 @@ public class TableManager {
         context.rollback();
     }
 
-    public TableManager() {
+    public TableManager() throws TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException, IndexAlreadyExistException {
         load();
     }
 
-    public void load() {
+    public void load() throws TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException, IndexAlreadyExistException {
         var context = TransactionContext.empty();
-        var meta = metaRecord.getMetadata(context);
-
-        var byteInStream = new ByteArrayInputStream(meta);
-        var stream = new JBBPBitInputStream(byteInStream);
-
-        int num;
+        Table metaTable;
         try {
-            num = stream.readInt(JBBPByteOrder.BIG_ENDIAN);
-        } catch (IOException e) {
-            return;
+            metaTable = Table.load(metaRecord);
+            tableCache.put("metadata", metaTable);
+        } catch (RuntimeException e) {
+            // 新建表
+            var fields = new ArrayList<BaseField>();
+            var keyField = new VarcharField("key", 255, false, null);
+            var valueField = new VarcharField("value", 255, false, null);
+            fields.add(keyField);
+            fields.add(valueField);
+
+            var dataDir = new File("data/");
+            if (!dataDir.exists() && !dataDir.isDirectory()) {
+                dataDir.mkdirs();
+            }
+
+            metaTable = new Table("metadata", fields, "data/metadata.db");
+
+            for (var f: fields) {
+                f.setParentTable(metaTable);
+            }
+
+            keyField.createIndex("data/");
+
+            metaTable.persist(context);
+            tableCache.put("metadata", metaTable);
         }
-        for (int i = 0; i < num; i++) {
-            try {
-                var key = stream.readString(JBBPByteOrder.BIG_ENDIAN);
-                var val = stream.readString(JBBPByteOrder.BIG_ENDIAN);
-                // 加载表
-                if (key.startsWith("tablePath$")) {
-                    var tableName = key.split("\\$")[1];
-                    var record = RecordManager.fromFile(val);
-                    recordPaths.add(val);
-                    var table = Table.load(record);
-                    tableCache.put(tableName, table);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+        var data = metaTable.readAll(context);
+        var map = new HashMap<String, String>();
+        data.forEach(row -> map.put((String) row.get(0), (String) row.get(1)));
+
+        if (!map.containsKey("table_num")) {
+            metaTable.insert(context, new ArrayList<>(){{
+                add("'table_num'");
+                add("'0'");
+            }});
+            map.put("table_num", "0");
+        }
+
+        for (var item: map.entrySet()) {
+            if (item.getKey().startsWith("tablePath$")) {
+                var tableName = item.getKey().split("\\$")[1];
+                var record = RecordManager.fromFile(item.getValue());
+                recordPaths.add(item.getValue());
+                var table = Table.load(record);
+                tableCache.put(tableName, table);
             }
         }
+
 
     }
 
@@ -123,9 +153,14 @@ public class TableManager {
             String tableName,
             List<BaseField> baseFields,
             String path
-    ) throws TableExistenceException {
+    ) throws TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException {
         if (tableCache.containsKey(tableName)) {
             throw new TableExistenceException(1);
+        }
+
+        var tableDir = new File("data/table/");
+        if (!tableDir.exists() && !tableDir.isDirectory()) {
+            tableDir.mkdirs();
         }
 
         var table = new Table(tableName, baseFields, path);
@@ -136,29 +171,36 @@ public class TableManager {
 
         table.persist(context);
 
-        var meta = metaRecord.getMetadata(TransactionContext.empty());
+        var metaTable = tableCache.get("metadata");
 
-        var in = new ByteArrayInputStream(meta);
-        var inStream = new JBBPBitInputStream(in);
+        var uuids = metaTable.search("key", "table_num");
 
-        int cnt;
-        try {
-            cnt = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
-
-        } catch (IOException e) {
-            cnt = 0;
+        int cnt = -1;
+        long cntUuid = -1;
+        for (var uuid: uuids) {
+            var res = metaTable.read(TransactionContext.empty(), uuid);
+            if (res.isPresent()) {
+                cnt = Integer.parseInt((String) res.get().get(1));
+                cntUuid = uuid;
+                break;
+            }
         }
 
-        var byteOutStream = new ByteArrayOutputStream();
-        var stream = new JBBPBitOutputStream(byteOutStream);
-        try {
-            stream.writeInt(cnt + 1, JBBPByteOrder.BIG_ENDIAN);
-            stream.write(in.readAllBytes());
-            stream.writeString("tablePath$" + tableName, JBBPByteOrder.BIG_ENDIAN);
-            stream.writeString(path, JBBPByteOrder.BIG_ENDIAN);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (cnt == -1 || cntUuid == -1 ) {
+            throw new RuntimeException();
         }
+
+        cnt = cnt + 1;
+        var newCntEntry = new ArrayList<String>();
+        newCntEntry.add("'table_num'");
+        newCntEntry.add("'" + Integer.toString(cnt) + "'");
+        metaTable.update(TransactionContext.empty(), cntUuid, newCntEntry);
+
+        var newTableData = new ArrayList<String>();
+        newTableData.add("'tablePath$" + tableName + "'");
+        newTableData.add("'" + path + "'");
+
+        metaTable.insert(TransactionContext.empty(), newTableData);
 
         tableCache.put(tableName, table);
     }

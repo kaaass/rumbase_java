@@ -1,8 +1,13 @@
 package net.kaaass.rumbase.page;
 
 import junit.framework.TestCase;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,9 +22,20 @@ import static org.junit.Assert.assertArrayEquals;
  * @author XuanLaoYee
  * @see net.kaaass.rumbase.page.PageStorage
  */
-public class PageStorageTest extends TestCase {
-    public static String filePath = "build/pageTest.db";
+public class PageStorageTest {
+    public static String filePath = FileUtil.TEST_PATH + "pageTest.db";
 
+    @BeforeClass
+    public static void createDataFolder() {
+        FileUtil.prepare();
+    }
+
+    @AfterClass
+    public static void clearDataFolder() {
+        FileUtil.clear();
+    }
+
+    @Test
     public void testGet() throws IOException {
         PageStorage rps = null;
         try {
@@ -49,7 +65,7 @@ public class PageStorageTest extends TestCase {
             in.skip((11 + PageManager.FILE_HEAD_SIZE) * PageManager.PAGE_SIZE);
             int readNumber = in.read(dataFromFile);
             p11.getData().read(dataFromPage);
-            assertEquals(readNumber, PageManager.PAGE_SIZE);
+            Assert.assertEquals(readNumber, PageManager.PAGE_SIZE);
             assertArrayEquals(dataFromPage, dataFromFile);
         } catch (Exception e) {
             throw e;
@@ -59,6 +75,7 @@ public class PageStorageTest extends TestCase {
         }
     }
 
+    @Test
     public void testWriteToFile() throws FileException, PageException {
         PageStorage storage = PageManager.fromFile(filePath);
         int[] testPage = new int[]{1, 3, 5, 7, 10, 11};
@@ -85,6 +102,7 @@ public class PageStorageTest extends TestCase {
         }
     }
 
+    @Test
     public void testFlush() throws PageException {
         PageStorage rps = null;
         try {
@@ -152,6 +170,7 @@ public class PageStorageTest extends TestCase {
         assertArrayEquals(data4, dataFromFile4);
     }
 
+    @Test
     public void testFlushAll() throws FileException, PageException {
         PageStorage storage = PageManager.fromFile(filePath);
         int[] testPage = new int[]{1, 3, 5, 7, 10, 11};

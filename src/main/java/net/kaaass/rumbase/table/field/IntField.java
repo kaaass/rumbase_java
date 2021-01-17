@@ -23,7 +23,7 @@ import java.util.Locale;
  */
 public class IntField extends BaseField {
 
-    public IntField(@NonNull String name, boolean nullable, @NonNull Table parentTable) {
+    public IntField(@NonNull String name, boolean nullable, Table parentTable) {
         super(name, FieldType.INT, nullable, parentTable);
     }
 
@@ -35,7 +35,7 @@ public class IntField extends BaseField {
             out.writeString(getName(), JBBPByteOrder.BIG_ENDIAN);
             out.writeString(getType().toString().toUpperCase(Locale.ROOT), JBBPByteOrder.BIG_ENDIAN);
             var flags = new byte[]{0};
-            flags[0] |= indexed() ? 1 : 0;
+            flags[0] |= isNullable() ? 1 : 0;
             if (indexed()) {
                 flags[0] |= 2;
                 out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
@@ -43,7 +43,6 @@ public class IntField extends BaseField {
             } else {
                 out.writeBytes(flags, 1, JBBPByteOrder.BIG_ENDIAN);
             }
-            // todo （字段约束）
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -183,8 +182,7 @@ public class IntField extends BaseField {
 
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         } catch (NumberFormatException e) {
             throw new TableConflictException(1);
         }
@@ -208,8 +206,7 @@ public class IntField extends BaseField {
             }
 
         } catch (IOException e) {
-            // fixme 这个给外面可能也不知道如何处理
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         } catch (NumberFormatException e) {
             throw new TableConflictException(1);
         }

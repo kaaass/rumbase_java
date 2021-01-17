@@ -108,29 +108,30 @@ public class ItemStorage implements IItemStorage {
         var pageStorage = PageManager.fromFile(fileName);
         var header = pageStorage.get(0);
         header.pin();
-        if (checkTableHeader(header)) {
-            // 如果表头标志存在，就解析对应表头信息
-            var h = parseTableHeader(header);
-            header.unpin();
-            var logStorage = RecoveryManager.getRecoveryStorage(fileName);
-            return new ItemStorage(fileName, h.tempFreePage, h.headerUuid, pageStorage,logStorage);
-        } else {
-            // 若表头标志不存在，就初始化对应的表信息。
-            // 只初始化headerFlag和tempFreePage，表头信息位置统一由setMetadata来实现
-            byte[] bytes;
-            try {
-                bytes = JBBPOut.BeginBin().
-                        Byte(1, 2, 3, 4).
-                        Int(1).
-                        End().toByteArray();
-            } catch (IOException e) {
-                header.unpin();
-                throw new PageCorruptedException(1, e);
+        try {
+            if (checkTableHeader(header)) {
+                // 如果表头标志存在，就解析对应表头信息
+                var h = parseTableHeader(header);
+                var logStorage = RecoveryManager.getRecoveryStorage(fileName);
+                return new ItemStorage(fileName, h.tempFreePage, h.headerUuid, pageStorage,logStorage);
+            } else {
+                // 若表头标志不存在，就初始化对应的表信息。
+                // 只初始化headerFlag和tempFreePage，表头信息位置统一由setMetadata来实现
+                byte[] bytes;
+                try {
+                    bytes = JBBPOut.BeginBin().
+                            Byte(1, 2, 3, 4).
+                            Int(1).
+                            End().toByteArray();
+                } catch (IOException e) {
+                    throw new PageCorruptedException(1, e);
+                }
+                header.patchData(0, bytes);
+                var logStorage = RecoveryManager.createRecoveryStorage(fileName);
+                return new ItemStorage(fileName, 1, 0, pageStorage,logStorage);
             }
-            header.patchData(0, bytes);
+        } finally {
             header.unpin();
-            var logStorage = RecoveryManager.createRecoveryStorage(fileName);
-            return new ItemStorage(fileName, 1, 0, pageStorage,logStorage);
         }
     }
 
@@ -141,27 +142,29 @@ public class ItemStorage implements IItemStorage {
         var pageStorage = PageManager.fromFile(fileName);
         var header = pageStorage.get(0);
         header.pin();
-        if (checkTableHeader(header)) {
-            // 如果表头标志存在，就解析对应表头信息
-            var h = parseTableHeader(header);
-            header.unpin();
-            return new ItemStorage(fileName, h.tempFreePage, h.headerUuid, pageStorage);
-        } else {
-            // 若表头标志不存在，就初始化对应的表信息。
-            // 只初始化headerFlag和tempFreePage，表头信息位置统一由setMetadata来实现
-            byte[] bytes;
-            try {
-                bytes = JBBPOut.BeginBin().
-                        Byte(1, 2, 3, 4).
-                        Int(1).
-                        End().toByteArray();
-            } catch (IOException e) {
-                header.unpin();
-                throw new PageCorruptedException(1, e);
+        try {
+            if (checkTableHeader(header)) {
+                // 如果表头标志存在，就解析对应表头信息
+                var h = parseTableHeader(header);
+                return new ItemStorage(fileName, h.tempFreePage, h.headerUuid, pageStorage);
+            } else {
+                // 若表头标志不存在，就初始化对应的表信息。
+                // 只初始化headerFlag和tempFreePage，表头信息位置统一由setMetadata来实现
+                byte[] bytes;
+                try {
+                    bytes = JBBPOut.BeginBin().
+                            Byte(1, 2, 3, 4).
+                            Int(1).
+                            End().toByteArray();
+                } catch (IOException e) {
+                    header.unpin();
+                    throw new PageCorruptedException(1, e);
+                }
+                header.patchData(0, bytes);
+                return new ItemStorage(fileName, 1, 0, pageStorage);
             }
-            header.patchData(0, bytes);
+        } finally {
             header.unpin();
-            return new ItemStorage(fileName, 1, 0, pageStorage);
         }
     }
 
