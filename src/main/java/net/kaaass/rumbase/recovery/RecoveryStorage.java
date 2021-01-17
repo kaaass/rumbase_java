@@ -3,10 +3,11 @@ package net.kaaass.rumbase.recovery;
 import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.dataitem.IItemStorage;
 import net.kaaass.rumbase.dataitem.ItemManager;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
-import net.kaaass.rumbase.page.Page;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.exception.LogException;
@@ -18,11 +19,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *  日志记录相关内容
+ * 日志记录相关内容
  *
  * @author kaito
  */
-public class RecoveryStorage implements  IRecoveryStorage {
+@Slf4j
+public class RecoveryStorage implements IRecoveryStorage {
 
 
     /**
@@ -34,37 +36,39 @@ public class RecoveryStorage implements  IRecoveryStorage {
      */
     private String fileName;
 
-    public RecoveryStorage(IItemStorage itemStorage,String fileName) {
+    public RecoveryStorage(IItemStorage itemStorage, String fileName) {
         this.logStorage = itemStorage;
         this.fileName = fileName;
     }
 
     /**
      * 读取日志文件并且解析得到日志管理器
+     *
      * @param fileName
      * @return 日志管理器
      */
     public static IRecoveryStorage ofFile(String fileName) throws LogException {
         try {
             var itemStorage = ItemManager.fromFileWithoutLog(fileName + ".log");
-            return new RecoveryStorage(itemStorage,fileName);
-        }catch (FileException | PageException e){
+            return new RecoveryStorage(itemStorage, fileName);
+        } catch (FileException | PageException e) {
             throw new LogException(10);
         }
     }
 
     /**
      * 创建日志文件
+     *
      * @param fileName 文件名
      * @return
      */
     public static IRecoveryStorage ofNewFile(String fileName) throws LogException {
         try {
             var metadata = JBBPOut.BeginBin().Int(HEADER).End().toByteArray();
-            var itemStorage = ItemManager.createFileWithoutLog(fileName + ".log",metadata);
-            return new RecoveryStorage(itemStorage,fileName);
-        }catch (IOException | FileException | PageException e) {
-            throw new LogException(9);
+            var itemStorage = ItemManager.createFileWithoutLog(fileName + ".log", metadata);
+            return new RecoveryStorage(itemStorage, fileName);
+        } catch (IOException | FileException | PageException e) {
+            throw new LogException(9, e);
         }
     }
 
@@ -75,13 +79,13 @@ public class RecoveryStorage implements  IRecoveryStorage {
                     Byte(TX_BEGIN).
                     Int(xid).
                     Int(snapshots.size());
-            for ( var i : snapshots){
+            for (var i : snapshots) {
                 jbbp = jbbp.Int(i);
             }
             var bytes = jbbp.End().toByteArray();
             var uuid = logStorage.insertItemWithoutLog(bytes);
             logStorage.flush(uuid);
-        } catch (IOException  | FileException e) {
+        } catch (IOException | FileException e) {
             throw new LogException(3);
         }
     }
@@ -95,7 +99,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
                     End().toByteArray();
             var uuid = logStorage.insertItemWithoutLog(bytes);
             logStorage.flush(uuid);
-        }catch (FileException | IOException e){
+        } catch (FileException | IOException e) {
             throw new LogException(4);
         }
     }
@@ -109,7 +113,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
                     End().toByteArray();
             var uuid = logStorage.insertItemWithoutLog(bytes);
             logStorage.flush(uuid);
-        }catch (FileException | IOException e){
+        } catch (FileException | IOException e) {
             throw new LogException(5);
         }
 
@@ -127,14 +131,14 @@ public class RecoveryStorage implements  IRecoveryStorage {
                     End().toByteArray();
             var id = logStorage.insertItemWithoutLog(bytes);
             logStorage.flush(id);
-        }catch (FileException | IOException e){
+        } catch (FileException | IOException e) {
             throw new LogException(6);
         }
     }
 
     @Override
     public void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) throws LogException {
-        try{
+        try {
             var bytes = JBBPOut.BeginBin().
                     Byte(UPDATE_FLAG).
                     Int(xid).
@@ -146,15 +150,15 @@ public class RecoveryStorage implements  IRecoveryStorage {
                     End().toByteArray();
             var id = logStorage.insertItemWithoutLog(bytes);
             logStorage.flush(id);
-        }catch (FileException | IOException e){
+        } catch (FileException | IOException e) {
             throw new LogException(7);
         }
     }
 
     @Override
-    public void updateMeta(int xid, long beforeUuid,byte[] metadata) throws LogException {
+    public void updateMeta(int xid, long beforeUuid, byte[] metadata) throws LogException {
         try {
-            var bytes  =JBBPOut.BeginBin().
+            var bytes = JBBPOut.BeginBin().
                     Byte(METADATA_UPDATE_FLAG).
                     Int(xid).
                     Long(beforeUuid).
@@ -163,7 +167,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
                     End().toByteArray();
             var uuid = logStorage.insertItemWithoutLog(bytes);
             logStorage.flush(uuid);
-        }catch (FileException | IOException e){
+        } catch (FileException | IOException e) {
             throw new LogException(8);
         }
 
@@ -173,10 +177,10 @@ public class RecoveryStorage implements  IRecoveryStorage {
     public List<byte[]> getContent() {
         List<byte[]> logList = new ArrayList<>();
         var maxPageId = logStorage.getMaxPageId();
-        for (int i = 1;i <= maxPageId ; i ++){
+        for (int i = 1; i <= maxPageId; i++) {
             var logs = logStorage.listItemByPageId(i);
-            for(var l : logs){
-                if (l.length > 4){
+            for (var l : logs) {
+                if (l.length > 4) {
                     logList.add(l);
                 }
             }
@@ -185,15 +189,19 @@ public class RecoveryStorage implements  IRecoveryStorage {
     }
 
     @Override
-    public void recovery() throws LogException{
+    public void recovery() throws LogException {
         try {
             var itemStorage = ItemManager.fromFile(this.fileName);
+            // TODO 判断是否进行恢复
+            log.info("开始恢复文件 {}...", this.fileName);
             var logs = getContent();
             var xidMaps = parseXid(logs);
-            for (var log : logs){
-                parseLog(log,itemStorage,xidMaps);
+            log.debug("文件 {} 回滚事务：{}", this.fileName, xidMaps);
+            // 逐条回滚
+            for (var log : logs) {
+                parseLog(log, itemStorage, xidMaps);
             }
-        }catch (FileException | PageException e){
+        } catch (FileException | PageException e) {
             throw new LogException(11);
         }
     }
@@ -201,18 +209,18 @@ public class RecoveryStorage implements  IRecoveryStorage {
     /**
      * 先进行一遍解析，得到所有已完成的事务和未完成的事务，来决定redo还是undo
      */
-    private Map<Character,List<Integer>> parseXid(List<byte[]> logs) throws LogException {
-        List<Integer> commitXids = new ArrayList<>();
+    private Map<Character, List<Integer>> parseXid(List<byte[]> logs) throws LogException {
+        List<Integer> commitXids = List.of(0);
         List<Integer> abortXids = new ArrayList<>();
 
-        for (var log : logs){
-            Tx tx = null;
+        for (var binLog : logs) {
+            Tx tx;
             try {
-                tx = parseTx(log);
+                tx = parseTx(binLog);
             } catch (IOException e) {
                 throw new LogException(1);
             }
-            switch (tx.type){
+            switch (tx.type) {
                 case TX_COMMIT:
                     // 若是commit 则放入commitXid并将对应的xid移出abort
                     Integer id = tx.xid;
@@ -229,9 +237,9 @@ public class RecoveryStorage implements  IRecoveryStorage {
             }
         }
 
-        Map<Character,List<Integer>> maps = new HashMap<>();
-        maps.put('C',commitXids);
-        maps.put('A',abortXids);
+        Map<Character, List<Integer>> maps = new HashMap<>();
+        maps.put('C', commitXids);
+        maps.put('A', abortXids);
         return maps;
     }
 
@@ -248,7 +256,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
      */
     private byte parseType(byte[] log) throws IOException {
         var type = JBBPParser.prepare("byte type;").parse(log).mapTo(new Type()).type;
-        return type ;
+        return type;
     }
 
     /**
@@ -272,16 +280,16 @@ public class RecoveryStorage implements  IRecoveryStorage {
     private UpdateMetaLog parseUpdateMeta(byte[] log) throws IOException {
         var updateMeta = JBBPParser.prepare("byte type;int xid;long beforeUuid;" +
                 "int length;byte[length] metadata;").
-                    parse(log).mapTo(new UpdateMetaLog());
+                parse(log).mapTo(new UpdateMetaLog());
         return updateMeta;
     }
 
-    private boolean checkCommit(int xid,Map<Character,List<Integer>> maps) throws LogException {
-        if (maps.get('C').contains(xid)){
+    private boolean checkCommit(int xid, Map<Character, List<Integer>> maps) throws LogException {
+        if (maps.get('C').contains(xid)) {
             return true;
-        }else if (maps.get('A').contains(xid)){
+        } else if (maps.get('A').contains(xid)) {
             return false;
-        }else {
+        } else {
             throw new LogException(2);
         }
     }
@@ -289,14 +297,14 @@ public class RecoveryStorage implements  IRecoveryStorage {
     private void parseLog(byte[] log, IItemStorage itemStorage, Map<Character, List<Integer>> xidMaps) throws LogException {
         try {
             var type = parseType(log);
-            switch (type){
+            switch (type) {
                 case INSERT_FLAG:
                     System.out.println("正在解析插入");
                     var insertLog = parseInsert(log);
-                    if (checkCommit(insertLog.xid,xidMaps)){
+                    if (checkCommit(insertLog.xid, xidMaps)) {
                         // 如果事务已经提交，则redo
-                        itemStorage.insertItemWithUuid(insertLog.item,insertLog.uuid);
-                    }else {
+                        itemStorage.insertItemWithUuid(insertLog.item, insertLog.uuid);
+                    } else {
                         // 如果事务没有提交，则undo
                         itemStorage.deleteUuid(insertLog.uuid);
                     }
@@ -304,17 +312,17 @@ public class RecoveryStorage implements  IRecoveryStorage {
                 case UPDATE_FLAG:
                     System.out.println("正在解析更新");
                     var updateLog = parseUpdate(log);
-                    if (checkCommit(updateLog.xid,xidMaps)){
+                    if (checkCommit(updateLog.xid, xidMaps)) {
                         // 若事务已经提交则redo
                         try {
-                            itemStorage.updateItemWithoutLog(updateLog.uuid,updateLog.itemAfter);
+                            itemStorage.updateItemWithoutLog(updateLog.uuid, updateLog.itemAfter);
                         } catch (UUIDException ignored) {
                             // uuid不存在说明对应之前的事务没有执行，是正常
                         }
-                    }else {
+                    } else {
                         // 若事务没有提交，则undo,恢复之前的数据
                         try {
-                            itemStorage.updateItemWithoutLog(updateLog.uuid,updateLog.itemBefore);
+                            itemStorage.updateItemWithoutLog(updateLog.uuid, updateLog.itemBefore);
                         } catch (UUIDException ignored) {
 
                         }
@@ -323,10 +331,10 @@ public class RecoveryStorage implements  IRecoveryStorage {
                 case METADATA_UPDATE_FLAG:
                     System.out.println("正在解析头信息更新");
                     var updateMetaLog = parseUpdateMeta(log);
-                    if (checkCommit(updateMetaLog.xid,xidMaps)){
+                    if (checkCommit(updateMetaLog.xid, xidMaps)) {
                         // redo
                         itemStorage.setMetadataWithoutLog(updateMetaLog.metadata);
-                    }else {
+                    } else {
                         // undo
                         itemStorage.setMetaUuid(updateMetaLog.beforeUuid);
                     }
@@ -334,7 +342,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
                 default:
                     return;
             }
-        }catch (IOException | PageException e){
+        } catch (IOException | PageException e) {
             throw new LogException(1);
         }
     }
@@ -343,7 +351,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
      * 日志头信息
      * TODO: 记录点等特殊要求
      */
-    public static class LogHeader{
+    public static class LogHeader {
         @Bin
         int header;
     }
@@ -351,7 +359,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
     /**
      * 解析类型
      */
-    public static class Type{
+    public static class Type {
         @Bin
         byte type;
     }
@@ -359,7 +367,8 @@ public class RecoveryStorage implements  IRecoveryStorage {
     /**
      * 事务状态的解析
      */
-    public static class Tx{
+    @Data
+    public static class Tx {
         @Bin
         byte type;
         @Bin
@@ -369,7 +378,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
     /**
      * 插入的解析
      */
-    public static class InsertLog{
+    public static class InsertLog {
         @Bin
         byte type;
         @Bin
@@ -380,6 +389,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
         int length;
         @Bin
         byte[] item;
+
         public Object newInstance(Class<?> klazz) {
             return klazz == InsertLog.class ? new InsertLog() : null;
         }
@@ -388,7 +398,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
     /**
      * 更新的解析
      */
-    public static class UpdateLog{
+    public static class UpdateLog {
         @Bin
         byte type;
         @Bin
@@ -403,12 +413,13 @@ public class RecoveryStorage implements  IRecoveryStorage {
         int length2;
         @Bin
         byte[] itemAfter;
+
         public Object newInstance(Class<?> klazz) {
             return klazz == UpdateLog.class ? new UpdateLog() : null;
         }
     }
 
-    public static class UpdateMetaLog{
+    public static class UpdateMetaLog {
         @Bin
         byte type;
         @Bin
@@ -419,6 +430,7 @@ public class RecoveryStorage implements  IRecoveryStorage {
         int length;
         @Bin
         byte[] metadata;
+
         public Object newInstance(Class<?> klazz) {
             return klazz == UpdateMetaLog.class ? new UpdateMetaLog() : null;
         }
@@ -440,8 +452,6 @@ public class RecoveryStorage implements  IRecoveryStorage {
     final private static byte UPDATE_FLAG = 'u';
 
     final private static byte METADATA_UPDATE_FLAG = 'm';
-
-
 
 
 }

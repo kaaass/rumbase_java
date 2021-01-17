@@ -28,4 +28,8 @@ public class LogException extends RumbaseException {
     public LogException(int subId) {
         super(3001,subId,REASONS.get(subId));
     }
+
+    public LogException(int subId, Throwable e) {
+        super(3001,subId,REASONS.get(subId), e);
+    }
 }

@@ -29,7 +29,8 @@ public class RumPageStorage implements PageStorage {
                 FileOutputStream out = new FileOutputStream(file);
                 out.write(new byte[PageManager.PAGE_SIZE * 10]);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("创建文件失败", e);
+                System.exit(1);
             }
         }
         //文件会预留5页作为文件头

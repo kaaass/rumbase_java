@@ -7,7 +7,6 @@ import net.kaaass.rumbase.page.exception.PageException;
 import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +36,7 @@ public class ItemManager {
         }
     }
 
-    public static IItemStorage fromFileWithoutLog(String fileName) throws FileException,PageException, PageCorruptedException {
+    public static IItemStorage fromFileWithoutLog(String fileName) throws FileException, PageException, PageCorruptedException {
         if (maps.containsKey(fileName)) {
             return maps.get(fileName);
         } else {
@@ -69,10 +68,10 @@ public class ItemManager {
         }
     }
 
-    public static IItemStorage createFileWithoutLog(String fileName, byte[] metadata) throws FileException,  PageException {
-        // 如果文件已经存在，那么就抛出文件已存在异常
+    public static IItemStorage createFileWithoutLog(String fileName, byte[] metadata) throws FileException, PageException {
+        // 如果文件已经存在，那就返回
         if (maps.containsKey(fileName)) {
-            throw new FileException(1);
+            return maps.get(fileName);
         } else {
             // 若文件不存在，则创建文件。
             IItemStorage iItemStorage = ItemStorage.ofNewFileWithoutLog(fileName, metadata);

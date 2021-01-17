@@ -1,11 +1,14 @@
 package net.kaaass.rumbase.table;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.IRecordStorage;
 import net.kaaass.rumbase.record.RecordManager;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
+import net.kaaass.rumbase.recovery.RecoveryManager;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -25,7 +28,7 @@ import java.util.*;
  *
  * @author @KveinAxel
  */
-
+@Slf4j
 public class TableManager {
 
     static {
@@ -68,11 +71,11 @@ public class TableManager {
         context.rollback();
     }
 
-    public TableManager() throws TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException, IndexAlreadyExistException {
+    public TableManager() throws IndexAlreadyExistException {
         load();
     }
 
-    public void load() throws TableExistenceException, TableConflictException, RecordNotFoundException, ArgumentException, IndexAlreadyExistException {
+    public void load() throws IndexAlreadyExistException {
         var context = TransactionContext.empty();
         Table metaTable;
         try {
@@ -102,29 +105,56 @@ public class TableManager {
             metaTable.persist(context);
             tableCache.put("metadata", metaTable);
         }
-        var data = metaTable.readAll(context);
+    }
+
+    /**
+     * 启动服务器前进行的准备
+     */
+    public void prepare() {
+        var context = TransactionContext.empty();
+        var metaTable = tableCache.get("metadata");
+        List<List<Object>> data = null;
+        try {
+            data = metaTable.readAll(context);
+        } catch (TableExistenceException | TableConflictException | ArgumentException | RecordNotFoundException e) {
+            log.error("无法读入元数据表，数据可能损坏！", e);
+            System.exit(1);
+        }
+        // 载入所有已有表
         var map = new HashMap<String, String>();
         data.forEach(row -> map.put((String) row.get(0), (String) row.get(1)));
 
         if (!map.containsKey("table_num")) {
-            metaTable.insert(context, new ArrayList<>(){{
-                add("'table_num'");
-                add("'0'");
-            }});
+            try {
+                metaTable.insert(context, new ArrayList<>(){{
+                    add("'table_num'");
+                    add("'0'");
+                }});
+            } catch (TableConflictException | TableExistenceException | ArgumentException e) {
+                log.error("无法初始化元数据表", e);
+                System.exit(1);
+            }
             map.put("table_num", "0");
         }
 
         for (var item: map.entrySet()) {
             if (item.getKey().startsWith("tablePath$")) {
                 var tableName = item.getKey().split("\\$")[1];
+                var tablePath = item.getValue();
+                // 恢复表
+                try {
+                    RecoveryManager.recovery(tablePath);
+                } catch (LogException e) {
+                    log.error("无法恢复表 {} 于 {}，数据可能损坏！", tableName, tablePath, e);
+                    System.exit(1);
+                }
+                // 读入表
                 var record = RecordManager.fromFile(item.getValue());
-                recordPaths.add(item.getValue());
+                recordPaths.add(tablePath);
                 var table = Table.load(record);
                 tableCache.put(tableName, table);
             }
         }
-
-
     }
 
     /**
