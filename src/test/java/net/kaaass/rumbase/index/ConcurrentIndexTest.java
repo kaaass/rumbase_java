@@ -2,18 +2,34 @@ package net.kaaass.rumbase.index;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Random;
 
 @Slf4j
-public class ConcurrentIndexTest extends TestCase {
-    public static final String fileDir = "build/";
+public class ConcurrentIndexTest {
+    public static final String fileDir = FileUtil.TEST_PATH;
+
+    @BeforeClass
+    public static void createDataFolder() {
+        FileUtil.prepare();
+    }
+
+    @AfterClass
+    public static void clearDataFolder() {
+        FileUtil.clear();
+    }
 
     /**
      * 测试索引的并发功能
      */
+    @Test
     public void test() {
         Index testIndex = null;
         try {
@@ -50,7 +66,7 @@ public class ConcurrentIndexTest extends TestCase {
         // 测试数据是否符合预期
         int cnt = 0;
         for (var pair : testIndex) {
-            assertEquals(cnt / 2,
+            Assert.assertEquals(cnt / 2,
                     pair.getKey());
             //log.debug("{}", pair);
             cnt++;
@@ -60,6 +76,7 @@ public class ConcurrentIndexTest extends TestCase {
     /**
      * 测试索引的更复杂的并发功能
      */
+    @Test
     public void testComplex() {
         Index testIndex = null;
         try {
@@ -108,7 +125,7 @@ public class ConcurrentIndexTest extends TestCase {
         // 测试数据是否符合预期
         int cnt = 0;
         for (var pair : testIndex) {
-            assertEquals(cnt / 3,
+            Assert.assertEquals(cnt / 3,
                     pair.getKey());
             //log.debug("{}", pair);
             cnt++;

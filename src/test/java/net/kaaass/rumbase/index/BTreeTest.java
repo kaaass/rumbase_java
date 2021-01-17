@@ -2,8 +2,13 @@ package net.kaaass.rumbase.index;
 
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
+import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.index.exception.IndexAlreadyExistException;
 import net.kaaass.rumbase.index.exception.IndexNotFoundException;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Iterator;
@@ -16,12 +21,23 @@ import java.util.Random;
  * @see net.kaaass.rumbase.index.BTreeTest
  */
 @Slf4j
-public class BTreeTest extends TestCase {
-    public static final String fileDir = "build/";
+public class BTreeTest {
+    public static final String fileDir = FileUtil.TEST_PATH;
+
+    @BeforeClass
+    public static void createDataFolder() {
+        FileUtil.prepare();
+    }
+
+    @AfterClass
+    public static void clearDataFolder() {
+        FileUtil.clear();
+    }
 
     /**
      * 测试索引的插入与第一个迭代器功能
      */
+    @Test
     public void testInsert() {
         Index testIndex = null;
         try {
@@ -42,7 +58,7 @@ public class BTreeTest extends TestCase {
         // 测试数据是否符合预期
         int cnt = 0;
         for (var pair : testIndex) {
-            assertEquals(cnt / 2,
+            Assert.assertEquals(cnt / 2,
                     pair.getKey());
             // log.debug("{}", pair);
             cnt++;
@@ -52,6 +68,7 @@ public class BTreeTest extends TestCase {
     /**
      * 测试不按顺寻key插入的情况
      */
+    @Test
     public void testInsertRandomKey() {
         Index testIndex = null;
         try {
@@ -72,7 +89,7 @@ public class BTreeTest extends TestCase {
         // 测试数据是否符合预期
         int cnt = 0;
         for (var pair : testIndex) {
-            assertEquals(cnt / 2,
+            Assert.assertEquals(cnt / 2,
                     pair.getKey());
             // log.debug("{}", pair);
             cnt++;
@@ -82,6 +99,7 @@ public class BTreeTest extends TestCase {
     /**
      * 测试索引的查询功能
      */
+    @Test
     public void testQuery() {
         Index testIndex = null;
 
@@ -110,18 +128,18 @@ public class BTreeTest extends TestCase {
         // 测试 findFirst 方法
         // keyHash在内的迭代器 1122->334455
         Iterator<Pair> it1 = testIndex.findFirst(3);
-        assertTrue(it1.hasNext());
-        assertEquals(3, it1.next().getKey());
-        assertEquals(3, it1.next().getKey());
-        assertEquals(4, it1.next().getKey());
+        Assert.assertTrue(it1.hasNext());
+        Assert.assertEquals(3, it1.next().getKey());
+        Assert.assertEquals(3, it1.next().getKey());
+        Assert.assertEquals(4, it1.next().getKey());
 
         // 测试 findUpperbound 方法
         // 不包括keyHash在内的迭代器 112233->4455
         Iterator<Pair> it2 = testIndex.findUpperbound(3);
-        assertTrue(it2.hasNext());
-        assertEquals(4, it2.next().getKey());
-        assertEquals(4, it2.next().getKey());
-        assertEquals(5, it2.next().getKey());
+        Assert.assertTrue(it2.hasNext());
+        Assert.assertEquals(4, it2.next().getKey());
+        Assert.assertEquals(4, it2.next().getKey());
+        Assert.assertEquals(5, it2.next().getKey());
 
         // 测试 query 方法
         var results = testIndex.query(4);
@@ -133,6 +151,7 @@ public class BTreeTest extends TestCase {
     /**
      * 测试multiKey索引的查询功能
      */
+    @Test
     public void testMultiKeyQuery() {
         Index testIndex = null;
 
@@ -166,18 +185,18 @@ public class BTreeTest extends TestCase {
         // 测试 findFirst 方法
         // keyHash在内的迭代器 1122->334455
         Iterator<Pair> it1 = testIndex.findFirst(3);
-        assertTrue(it1.hasNext());
-        assertEquals(3, it1.next().getKey());
-        assertEquals(3, it1.next().getKey());
-        assertEquals(3, it1.next().getKey());
+        Assert.assertTrue(it1.hasNext());
+        Assert.assertEquals(3, it1.next().getKey());
+        Assert.assertEquals(3, it1.next().getKey());
+        Assert.assertEquals(3, it1.next().getKey());
 
         // 测试 findUpperbound 方法
         // 不包括keyHash在内的迭代器 112233->4455
         Iterator<Pair> it2 = testIndex.findUpperbound(3);
-        assertTrue(it2.hasNext());
-        assertEquals(4, it2.next().getKey());
-        assertEquals(4, it2.next().getKey());
-        assertEquals(4, it2.next().getKey());
+        Assert.assertTrue(it2.hasNext());
+        Assert.assertEquals(4, it2.next().getKey());
+        Assert.assertEquals(4, it2.next().getKey());
+        Assert.assertEquals(4, it2.next().getKey());
         for (int i = 0; i < 3; i++) {
             log.debug("{}", it2.next().getUuid());
         }
