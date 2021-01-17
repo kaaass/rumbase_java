@@ -75,29 +75,23 @@ public class LockTableImpl implements LockTable {
             // 判断是否能加锁
             boolean canGrant = list.canGrant(mode);
             log.info("{} can grant {} lock : {}", xid, mode, canGrant);
-            // TODO 并发度差，最好改成读写锁
-            synchronized (this) {
-                // 虚加锁
-                list.weakInsert(xid, id, mode, canGrant);
-                // 检测死锁
-                if (deadlockCheck()) {
-                    log.info("deadlock");
-                    list.pop();
-                    throw new DeadlockException(1);
-                }
+            // 虚加锁
+            list.weakInsert(xid, id, mode, canGrant);
+            // 检测死锁
+            if (deadlockCheck()) {
+                log.info("deadlock");
+                list.pop();
+                throw new DeadlockException(1);
             }
 
             // 可以加锁
             // 对于互斥锁，如果发生等待，在等待处即已释放，此处无需释放
             canUnlock = canGrant;
 
-            // TODO 并发度差，最好改成读写锁
-            synchronized (list) {
-                // 移除虚锁
-                list.pop();
-                // 正式加锁
-                list.insert(xid, id, mode, canGrant);
-            }
+            // 移除虚锁
+            list.pop();
+            // 正式加锁
+            list.insert(xid, id, mode, canGrant);
         } finally {
             if (canUnlock) {
                 list.mutexLock.unlock();
@@ -139,26 +133,21 @@ public class LockTableImpl implements LockTable {
      */
     @Override
     public void release(int xid) {
-        lock.lock();
-        try {
-            Set<DataItemId> dataItemSet = new HashSet<>();
-            List<DataItemId> sharedLocks = TxList.sharedLocks.get(xid);
-            List<DataItemId> exclusiveLocks = TxList.exclusiveLocks.get(xid);
-            log.info("{}'s sharedLocks: {}", xid, sharedLocks);
-            log.info("{}'s exclusiveLocks: {}", xid, exclusiveLocks);
-            if (sharedLocks != null) {
-                dataItemSet.addAll(sharedLocks);
-            }
-            if (exclusiveLocks != null) {
+        Set<DataItemId> dataItemSet = new HashSet<>();
+        List<DataItemId> sharedLocks = TxList.sharedLocks.get(xid);
+        List<DataItemId> exclusiveLocks = TxList.exclusiveLocks.get(xid);
+        log.info("{}'s sharedLocks: {}", xid, sharedLocks);
+        log.info("{}'s exclusiveLocks: {}", xid, exclusiveLocks);
+        if (sharedLocks != null) {
+            dataItemSet.addAll(sharedLocks);
+        }
+        if (exclusiveLocks != null) {
 
-                dataItemSet.addAll(exclusiveLocks);
-            }
+            dataItemSet.addAll(exclusiveLocks);
+        }
 
-            for (DataItemId id : dataItemSet) {
-                release(xid, id);
-            }
-        } finally {
-            lock.unlock();
+        for (DataItemId id : dataItemSet) {
+            release(xid, id);
         }
     }
 
@@ -252,11 +241,8 @@ public class LockTableImpl implements LockTable {
         // 建图
 
         // 遍历每一个等待队列
-        var lockTableView = Collections.unmodifiableMap(lockTable);
-        log.debug("Lock table: {}", lockTableView);
-        for (TxList list : lockTableView.values()) {
+        for (TxList list : lockTable.values()) {
             List<TxItem> waitingTxs = new ArrayList<>(list.locks);
-            log.debug("locks: {}", list.locks);
             // 对等待队列中建立等待关系
             for (int i = 0; i < waitingTxs.size() - 1; i++) {
                 TxItem frontItem = waitingTxs.get(i);
@@ -270,7 +256,7 @@ public class LockTableImpl implements LockTable {
                             continue;
                         }
 
-                        log.debug("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
+                        log.info("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
 
                         // backItem等待frontItem
                         graph.addEdge(backItem.xid, frontItem.xid);
@@ -281,13 +267,13 @@ public class LockTableImpl implements LockTable {
                     // 邻近的后面的锁等待该锁
                     TxItem backItem = waitingTxs.get(i + 1);
                     // backItem等待frontItem
-                    log.debug("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
+                    log.info("[CREATING GRAPH] add edge : {} -> {}", backItem.xid, frontItem.xid);
                     graph.addEdge(backItem.xid, frontItem.xid);
                 }
             }
         }
 
-        log.debug("create graph successful: {}", graph);
+        log.info("create graph successful!");
         // 图成环，则有死锁
         return graph.hasLoop();
     }

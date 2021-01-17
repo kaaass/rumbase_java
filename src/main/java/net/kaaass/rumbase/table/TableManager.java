@@ -11,7 +11,6 @@ import net.kaaass.rumbase.table.field.BaseField;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.table.field.VarcharField;
 import net.kaaass.rumbase.transaction.TransactionContext;
-import net.kaaass.rumbase.transaction.exception.StatusException;
 
 import java.io.File;
 import java.util.*;
@@ -56,7 +55,7 @@ public class TableManager {
      *
      * @param context 事务context
      */
-    public void commit(TransactionContext context) throws StatusException {
+    public void commit(TransactionContext context) {
         context.commit();
     }
 
@@ -65,7 +64,7 @@ public class TableManager {
      *
      * @param context 事务context
      */
-    public void abort(TransactionContext context) throws StatusException {
+    public void abort(TransactionContext context) {
         context.rollback();
     }
 

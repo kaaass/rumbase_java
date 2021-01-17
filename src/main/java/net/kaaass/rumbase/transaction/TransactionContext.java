@@ -1,7 +1,6 @@
 package net.kaaass.rumbase.transaction;
 
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
-import net.kaaass.rumbase.transaction.exception.StatusException;
 
 import java.util.List;
 
@@ -62,17 +61,17 @@ public interface TransactionContext {
     /**
      * 事务开始
      */
-    void start() throws StatusException;
+    void start();
 
     /**
      * 事务提交
      */
-    void commit() throws StatusException;
+    void commit();
 
     /**
      * 事务撤销
      */
-    void rollback() throws StatusException;
+    void rollback();
 
     /**
      * 对记录加共享锁
@@ -81,7 +80,7 @@ public interface TransactionContext {
      * @param tableName 表字段
      * @throws DeadlockException 发生死锁异常
      */
-    void sharedLock(long uuid, String tableName) throws DeadlockException, StatusException;
+    void sharedLock(long uuid, String tableName) throws DeadlockException;
 
     /**
      * 对记录加排他锁
@@ -90,5 +89,5 @@ public interface TransactionContext {
      * @param tableName 表字段
      * @throws DeadlockException 发生死锁异常
      */
-    void exclusiveLock(long uuid, String tableName) throws DeadlockException, StatusException;
+    void exclusiveLock(long uuid, String tableName) throws DeadlockException;
 }
