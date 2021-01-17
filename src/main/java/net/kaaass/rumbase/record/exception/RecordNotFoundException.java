@@ -10,6 +10,7 @@ import java.util.Map;
  * <p>
  * E5001-1 物理记录不存在
  * E5001-2 由于事务性，记录不可见
+ * E5001-3 事务未处于活动状态，不可访问记录
  *
  * @author kaaass
  */
@@ -18,6 +19,7 @@ public class RecordNotFoundException extends RumbaseException {
     public static final Map<Integer, String> REASONS = new HashMap<>() {{
         put(1, "物理记录不存在");
         put(2, "由于事务隔离或已经被删除，记录不可见");
+        put(3, "事务未处于活动状态，不可访问记录");
     }};
 
     /**

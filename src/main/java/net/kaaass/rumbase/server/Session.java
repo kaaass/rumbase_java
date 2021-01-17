@@ -19,6 +19,7 @@ import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
+import net.kaaass.rumbase.transaction.exception.StatusException;
 
 import java.io.*;
 import java.net.Socket;
@@ -151,6 +152,7 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
             } catch (RumbaseRuntimeException e) {
                 log.warn("退出会话 {} 时提交事务失败", sessionId, e);
                 say(e);
+            } catch (StatusException ignored) {
             }
         }
         // 删除活跃会话
@@ -386,10 +388,15 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
         if (autoCommit) {
             try {
                 assert currentContext != null;
-                if (rollback) {
-                    currentContext.rollback();
-                } else {
-                    currentContext.commit();
+                try {
+                    if (rollback) {
+                        currentContext.rollback();
+                    } else {
+                        currentContext.commit();
+                    }
+                } catch (StatusException e) {
+                    log.warn("自动提交事务失败，会话 {} ", sessionId, e);
+                    say(e);
                 }
                 currentContext = null;
             } finally {
@@ -419,7 +426,12 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
             return false;
         }
         // 提交事务
-        currentContext.commit();
+        try {
+            currentContext.commit();
+        } catch (StatusException e) {
+            say(e);
+            return false;
+        }
         say("成功提交事务" + currentContext.getXid() + "\n");
         currentContext = null;
         return false;
@@ -432,7 +444,12 @@ public class Session implements Runnable, Comparable<Session>, ISqlStatementVisi
             return false;
         }
         // 回滚事务
-        currentContext.rollback();
+        try {
+            currentContext.rollback();
+        } catch (StatusException e) {
+            say(e);
+            return false;
+        }
         say("成功回滚事务" + currentContext.getXid() + "\n");
         currentContext = null;
         return false;

@@ -93,4 +93,13 @@ public class TxItem {
             lock.unlock();
         }
     }
+
+    @Override
+    public String toString() {
+        return "TxItem{" +
+                "granted=" + granted +
+                ", xid=" + xid +
+                ", mode=" + mode +
+                '}';
+    }
 }

@@ -13,6 +13,7 @@ import net.kaaass.rumbase.transaction.TransactionContext;
 import net.kaaass.rumbase.transaction.TransactionIsolation;
 import net.kaaass.rumbase.transaction.TransactionStatus;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
+import net.kaaass.rumbase.transaction.exception.StatusException;
 
 import java.util.Optional;
 
@@ -57,6 +58,8 @@ public class MvccRecordStorage implements IRecordStorage {
                 txContext.sharedLock(recordId, this.identifiedName);
             } catch (DeadlockException e) {
                 throw new NeedRollbackException(2, e);
+            } catch (StatusException e) {
+                throw new RecordNotFoundException(3, e);
             }
         }
         // 读取数据
@@ -92,6 +95,8 @@ public class MvccRecordStorage implements IRecordStorage {
             txContext.exclusiveLock(recordId, this.identifiedName);
         } catch (DeadlockException e) {
             throw new NeedRollbackException(2, e);
+        } catch (StatusException e) {
+            throw new RecordNotFoundException(3, e);
         }
         var xid = txContext.getXid();
         if (xid == 0) {
