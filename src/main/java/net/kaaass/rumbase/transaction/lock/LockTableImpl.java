@@ -92,7 +92,7 @@ public class LockTableImpl implements LockTable {
             canUnlock = canGrant;
 
             // TODO 并发度差，最好改成读写锁
-            synchronized (list) {
+            synchronized (LockTableImpl.class) {
                 // 移除虚锁
                 list.pop();
                 // 正式加锁
