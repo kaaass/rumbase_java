@@ -1,11 +1,12 @@
 package net.kaaass.rumbase.dataitem;
 
 
+import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class ItemManager {
      * @param fileName 文件名
      * @return 数据项管理器，用于管理数据项
      */
-    public static IItemStorage fromFile(String fileName) throws FileException, IOException, PageException {
+    public static IItemStorage fromFile(String fileName) throws FileException, PageException, LogException {
         if (maps.containsKey(fileName)) {
             return maps.get(fileName);
         } else {
@@ -34,6 +35,17 @@ public class ItemManager {
             return iItemStorage;
         }
     }
+
+    public static IItemStorage fromFileWithoutLog(String fileName) throws FileException, PageException, PageCorruptedException {
+        if (maps.containsKey(fileName)) {
+            return maps.get(fileName);
+        } else {
+            IItemStorage iItemStorage = ItemStorage.ofFileWithoutLog(fileName);
+            maps.put(fileName, iItemStorage);
+            return iItemStorage;
+        }
+    }
+
 
     /**
      * 新建一个数据库，并且将上层提供的头信息写入。
@@ -44,7 +56,7 @@ public class ItemManager {
      * @return 数据项管理器
      * @throws FileException 想新建的文件已经存在的异常
      */
-    public static IItemStorage createFile(TransactionContext txContext, String fileName, byte[] metadata) throws FileException, IOException, PageException {
+    public static IItemStorage createFile(TransactionContext txContext, String fileName, byte[] metadata) throws FileException, PageException, LogException {
         // 如果文件已经存在，那么就抛出文件已存在异常
         if (maps.containsKey(fileName)) {
             throw new FileException(1);
@@ -54,6 +66,17 @@ public class ItemManager {
             maps.put(fileName, iItemStorage);
             return iItemStorage;
         }
+    }
 
+    public static IItemStorage createFileWithoutLog(String fileName, byte[] metadata) throws FileException, PageException {
+        // 如果文件已经存在，那就返回
+        if (maps.containsKey(fileName)) {
+            return maps.get(fileName);
+        } else {
+            // 若文件不存在，则创建文件。
+            IItemStorage iItemStorage = ItemStorage.ofNewFileWithoutLog(fileName, metadata);
+            maps.put(fileName, iItemStorage);
+            return iItemStorage;
+        }
     }
 }

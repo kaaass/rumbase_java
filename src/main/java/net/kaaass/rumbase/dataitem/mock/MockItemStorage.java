@@ -2,9 +2,13 @@ package net.kaaass.rumbase.dataitem.mock;
 
 import lombok.Data;
 import net.kaaass.rumbase.dataitem.IItemStorage;
+import net.kaaass.rumbase.dataitem.exception.PageCorruptedException;
 import net.kaaass.rumbase.dataitem.exception.UUIDException;
+import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.recovery.IRecoveryStorage;
 import net.kaaass.rumbase.transaction.TransactionContext;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -80,6 +84,26 @@ public class MockItemStorage implements IItemStorage {
 
 
     @Override
+    public void setMetaUuid(long uuid) {
+
+    }
+
+    @Override
+    public IRecoveryStorage getRecoveryStorage() {
+        return null;
+    }
+
+    @Override
+    public int getMaxPageId() {
+        return 0;
+    }
+
+    @Override
+    public void flush(long uuid) {
+
+    }
+
+    @Override
     public long insertItem(TransactionContext txContext, byte[] item) {
         Random ran = new Random();
         long r = ran.nextLong();
@@ -88,7 +112,12 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
-    public void insertItemWithUuid(TransactionContext txContext, byte[] item, long uuid) {
+    public long insertItemWithoutLog( byte[] item) {
+        return 0;
+    }
+
+    @Override
+    public void insertItemWithUuid(byte[] item, long uuid) {
         maps.put(uuid, item);
     }
 
@@ -116,19 +145,40 @@ public class MockItemStorage implements IItemStorage {
     }
 
     @Override
+    public byte[] updateItemWithoutLog(long uuid, byte[] item) throws UUIDException {
+        return new byte[0];
+    }
+
+    @Override
     public byte[] getMetadata() {
         return meta;
     }
 
     @Override
-    public void setMetadata(TransactionContext txContext, byte[] metadata) {
+    public long setMetadata(TransactionContext txContext, byte[] metadata) {
         this.meta = metadata;
+        return 0;
+    }
+
+    @Override
+    public long setMetadataWithoutLog(byte[] metadata) throws PageCorruptedException {
+
+        return 0;
     }
 
 
     @Override
     public void removeItems(List<Long> uuids) {
         System.out.println("已经清除文件对应uuid的信息");
+    }
+
+    @Override
+    public void deleteUuid(long uuid) throws IOException, PageException {
+
+    }
+
+    @Override
+    public void flush() {
     }
 
     @Override

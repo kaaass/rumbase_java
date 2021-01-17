@@ -8,6 +8,8 @@ import net.kaaass.rumbase.page.PageManager;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.query.exception.ArgumentException;
 import net.kaaass.rumbase.record.exception.RecordNotFoundException;
+import net.kaaass.rumbase.recovery.RecoveryManager;
+import net.kaaass.rumbase.recovery.exception.LogException;
 import net.kaaass.rumbase.table.TableManager;
 import net.kaaass.rumbase.table.exception.TableConflictException;
 import net.kaaass.rumbase.table.exception.TableExistenceException;
@@ -51,10 +53,14 @@ public class Server {
      */
     public void prepare() {
         // 准备文件夹
-        var tableFolder = new File("data/table/a");
-        assert tableFolder.exists() || tableFolder.mkdirs();
-        var indexFolder = new File("data/index/a");
-        assert indexFolder.exists() || indexFolder.mkdirs();
+        var tableFolder = new File("data/table/");
+        if (!tableFolder.exists()) {
+            tableFolder.mkdirs();
+        }
+        var indexFolder = new File("data/index/");
+        if (!indexFolder.exists()) {
+            indexFolder.mkdirs();
+        }
         // 初始化事务管理器
         log.info("初始化事务管理器...");
         try {
@@ -63,15 +69,23 @@ public class Server {
             log.error("初始化事务管理器失败", e);
             System.exit(1);
         }
+        // 恢复表管理器
+        try {
+            RecoveryManager.recovery("data/metadata.db");
+        } catch (LogException e) {
+            log.error("无法恢复表管理器，数据可能损坏！", e);
+            System.exit(1);
+        }
         // 初始化表管理器
         log.info("初始化表管理器...");
-        // TODO 先恢复metadata
         try {
             tableManager = new TableManager();
-        } catch (TableExistenceException | TableConflictException | RecordNotFoundException | ArgumentException | IndexAlreadyExistException e) {
+        } catch (IndexAlreadyExistException e) {
             log.error("初始化表管理器失败", e);
             System.exit(1);
         }
+        // 恢复、载入其他表
+        tableManager.prepare();
         // 初始化线程池
         log.info("初始化线程池...");
         var namedThreadFactory = Executors.defaultThreadFactory();

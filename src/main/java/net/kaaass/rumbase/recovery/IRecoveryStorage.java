@@ -1,5 +1,10 @@
 package net.kaaass.rumbase.recovery;
 
+import net.kaaass.rumbase.page.exception.FileException;
+import net.kaaass.rumbase.page.exception.PageException;
+import net.kaaass.rumbase.recovery.exception.LogException;
+
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -14,21 +19,21 @@ public interface IRecoveryStorage {
      * @param xid       事务编号
      * @param snapshots 快照集合
      */
-    void begin(int xid, List<Integer> snapshots);
+    void begin(int xid, List<Integer> snapshots) throws  LogException;
 
     /**
      * 记录事务失败回滚
      *
      * @param xid
      */
-    void rollback(int xid);
+    void rollback(int xid) throws  LogException;
 
     /**
      * 记录事务完成
      *
      * @param xid
      */
-    void commit(int xid);
+    void commit(int xid) throws LogException;
 
     /**
      * 插入数据项的日志记录
@@ -37,27 +42,30 @@ public interface IRecoveryStorage {
      * @param uuid 数据项的对应编号
      * @param item 插入的数据内容
      */
-    void insert(int xid, long uuid, byte[] item);
+    void insert(int xid, long uuid, byte[] item) throws LogException;
 
     /**
      * 更新数据项的日志记录
      *
      * @param xid
      * @param uuid
-     * @param item
      */
-    void update(int xid, long uuid, byte[] item);
+    void update(int xid, long uuid, byte[] itemBefore, byte[] itemAfter) throws  LogException;
 
     /**
      * 更新数据项的日志头
      *
      * @param xid
-     * @param metaUUID 头信息的UUID
      */
-    void updateMeta(int xid, long metaUUID);
+    void updateMeta(int xid, long beforeUuid,byte[] metadata) throws LogException;
 
     /**
      * 模拟打印日志资料
      */
     List<byte[]> getContent();
+
+    /**
+     * 恢复数据
+     */
+    void recovery() throws  LogException;
 }

@@ -2,6 +2,8 @@ package net.kaaass.rumbase.transaction;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.kaaass.rumbase.recovery.RecoveryManager;
+import net.kaaass.rumbase.recovery.RecoveryStorage;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
 import net.kaaass.rumbase.transaction.lock.LockTable;
 import net.kaaass.rumbase.transaction.lock.LockTableImpl;
