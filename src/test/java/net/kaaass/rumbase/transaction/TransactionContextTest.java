@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kaaass.rumbase.FileUtil;
 import net.kaaass.rumbase.page.exception.FileException;
 import net.kaaass.rumbase.transaction.exception.DeadlockException;
+import net.kaaass.rumbase.transaction.exception.StatusException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -57,7 +58,7 @@ public class TransactionContextTest {
      * 测试事务变化
      */
     @Test
-    public void testChangeStatus() throws IOException, FileException {
+    public void testChangeStatus() throws IOException, FileException, StatusException {
         var manager = new TransactionManagerImpl("test_gen_files/test_change.log");
         var committedTransaction = manager.createTransactionContext(TransactionIsolation.READ_COMMITTED);
         // 事务初始状态
@@ -82,7 +83,7 @@ public class TransactionContextTest {
      * 测试事务持久化
      */
     @Test
-    public void testTransactionPersistence() throws IOException, FileException {
+    public void testTransactionPersistence() throws IOException, FileException, StatusException {
         var manager = new TransactionManagerImpl("test_gen_files/test_persistence.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -115,7 +116,7 @@ public class TransactionContextTest {
      * 测试事务状态复原
      */
     @Test
-    public void testTransactionRecovery() throws IOException, FileException {
+    public void testTransactionRecovery() throws IOException, FileException, StatusException {
         var manager = new TransactionManagerImpl("test_gen_files/test_recovery.log");
         // 事务创建，事务状态记录数改变
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
@@ -136,12 +137,14 @@ public class TransactionContextTest {
      * 测试事务上锁
      */
     @Test
-    public void testAddLock() throws IOException, FileException {
+    public void testAddLock() throws IOException, FileException, StatusException {
         var manager = new TransactionManagerImpl("test_gen_files/test_add_lock.log");
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
 
+        transaction1.start();
+        transaction2.start();
 
         // 互斥锁
         new Thread(() -> {
@@ -151,7 +154,11 @@ public class TransactionContextTest {
                 e.printStackTrace();
             }
             log.info("transaction2 commit");
-            transaction2.commit();
+            try {
+                transaction2.commit();
+            } catch (StatusException e) {
+                e.printStackTrace();
+            }
         }).start();
         try {
             transaction1.exclusiveLock(1, tableName);
@@ -171,7 +178,7 @@ public class TransactionContextTest {
 
             transaction1.commit();
             transaction2.rollback();
-        } catch (DeadlockException e) {
+        } catch (DeadlockException | StatusException e) {
             e.printStackTrace();
         }
     }
@@ -180,11 +187,14 @@ public class TransactionContextTest {
      * 测试死锁
      */
     @Test
-    public void testDeadlock() throws IOException, FileException, InterruptedException {
+    public void testDeadlock() throws IOException, FileException, InterruptedException, StatusException {
         var manager = new TransactionManagerImpl("test_gen_files/test_deadlock.log");
         var transaction1 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         var transaction2 = manager.createTransactionContext(TransactionIsolation.READ_UNCOMMITTED);
         String tableName = "test";
+
+        transaction1.start();
+        transaction2.start();
 
         AtomicBoolean deadlockDetect = new AtomicBoolean(false);
         new Thread(() -> {
@@ -197,7 +207,13 @@ public class TransactionContextTest {
                 transaction2.exclusiveLock(1, tableName);
             } catch (DeadlockException e) {
                 deadlockDetect.set(true);
-                transaction2.rollback();
+                try {
+                    transaction2.rollback();
+                } catch (StatusException statusException) {
+                    statusException.printStackTrace();
+                }
+                e.printStackTrace();
+            } catch (StatusException e) {
                 e.printStackTrace();
             }
         }).start();
